@@ -24,8 +24,8 @@ class GradleApplication {
     void run(context) {
         script.dir("${context.workDir}") {
             def nexusRepositoryUrl = context.artifactVersion.contains("snapshot") ?
-                    "${context.nexus.mavenRepositoryUrl}-snapshots" : "${context.nexus.mavenRepositoryUrl}-releases"
-            script.sh "gradle publish -I ${context.gradle.settings} -PnexusMavenRepositoryUrl=${nexusRepositoryUrl}"
+                    "${context.buildTool.hostedRepository}-snapshots" : "${context.buildTool.hostedRepository}-releases"
+            script.sh "gradle publish -I ${context.buildTool.settings} -PnexusMavenRepositoryUrl=${nexusRepositoryUrl}"
         }
         context.deployableModuleDir = "${context.workDir}/build/libs"
     }

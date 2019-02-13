@@ -23,7 +23,7 @@ class MavenApplication {
 
     void run(context) {
         script.dir("${context.workDir}") {
-            script.sh "mvn clean package -B -DskipTests=true --settings ${context.maven.settings}"
+            script.sh "mvn clean package -B -DskipTests=true --settings ${context.buildTool.settings}"
         }
     }
 }

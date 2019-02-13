@@ -23,24 +23,13 @@ class DotnetApplication {
     Script script
 
     void run(context) {
-        script.dir("${context.settingsDir}") {
-            script.writeFile file: "${context.settingsDir}/get-nuget-token.groovy",
-                    text: context.nexus.internalScripts.getNugetToken
-        }
 
         script.dir("${context.workDir}") {
-            context.nexus.uploadGroovyScriptToNexus("get-nuget-token", "${context.settingsDir}/get-nuget-token.groovy")
-            def response = context.nexus.runNexusGroovyScript("get-nuget-token",
-                    "{\"name\": \"${context.nexus.autouser}\"}")
-            response = new JsonSlurperClassic().parseText(response.content)
-            response = new JsonSlurperClassic().parseText(response.result)
-
-            def nugetApiKey = response.nuGetApiKey
             def nugetPackagesPath = "/tmp/${context.gerrit.project}-nupkgs/"
 
-            script.sh "dotnet pack ${context.nexus.dotnet.sln_filename} --no-build --output ${nugetPackagesPath}"
-            script.sh "dotnet nuget push ${nugetPackagesPath} -k ${nugetApiKey} " +
-                    "-s ${context.nexus.nugetInternalRegistry}"
+            script.sh "dotnet pack ${context.buildTool.sln_filename} --no-build --output ${nugetPackagesPath}"
+            script.sh "dotnet nuget push ${nugetPackagesPath} -k ${context.buildTool.nugetApiKey} " +
+                    "-s ${context.buildTool.hostedRepository}"
         }
         context.deployableModuleDir = "${context.workDir}"
     }

@@ -39,7 +39,7 @@ class MavenAutotest {
                         "It's mandatory to be specified, please check"
 
             try {
-                script.sh "${parsedRunCommandJson.precommit} -B --settings ${context.maven.settings}"
+                script.sh "${parsedRunCommandJson.precommit} -B --settings ${context.buildTool.settings}"
             }
 
             catch (Exception ex) {

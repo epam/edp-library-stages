@@ -28,16 +28,16 @@ class NpmApplication {
                 def token = script.sh(script: """
         curl -s -H "Accept: application/json" -H "Content-Type:application/json" -X PUT --data \
         '{"name": "${script.USERNAME}", "password": "${script.PASSWORD}"}' \
-        ${context.nexus.npmInternalRegistry}-/user/org.couchdb.user:${script.USERNAME} | \
+        ${context.buildTool.hostedRepository}-/user/org.couchdb.user:${script.USERNAME} | \
         grep -oE 'NpmToken\\.[0-9a-zA-Z-]+'
         """,
                         returnStdout: true)
 
                 script.sh (script: """
             set +x
-            npm set registry ${context.nexus.npmInternalRegistry}
+            npm set registry ${context.buildTool.hostedRepository}
             auth=\$(echo -n '${script.USERNAME}:${script.PASSWORD}' | base64); npm set _auth=\$auth
-            npm set //${context.nexus.npmInternalRegistry}:_authToken ${token}
+            npm set //${context.buildTool.hostedRepository}:_authToken ${token}
             npm set email=${context.gerrit.autouser}@epam.com
             """, returnStdout: false)
             }

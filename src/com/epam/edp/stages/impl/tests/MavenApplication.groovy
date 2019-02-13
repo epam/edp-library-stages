@@ -24,7 +24,7 @@ class MavenApplication {
     void run(context) {
         script.dir("${context.workDir}") {
             script.sh "mvn org.jacoco:jacoco-maven-plugin:prepare-agent -Dmaven.test.failure.ignore=true verify" +
-                    " org.jacoco:jacoco-maven-plugin:report -B --settings ${context.maven.settings}"
+                    " org.jacoco:jacoco-maven-plugin:report -B --settings ${context.buildTool.settings}"
             script.junit "target/*-reports/*.xml, */target/*-reports/*.xml"
         }
     }

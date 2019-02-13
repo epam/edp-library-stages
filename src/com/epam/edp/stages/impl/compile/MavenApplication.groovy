@@ -23,7 +23,7 @@ class MavenApplication {
 
     void run(context) {
         script.dir("${context.workDir}") {
-            script.sh "mvn compile -B --settings ${context.maven.settings}"
+            script.sh "mvn compile -B --settings ${context.buildTool.settings}"
         }
     }
 }

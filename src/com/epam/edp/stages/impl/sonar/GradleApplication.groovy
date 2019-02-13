@@ -27,7 +27,7 @@ class GradleApplication {
                 script.withCredentials([script.usernamePassword(credentialsId: "${context.nexus.credentialsId}",
                         passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]) {
                     script.withSonarQubeEnv('Sonar') {
-                        script.sh "${context.gradleCommand} -PnexusLogin=${script.USERNAME} " +
+                        script.sh "${context.buildTool.command} -PnexusLogin=${script.USERNAME} " +
                                 "-PnexusPassword=${script.PASSWORD} " +
                                 "sonarqube -Dsonar.analysis.mode=preview -Dsonar.report.export.path=sonar-report.json" +
                                 " -Dsonar.branch=precommit -Dsonar.projectKey=${context.application.name}" +
@@ -49,7 +49,7 @@ class GradleApplication {
             script.withCredentials([script.usernamePassword(credentialsId: "${context.nexus.credentialsId}",
                     passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]) {
                 script.withSonarQubeEnv('Sonar') {
-                    script.sh "${context.gradleCommand} -PnexusLogin=${script.USERNAME} " +
+                    script.sh "${context.buildTool.command} -PnexusLogin=${script.USERNAME} " +
                             "-PnexusPassword=${script.PASSWORD} " +
                             "sonarqube -Dsonar.projectKey=${context.application.name} " +
                             "-Dsonar.projectName=${context.application.name} " +

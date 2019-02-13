@@ -60,7 +60,7 @@ class Maven {
                     script.sh "mvn sonar:sonar -Dsonar.analysis.mode=preview " +
                             "-Dsonar.report.export.path=sonar-report.json" +
                             " -Dsonar.branch=precommit -B -Dsonar.projectName=${context.application.name} " +
-                            "-Dsonar.projectKey=${context.application.name} --settings ${context.maven.settings}"
+                            "-Dsonar.projectKey=${context.application.name} --settings ${context.buildTool.settings}"
                 }
                 script.sonarToGerrit inspectionConfig: [baseConfig: [projectPath: ""],
                                                         serverURL: "${context.sonar.route}"],
@@ -74,7 +74,7 @@ class Maven {
 
         script.dir("${codereviewAnalysisRunDir}") {
             script.withSonarQubeEnv('Sonar') {
-                script.sh "mvn sonar:sonar --settings ${context.maven.settings} " +
+                script.sh "mvn sonar:sonar --settings ${context.buildTool.settings} " +
                         "-Dsonar.projectKey=${context.application.name} " +
                         "-Dsonar.projectName=${context.application.name} " +
                         "-Dsonar.branch=" +

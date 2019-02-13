@@ -28,14 +28,14 @@ class NpmApplication {
                 def token = script.sh(script: """
         curl -s -H "Accept: application/json" -H "Content-Type:application/json" -X PUT --data \
         '{"name": "${script.USERNAME}", "password": "${script.PASSWORD}"}' \
-        ${context.nexus.npmGroupRegistry}-/user/org.couchdb.user:${script.USERNAME} | \
+        ${context.buildTool.groupRepository}-/user/org.couchdb.user:${script.USERNAME} | \
         grep -oE 'NpmToken\\.[0-9a-zA-Z-]+'
         """,
                         returnStdout: true)
             }
             script.sh(script: """
             set +x
-            npm set registry ${context.nexus.npmGroupRegistry}
+            npm set registry ${context.buildTool.groupRepository}
             """)
 
             script.sh "npm install && npm run build:clean"

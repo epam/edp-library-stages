@@ -24,9 +24,9 @@ class MavenApplication {
     void run(context) {
         script.dir("${context.workDir}") {
             def nexusRepositoryUrl = context.pomVersion.contains("snapshot") ?
-                    "${context.nexus.mavenRepositoryUrl}-snapshots" : "${context.nexus.mavenRepositoryUrl}-releases"
+                    "${context.buildTool.hostedRepository}-snapshots" : "${context.buildTool.hostedRepository}-releases"
             script.sh "mvn deploy -DskipTests=true -DaltDeploymentRepository=nexus::default::${nexusRepositoryUrl} " +
-                    "--settings ${context.maven.settings}"
+                    "--settings ${context.buildTool.settings}"
         }
         context.deployableModuleDir = context.deployableModule.isEmpty() ? "${context.workDir}/target" :
                 "${context.workDir}/${context.deployableModule}/target"

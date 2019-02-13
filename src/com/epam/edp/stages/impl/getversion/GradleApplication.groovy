@@ -27,7 +27,7 @@ class GradleApplication {
                     passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]) {
                 context.artifactID = script.sh(
                         script: """
-                        ${context.gradleCommand} -PnexusLogin=${script.USERNAME} -PnexusPassword=${script.PASSWORD} \
+                        ${context.buildTool.command} -PnexusLogin=${script.USERNAME} -PnexusPassword=${script.PASSWORD} \
                         properties|egrep "rootProject: root project "|awk -F "'" '{print \$2}' 
                     """,
                         returnStdout: true
@@ -35,7 +35,7 @@ class GradleApplication {
 
                 context.artifactVersion = script.sh(
                         script: """
-                        ${context.gradleCommand} -PnexusLogin=${script.USERNAME} -PnexusPassword=${script.PASSWORD} \
+                        ${context.buildTool.command} -PnexusLogin=${script.USERNAME} -PnexusPassword=${script.PASSWORD} \
                         properties|egrep "version: "|awk '{print \$2}'    
                     """,
                         returnStdout: true
@@ -43,7 +43,7 @@ class GradleApplication {
 
                 context.groupID = script.sh(
                         script: """
-                    ${context.gradleCommand} -PnexusLogin=${script.USERNAME} -PnexusPassword=${script.PASSWORD} \
+                    ${context.buildTool.command.command} -PnexusLogin=${script.USERNAME} -PnexusPassword=${script.PASSWORD} \
                     properties|egrep \"group: \"|awk '{print \$2}'
                 """,
                         returnStdout: true

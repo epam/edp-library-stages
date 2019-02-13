@@ -33,7 +33,7 @@ class DotnetApplication {
                 /n:${context.application.name} \
                 /d:sonar.report.export.path=sonar-report.json \
                 /d:sonar.branch=precommit
-                dotnet build ${context.nexus.dotnet.sln_filename}
+                dotnet build ${context.buildTool.sln_filename}
                 dotnet ${scannerHome}/SonarScanner.MSBuild.dll end
             """
                 }
@@ -54,7 +54,7 @@ class DotnetApplication {
                 /n:${context.application.name} \
                 /d:sonar.branch=${context.job.type == "codereview" ? context.gerrit.changeName : context.gerrit.branch} \
                 /d:sonar.cs.opencover.reportsPaths=${context.workDir}/*Tests*/*.xml
-                dotnet build ${context.nexus.dotnet.sln_filename}
+                dotnet build ${context.buildTool.sln_filename}
                 dotnet ${scannerHome}/SonarScanner.MSBuild.dll end
             """
             }

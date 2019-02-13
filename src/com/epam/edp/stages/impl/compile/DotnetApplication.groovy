@@ -23,11 +23,11 @@ class DotnetApplication {
 
     void run(context) {
         script.dir("${context.workDir}") {
-            context.nexus.dotnet.sln_filename = script.sh(
+            context.buildTool.sln_filename = script.sh(
                     script: "ls *.sln",
                     returnStdout: true
             ).trim()
-            script.sh "dotnet build ${context.nexus.dotnet.sln_filename}"
+            script.sh "dotnet build ${context.buildTool.sln_filename}"
         }
     }
 }
