@@ -48,6 +48,8 @@ class StageFactory {
 
     void add(clazz) {
         Annotation annotation = clazz.getAnnotation(Stage)
+        if (!annotation)
+            return
         for (tool in annotation.buildTool()) {
             for (app in annotation.type()) {
                 stages.put(buildKey(annotation.name(), tool, app.getValue()), clazz)
