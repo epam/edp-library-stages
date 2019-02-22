@@ -25,8 +25,11 @@ class PushMavenApplication {
         script.dir("${context.workDir}") {
             def nexusRepositoryUrl = context.application.version.contains("snapshot") ?
                     "${context.buildTool.hostedRepository}-snapshots" : "${context.buildTool.hostedRepository}-releases"
-            script.sh "mvn deploy -B -DskipTests=true -DaltDeploymentRepository=nexus::default::${nexusRepositoryUrl} " +
-                    "--settings ${context.buildTool.settings}"
+            script.withCredentials([script.usernamePassword(credentialsId: "${context.nexus.credentialsId}",
+                    passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]) {
+                script.sh "${context.buildTool.command} -Dartifactory.username=${script.USERNAME} -Dartifactory.password=${script.PASSWORD}" +
+                        " deploy -B -DskipTests=true -DaltDeploymentRepository=nexus::default::${nexusRepositoryUrl}"
+            }
         }
     }
 }

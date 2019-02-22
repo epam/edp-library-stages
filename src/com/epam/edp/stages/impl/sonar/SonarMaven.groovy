@@ -58,10 +58,14 @@ class SonarMaven {
                 }
 
                 script.withSonarQubeEnv('Sonar') {
-                    script.sh "mvn sonar:sonar -Dsonar.analysis.mode=preview " +
-                            "-Dsonar.report.export.path=sonar-report.json" +
-                            " -Dsonar.branch=codereview -B -Dsonar.projectName=${context.application.name} " +
-                            "-Dsonar.projectKey=${context.application.name} --settings ${context.buildTool.settings}"
+                    script.withCredentials([script.usernamePassword(credentialsId: "${context.nexus.credentialsId}",
+                            passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]) {
+                        script.sh "${context.buildTool.command} -Dartifactory.username=${script.USERNAME} -Dartifactory.password=${script.PASSWORD} " +
+                                "sonar:sonar -Dsonar.analysis.mode=preview " +
+                                "-Dsonar.report.export.path=sonar-report.json " +
+                                "-Dsonar.branch=codereview -B -Dsonar.projectName=${context.application.name} " +
+                                "-Dsonar.projectKey=${context.application.name}"
+                    }
                 }
                 script.sonarToGerrit inspectionConfig: [baseConfig: [projectPath: ""],
                                                         serverURL: "${context.sonar.route}"],
@@ -75,11 +79,15 @@ class SonarMaven {
 
         script.dir("${codereviewAnalysisRunDir}") {
             script.withSonarQubeEnv('Sonar') {
-                script.sh "mvn sonar:sonar --settings ${context.buildTool.settings} " +
-                        "-Dsonar.projectKey=${context.application.name} " +
-                        "-Dsonar.projectName=${context.application.name} " +
-                        "-Dsonar.branch=" +
-                        "${context.job.type == "codereview" ? context.gerrit.changeName : context.gerrit.branch}"
+                script.withCredentials([script.usernamePassword(credentialsId: "${context.nexus.credentialsId}",
+                        passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]) {
+                    script.sh "${context.buildTool.command} -Dartifactory.username=${script.USERNAME} -Dartifactory.password=${script.PASSWORD} " +
+                            "sonar:sonar " +
+                            "-Dsonar.projectKey=${context.application.name} " +
+                            "-Dsonar.projectName=${context.application.name} " +
+                            "-Dsonar.branch=" +
+                            "${context.job.type == "codereview" ? context.gerrit.changeName : context.gerrit.branch}"
+                }
             }
             script.timeout(time: 10, unit: 'MINUTES') {
                 def qualityGateResult = script.waitForQualityGate()

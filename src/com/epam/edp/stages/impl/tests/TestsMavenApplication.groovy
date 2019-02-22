@@ -23,8 +23,12 @@ class TestsMavenApplication {
 
     void run(context) {
         script.dir("${context.workDir}") {
-            script.sh "mvn org.jacoco:jacoco-maven-plugin:prepare-agent -Dmaven.test.failure.ignore=true verify" +
-                    " org.jacoco:jacoco-maven-plugin:report -B --settings ${context.buildTool.settings}"
+            script.withCredentials([script.usernamePassword(credentialsId: "${context.nexus.credentialsId}",
+                    passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]) {
+                script.sh "${context.buildTool.command} -Dartifactory.username=${script.USERNAME} -Dartifactory.password=${script.PASSWORD} " +
+                        "org.jacoco:jacoco-maven-plugin:prepare-agent -Dmaven.test.failure.ignore=true verify " +
+                        "org.jacoco:jacoco-maven-plugin:report -B"
+            }
             script.junit "target/*-reports/*.xml, */target/*-reports/*.xml"
         }
     }

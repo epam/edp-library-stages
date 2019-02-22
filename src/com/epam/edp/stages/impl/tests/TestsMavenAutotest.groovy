@@ -39,7 +39,11 @@ class TestsMavenAutotest {
                         "It's mandatory to be specified, please check"
 
             try {
-                script.sh "${parsedRunCommandJson.codereview} -B --settings ${context.buildTool.settings}"
+                script.withCredentials([script.usernamePassword(credentialsId: "${context.nexus.credentialsId}",
+                        passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]) {
+                    script.sh "${parsedRunCommandJson.codereview} -Dartifactory.username=${script.USERNAME} -Dartifactory.password=${script.PASSWORD} " +
+                            "-B --settings ${context.buildTool.settings}"
+                }
             }
 
             catch (Exception ex) {

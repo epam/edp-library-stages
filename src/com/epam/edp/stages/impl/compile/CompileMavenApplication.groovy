@@ -23,7 +23,11 @@ class CompileMavenApplication {
 
     void run(context) {
         script.dir("${context.workDir}") {
-            script.sh "mvn compile -B --settings ${context.buildTool.settings}"
+            script.withCredentials([script.usernamePassword(credentialsId: "${context.nexus.credentialsId}",
+                    passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]) {
+                script.sh "${context.buildTool.command} -Dartifactory.username=${script.USERNAME} -Dartifactory.password=${script.PASSWORD}" +
+                        " compile -B"
+            }
         }
     }
 }
