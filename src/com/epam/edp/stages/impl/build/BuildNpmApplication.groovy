@@ -23,7 +23,7 @@ class BuildNpmApplication {
 
     void run(context) {
         script.dir("${context.workDir}") {
-            script.withCredentials([script.usernamePassword(credentialsId: 'nexus', passwordVariable: 'PASSWORD',
+            script.withCredentials([script.usernamePassword(credentialsId: "${context.nexus.credentialsId}", passwordVariable: 'PASSWORD',
                     usernameVariable: 'USERNAME')]) {
                 def token = script.sh(script: """
         curl -s -H "Accept: application/json" -H "Content-Type:application/json" -X PUT --data \
