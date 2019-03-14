@@ -14,6 +14,10 @@ limitations under the License.*/
 
 package com.epam.edp.stages
 
+import com.epam.edp.stages.impl.ci.Stage as ciStage
+import com.epam.edp.stages.impl.cd.Stage as cdStage
+import groovy.io.FileType
+
 import java.lang.annotation.Annotation
 import hudson.FilePath
 
@@ -27,8 +31,8 @@ class StageFactory {
         def res = Thread.currentThread().getContextClassLoader().getResources("com/epam/edp/stages/impl")
         def dir = new File(res.nextElement().getFile())
         dir.eachDirRecurse() { directory ->
-            directory.eachFileRecurse {file ->
-                classesList.push(Class.forName("com.epam.edp.stages.impl.${directory.name}."
+            directory.eachFile(FileType.FILES) { file ->
+                classesList.push(Class.forName("com.epam.edp.stages.impl.${directory.path.replace("${dir.path}/","").replaceAll('/','.')}."
                         + file.name.substring(0, file.name.length() - 7)))
             }
         }
@@ -39,7 +43,6 @@ class StageFactory {
         def classesList = []
         def customStagesDir = new FilePath(Jenkins.getInstance().getComputer(script.env['NODE_NAME']).getChannel(),
                 directory)
-
         customStagesDir.list().each {
             classesList.push(script.load(it.getRemote()))
         }
@@ -47,18 +50,27 @@ class StageFactory {
     }
 
     void add(clazz) {
-        Annotation annotation = clazz.getAnnotation(Stage)
-        if (!annotation)
-            return
-        for (tool in annotation.buildTool()) {
-            for (app in annotation.type()) {
-                stages.put(buildKey(annotation.name(), tool, app.getValue()), clazz)
+        Annotation ciAnnotation = clazz.getAnnotation(ciStage)
+        if (ciAnnotation) {
+            for (tool in ciAnnotation.buildTool()) {
+                for (app in ciAnnotation.type()) {
+                    stages.put(ciKey(ciAnnotation.name(), tool, app.getValue()), clazz)
+                }
             }
         }
+
+        Annotation cdAnnotation = clazz.getAnnotation(cdStage)
+        if (cdAnnotation)
+            stages.put(cdKey(cdAnnotation.name()), clazz)
     }
 
-    def getStage(name, buildTool, type) {
-        def stageClass = stages.find { it.key == buildKey(name, buildTool, type) }?.value
+    def getStage(name, buildTool = null, type = null) {
+        def stageClass
+        if (buildTool && type)
+            stageClass = stages.find { it.key == ciKey(name, buildTool, type) }?.value
+        else
+            stageClass = stages.find { it.key == cdKey(name) }?.value
+
         if (!stageClass) {
             script.error("[JENKINS][ERROR] There are no implementation for stage: ${name} " +
                     "build tool: ${buildTool}, type: ${type}")
@@ -66,7 +78,11 @@ class StageFactory {
         stageClass.newInstance(script: script)
     }
 
-    private def buildKey(name, buildTool, type) {
+    private def ciKey(name, buildTool, type) {
         name + buildTool + type
+    }
+
+    private def cdKey(name) {
+        name
     }
 }
