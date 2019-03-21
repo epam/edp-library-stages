@@ -32,7 +32,7 @@ class StageFactory {
         def dir = new File(res.nextElement().getFile())
         dir.eachDirRecurse() { directory ->
             directory.eachFile(FileType.FILES) { file ->
-                classesList.push(Class.forName("com.epam.edp.stages.impl.${directory.path.replace("${dir.path}/","").replaceAll('/','.')}."
+                classesList.push(Class.forName("com.epam.edp.stages.impl.${directory.path.replace("${dir.path}/", "").replaceAll('/', '.')}."
                         + file.name.substring(0, file.name.length() - 7)))
             }
         }
@@ -41,8 +41,15 @@ class StageFactory {
 
     def loadCustomStages(String directory) {
         def classesList = []
-        def customStagesDir = new FilePath(Jenkins.getInstance().getComputer(script.env['NODE_NAME']).getChannel(),
-                directory)
+        def customStagesDir
+
+        if (script.env['NODE_NAME'].equals("master")) {
+            def stagesDir = new File(directory)
+            customStagesDir = new FilePath(stagesDir)
+        } else {
+            customStagesDir = new FilePath(Jenkins.getInstance().getComputer(script.env['NODE_NAME']).getChannel(),
+                    directory)
+        }
         customStagesDir.list().each {
             classesList.push(script.load(it.getRemote()))
         }
