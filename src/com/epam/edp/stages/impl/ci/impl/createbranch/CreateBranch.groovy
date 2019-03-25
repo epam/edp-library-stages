@@ -33,12 +33,12 @@ class CreateBranch {
                 ssh-keyscan -p ${context.gerrit.sshPort} ${context.gerrit.host} >> ~/.ssh/known_hosts
                 git config --global user.email ${context.gerrit.autouser}@epam.com
                 git config --global user.name ${context.gerrit.autouser}
-                git checkout -b ${context.job.newBranch}
+                git checkout -b ${context.job.releaseName}
                 git push --all
                 """
                 }
                 catch(Exception ex) {
-                    script.error "[JENKINS][ERROR] Create branch has failed with excewption - ${ex}"
+                    script.error "[JENKINS][ERROR] Create branch has failed with exception - ${ex}"
                 }
             }
         }
