@@ -141,13 +141,24 @@ class Deploy {
     def cloneProject(context, application) {
         def gitApplicationUrl = "ssh://${context.gerrit.autouser}@${context.gerrit.host}:${context.gerrit.sshPort}/${application.name}"
 
-        script.checkout([$class                           : 'GitSCM', branches: [[name: "refs/tags/master-${application.version}"]],
-                  doGenerateSubmoduleConfigurations: false, extensions: [],
-                  submoduleCfg                     : [],
-                  userRemoteConfigs                : [[credentialsId: "${context.gerrit.credentialsId}",
-                                                       refspec      : "refs/tags/master-${application.version}",
-                                                       url          : "${gitApplicationUrl}"]]])
+        try {
+            script.checkout([$class                           : 'GitSCM', branches: [[name: "refs/tags/master-${application.version}"]],
+                             doGenerateSubmoduleConfigurations: false, extensions: [],
+                             submoduleCfg                     : [],
+                             userRemoteConfigs                : [[credentialsId: "${context.gerrit.credentialsId}",
+                                                                  refspec      : "refs/tags/master-${application.version}",
+                                                                  url          : "${gitApplicationUrl}"]]])
+        }
+        catch(Exception ex) {
+            script.println("[JENKINS][WARNING] Project ${application.name} cloning has failed with ${ex}\r\n" +
+                    "[JENKINS][WARNING] Deploy will be skipped\r\n" +
+                    "[JENKINS][WARNING] Check if tag ${application.version} exists in repository")
+            script.currentBuild.result = 'UNSTABLE'
+            script.currentBuild.description = "${script.currentBuild.description}\r\n${application.name} deploy failed"
+            return false
+        }
         script.println("[JENKINS][DEBUG] Project ${application.name} has been successfully cloned")
+        return true
     }
 
     def deployConfigMapTemplate(context, application, deployTemplatesPath) {
@@ -236,7 +247,8 @@ class Deploy {
                 def appDir = "${script.WORKSPACE}/${RandomStringUtils.random(10, true, true)}/${application.name}"
                 def deployTemplatesPath = "${appDir}/${context.job.deployTemplatesDirectory}"
                 script.dir("${appDir}") {
-                    cloneProject(context, application)
+                    if(!cloneProject(context, application))
+                        return
                     deployConfigMapTemplate(context, application, deployTemplatesPath)
                     try {
                         deployApplicationTemplate(context, application, deployTemplatesPath)
@@ -251,4 +263,3 @@ class Deploy {
         }
     }
 }
-
