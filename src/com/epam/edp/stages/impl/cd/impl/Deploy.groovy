@@ -231,6 +231,7 @@ class Deploy {
                         return
                 }
 
+                script.sh("oc adm policy add-scc-to-user anyuid -z ${application.name} -n ${context.job.deployProject}")
                 script.sh("oc adm policy add-role-to-user view system:serviceaccount:${context.job.deployProject}:${application.name} -n ${context.job.deployProject}")
                 def appDir = "${script.WORKSPACE}/${RandomStringUtils.random(10, true, true)}/${application.name}"
                 def deployTemplatesPath = "${appDir}/${context.job.deployTemplatesDirectory}"
