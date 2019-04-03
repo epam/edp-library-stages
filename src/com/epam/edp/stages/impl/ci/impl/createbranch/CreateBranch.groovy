@@ -33,7 +33,7 @@ class CreateBranch {
                 ssh-keyscan -p ${context.gerrit.sshPort} ${context.gerrit.host} >> ~/.ssh/known_hosts
                 git config --global user.email ${context.gerrit.autouser}@epam.com
                 git config --global user.name ${context.gerrit.autouser}
-                git checkout -b ${context.job.releaseName}
+                git branch ${context.job.releaseName} ${context.job.releaseFromCommitId}
                 git push --all
                 """
                 }
