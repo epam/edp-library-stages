@@ -18,27 +18,30 @@ class BuildImageApplication {
     Script script
 
     void run(context) {
-        context.application.imageBuildArgs.push("--name=${context.application.name}")
+        def buildconfigName = "${context.application.name}-${context.gerrit.branch.replaceAll("[^\\p{L}\\p{Nd}]+", "-")}"
+        context.application.imageBuildArgs.push("--name=${buildconfigName}")
         context.application.imageBuildArgs.push("--image-stream=s2i-${context.application.config.language.toLowerCase()}")
         def resultTag
         def targetTags = [context.application.buildVersion, "latest"]
         script.openshift.withCluster() {
             script.openshift.withProject() {
-                if (!script.openshift.selector("buildconfig", "${context.application.name}").exists())
+                if (!script.openshift.selector("buildconfig", "${buildconfigName}").exists())
                     script.openshift.newBuild(context.application.imageBuildArgs)
 
                 script.dir(context.application.deployableModuleDir) {
                     script.sh "tar -cf ${context.application.name}.tar *"
-                    def buildResult = script.openshift.selector("bc", "${context.application.name}").startBuild("--from-archive=${context.application.name}.tar", "--wait=true")
+                    def buildResult = script.openshift.selector("bc", "${buildconfigName}").startBuild(
+                            "--from-archive=${context.application.name}.tar",
+                            "--wait=true")
                     resultTag = buildResult.object().status.output.to.imageDigest
                 }
-                script.println("[JENKINS][DEBUG] Build config ${context.application.name} with result ${resultTag} " +
-                        "has been completed")
+                script.println("[JENKINS][DEBUG] Build config ${context.application.name} with result " +
+                        "${buildconfigName}:${resultTag} has been completed")
 
                 if (context.job.promoteImages) {
                     targetTags.each() { tagName ->
-                        script.openshift.tag("${script.openshift.project()}/${context.application.name}@${resultTag}",
-                                "${context.job.envToPromote}/${context.application.name}:${tagName}")
+                        script.openshift.tag("${script.openshift.project()}/${buildconfigName}@${resultTag}",
+                                "${context.job.envToPromote}/${buildconfigName}:${tagName}")
                     }
                 } else
                     script.println("[JENKINS][WARNING] Image wasn't promoted since there are no environments " +

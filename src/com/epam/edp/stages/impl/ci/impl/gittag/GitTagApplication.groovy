@@ -33,7 +33,7 @@ class GitTagApplication {
                 ssh-keyscan -p ${context.gerrit.sshPort} ${context.gerrit.host} >> ~/.ssh/known_hosts
                 git config --global user.email ${context.gerrit.autouser}@epam.com
                 git config --global user.name ${context.gerrit.autouser}
-                git tag -a ${context.application.buildVersion} -m 'Tag is added automatically by \
+                git tag -a ${context.gerrit.branch}-${context.application.buildVersion} -m 'Tag is added automatically by \
                      ${context.gerrit.autouser} user'
                 git push --tags"""
             }

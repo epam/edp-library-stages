@@ -174,7 +174,7 @@ class Deploy {
                 return
         }
         script.sh("oc -n ${context.job.deployProject} process -f ${deployTemplatesPath}/${templateName}.yaml " +
-                "-p IMAGE_NAME=${context.job.metaProject}/${application.name} " +
+                "-p IMAGE_NAME=${context.job.metaProject}/${application.name}-master " +
                 "-p APP_VERSION=${application.version} " +
                 "-p NAMESPACE=${context.job.deployProject} " +
                 "--local=true -o json | oc -n ${context.job.deployProject} apply -f -")
