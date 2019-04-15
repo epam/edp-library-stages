@@ -42,6 +42,8 @@ class BuildImageApplication {
                     targetTags.each() { tagName ->
                         script.openshift.tag("${script.openshift.project()}/${buildconfigName}@${resultTag}",
                                 "${context.job.envToPromote}/${buildconfigName}:${tagName}")
+                        script.openshift.tag("${script.openshift.project()}/${buildconfigName}@${resultTag}",
+                                "${script.openshift.project()}/${buildconfigName}:${tagName}")
                     }
                 } else
                     script.println("[JENKINS][WARNING] Image wasn't promoted since there are no environments " +
