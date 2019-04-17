@@ -88,7 +88,7 @@ class Deploy {
 
     def checkImageExists(context, object) {
         def imageExists = script.sh(
-                script: "oc -n ${context.job.metaProject} get is ${object.name}-master --no-headers | awk '{print \$1}'",
+                script: "oc -n ${context.job.metaProject} get is ${object.normalizedName} --no-headers | awk '{print \$1}'",
                 returnStdout: true
         ).trim()
         if (imageExists == "") {
@@ -98,7 +98,7 @@ class Deploy {
         }
 
         def tagExist = script.sh(
-                script: "oc -n ${context.job.metaProject} get is ${object.name}-master -o jsonpath='{.spec.tags[?(@.name==\"${object.version}\")].name}'",
+                script: "oc -n ${context.job.metaProject} get is ${object.normalizedName} -o jsonpath='{.spec.tags[?(@.name==\"${object.version}\")].name}'",
                 returnStdout: true
         ).trim()
         if (tagExist == "") {
@@ -111,11 +111,11 @@ class Deploy {
 
     def getNumericVersion(context, application) {
         def hash = script.sh(
-                script: "oc -n ${context.job.metaProject} get is ${application.name}-master -o jsonpath=\'{@.spec.tags[?(@.name==\"${application.version}\")].from.name}\'",
+                script: "oc -n ${context.job.metaProject} get is ${application.normalizedName} -o jsonpath=\'{@.spec.tags[?(@.name==\"${application.version}\")].from.name}\'",
                 returnStdout: true
         ).trim()
         def tags = script.sh(
-                script: "oc -n ${context.job.metaProject} get is ${application.name}-master -o jsonpath=\'{@.spec.tags[?(@.from.name==\"${hash}\")].name}\'",
+                script: "oc -n ${context.job.metaProject} get is ${application.normalizedName} -o jsonpath=\'{@.spec.tags[?(@.from.name==\"${hash}\")].name}\'",
                 returnStdout: true
         ).trim().tokenize()
         tags.removeAll { it == "latest" }
@@ -142,11 +142,11 @@ class Deploy {
         def gitApplicationUrl = "ssh://${context.gerrit.autouser}@${context.gerrit.host}:${context.gerrit.sshPort}/${application.name}"
 
         try {
-            script.checkout([$class                           : 'GitSCM', branches: [[name: "refs/tags/master-${application.version}"]],
+            script.checkout([$class                           : 'GitSCM', branches: [[name: "refs/tags/${application.branch}-${application.version}"]],
                              doGenerateSubmoduleConfigurations: false, extensions: [],
                              submoduleCfg                     : [],
                              userRemoteConfigs                : [[credentialsId: "${context.gerrit.credentialsId}",
-                                                                  refspec      : "refs/tags/master-${application.version}",
+                                                                  refspec      : "refs/tags/${application.branch}-${application.version}",
                                                                   url          : "${gitApplicationUrl}"]]])
         }
         catch(Exception ex) {
@@ -185,7 +185,7 @@ class Deploy {
                 return
         }
         script.sh("oc -n ${context.job.deployProject} process -f ${deployTemplatesPath}/${templateName}.yaml " +
-                "-p IMAGE_NAME=${context.job.metaProject}/${application.name}-master " +
+                "-p IMAGE_NAME=${context.job.metaProject}/${application.normalizedName} " +
                 "-p APP_VERSION=${application.version} " +
                 "-p NAMESPACE=${context.job.deployProject} " +
                 "--local=true -o json | oc -n ${context.job.deployProject} apply -f -")

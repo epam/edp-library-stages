@@ -24,14 +24,14 @@ class PromoteImages {
         script.openshift.withCluster() {
             script.openshift.withProject() {
                 context.environment.updatedApplicaions.each() { application ->
-                    script.openshift.tag("${context.job.promotion.sourceProject}/${application.name}-master:${application.version}",
-                            "${context.job.promotion.sourceProject}/${application.name}-master:stable")
-                    script.openshift.tag("${context.job.promotion.sourceProject}/${application.name}-master:${application.version}",
-                            "${context.job.promotion.targetProject}/${application.name}-master:latest")
-                    script.openshift.tag("${context.job.promotion.sourceProject}/${application.name}-master:${application.version}",
-                            "${context.job.promotion.targetProject}/${application.name}-master:${application.version}")
+                    script.openshift.tag("${context.job.promotion.sourceProject}/${application.normalizedName}:${application.version}",
+                            "${context.job.promotion.sourceProject}/${application.normalizedName}:stable")
+                    script.openshift.tag("${context.job.promotion.sourceProject}/${application.normalizedName}:${application.version}",
+                            "${context.job.promotion.targetProject}/${application.normalizedName}:latest")
+                    script.openshift.tag("${context.job.promotion.sourceProject}/${application.normalizedName}:${application.version}",
+                            "${context.job.promotion.targetProject}/${application.normalizedName}:${application.version}")
 
-                    script.println("[JENKINS][INFO] Image ${application.name}-master:${application.version} has been promoted to ${context.job.promotion.targetProject} project")
+                    script.println("[JENKINS][INFO] Image ${application.normalizedName}:${application.version} has been promoted to ${context.job.promotion.targetProject} project")
                 }
             }
         }
