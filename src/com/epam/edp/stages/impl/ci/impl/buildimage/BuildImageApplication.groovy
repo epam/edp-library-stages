@@ -38,18 +38,22 @@ class BuildImageApplication {
                 script.println("[JENKINS][DEBUG] Build config ${context.application.name} with result " +
                         "${buildconfigName}:${resultTag} has been completed")
 
-                if (context.job.promoteImages) {
-                    targetTags.each() { tagName ->
+
+                targetTags.each() { tagName ->
+                    if (context.job.promoteImages) {
                         script.openshift.tag("${script.openshift.project()}/${buildconfigName}@${resultTag}",
                                 "${context.job.envToPromote}/${buildconfigName}:${tagName}")
-                        script.openshift.tag("${script.openshift.project()}/${buildconfigName}@${resultTag}",
-                                "${script.openshift.project()}/${buildconfigName}:${tagName}")
                     }
-                } else
+                    script.openshift.tag("${script.openshift.project()}/${buildconfigName}@${resultTag}",
+                            "${script.openshift.project()}/${buildconfigName}:${tagName}")
+                }
+                if (!context.job.promoteImages) {
                     script.println("[JENKINS][WARNING] Image wasn't promoted since there are no environments " +
                             "were added\r\n [JENKINS][WARNING] If your like to promote your images please add " +
                             "environment via your cockpit panel")
+                }
             }
         }
     }
+
 }
