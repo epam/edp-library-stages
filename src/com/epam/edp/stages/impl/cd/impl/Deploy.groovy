@@ -13,6 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 
 package com.epam.edp.stages.impl.cd.impl
+
 import org.apache.commons.lang.RandomStringUtils
 
 
@@ -48,7 +49,7 @@ class Deploy {
             script.openshiftVerifyDeployment apiURL: '', authToken: '', depCfg: "${object.name}",
                     namespace: "${context.job.deployProject}", verbose: 'false',
                     verifyReplicaCount: 'true', waitTime: '600', waitUnit: 'sec'
-            if (type == 'application' && getDeploymentVersion(context,object) != object.currentDeploymentVersion) {
+            if (type == 'application' && getDeploymentVersion(context, object) != object.currentDeploymentVersion) {
                 script.println("[JENKINS][DEBUG] Deployment ${object.name} in project ${context.job.deployProject} has been rolled out")
                 context.environment.updatedApplicaions.push(object)
             } else
@@ -149,7 +150,7 @@ class Deploy {
                                                                   refspec      : "refs/tags/${application.branch}-${application.version}",
                                                                   url          : "${gitApplicationUrl}"]]])
         }
-        catch(Exception ex) {
+        catch (Exception ex) {
             script.println("[JENKINS][WARNING] Project ${application.name} cloning has failed with ${ex}\r\n" +
                     "[JENKINS][WARNING] Deploy will be skipped\r\n" +
                     "[JENKINS][WARNING] Check if tag ${application.version} exists in repository")
@@ -213,6 +214,21 @@ class Deploy {
                 script.sh("oc adm policy add-role-to-group view ${context.job.edpName}-edp-view -n ${context.job.deployProject}")
             }
 
+            def secretSelector = script.openshift.selector('secrets')
+
+            secretSelector.withEach { item ->
+                def sharedSecretName = item.name().split('/')[1]
+                def secretName = sharedSecretName.replace(context.job.sharedSecretsMask, '')
+                if (sharedSecretName =~ /${context.job.sharedSecretsMask}/) {
+                    if (!script.openshift.withProject(context.job.deployProject) {
+                        script.openshift.selector('secrets', secretName).exists()}) {
+                        script.sh("oc get --export -o yaml secret ${sharedSecretName} | " +
+                                "sed -e 's/name: ${sharedSecretName}/name: ${secretName}/' | " +
+                                "oc -n ${context.job.deployProject} apply -f -")
+                    }
+                }
+            }
+
             if (context.job.buildUser == null || context.job.buildUser == "")
                 context.job.buildUser = getBuildUserFromLog(context)
 
@@ -247,7 +263,7 @@ class Deploy {
                 def appDir = "${script.WORKSPACE}/${RandomStringUtils.random(10, true, true)}/${application.name}"
                 def deployTemplatesPath = "${appDir}/${context.job.deployTemplatesDirectory}"
                 script.dir("${appDir}") {
-                    if(!cloneProject(context, application))
+                    if (!cloneProject(context, application))
                         return
                     deployConfigMapTemplate(context, application, deployTemplatesPath)
                     try {
