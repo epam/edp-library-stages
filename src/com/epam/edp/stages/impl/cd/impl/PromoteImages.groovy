@@ -31,6 +31,15 @@ class PromoteImages {
                     script.openshift.tag("${context.job.promotion.sourceProject}/${application.normalizedName}:${application.version}",
                             "${context.job.promotion.targetProject}/${application.normalizedName}:${application.version}")
 
+                    if (application.outputIs) {
+                        script.openshift.tag("${context.job.promotion.sourceProject}/${application.normalizedName}:${application.version}",
+                                "${context.job.promotion.sourceProject}/${application.outputIs}:stable")
+                        script.openshift.tag("${context.job.promotion.sourceProject}/${application.normalizedName}:${application.version}",
+                                "${context.job.promotion.targetProject}/${application.outputIs}:latest")
+                        script.openshift.tag("${context.job.promotion.sourceProject}/${application.normalizedName}:${application.version}",
+                                "${context.job.promotion.targetProject}/${application.outputIs}:${application.version}")
+                    }
+
                     script.println("[JENKINS][INFO] Image ${application.normalizedName}:${application.version} has been promoted to ${context.job.promotion.targetProject} project")
                 }
             }

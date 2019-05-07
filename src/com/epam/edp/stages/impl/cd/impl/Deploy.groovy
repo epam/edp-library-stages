@@ -185,8 +185,10 @@ class Deploy {
             if (!checkTemplateExists(templateName, deployTemplatesPath))
                 return
         }
+
+        def imageName = application.inputIs ? application.inputIs : application.normalizedName
         script.sh("oc -n ${context.job.deployProject} process -f ${deployTemplatesPath}/${templateName}.yaml " +
-                "-p IMAGE_NAME=${context.job.metaProject}/${application.normalizedName} " +
+                "-p IMAGE_NAME=${context.job.metaProject}/${imageName} " +
                 "-p APP_VERSION=${application.version} " +
                 "-p NAMESPACE=${context.job.deployProject} " +
                 "--local=true -o json | oc -n ${context.job.deployProject} apply -f -")
@@ -257,6 +259,7 @@ class Deploy {
                     if (!application.version)
                         return
                 }
+
 
                 script.sh("oc adm policy add-scc-to-user anyuid -z ${application.name} -n ${context.job.deployProject}")
                 script.sh("oc adm policy add-role-to-user view system:serviceaccount:${context.job.deployProject}:${application.name} -n ${context.job.deployProject}")
