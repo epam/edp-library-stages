@@ -35,9 +35,9 @@ class Deploy {
         ).trim()
     }
 
-    def checkOpenshiftTemplateExists(templateName) {
+    def checkOpenshiftTemplateExists(context,templateName) {
         if (!script.openshift.selector("template", templateName).exists()) {
-            script.println("[JENKINS][WARNING] Template which called ${templateName} doesn't exist in ${vars.projectPrefix}-edp-cicd namespace")
+            script.println("[JENKINS][WARNING] Template which called ${templateName} doesn't exist in ${context.job.edpName}-edp-cicd namespace")
             return false
         }
         return true
@@ -239,7 +239,7 @@ class Deploy {
             }
 
             context.job.servicesList.each() { service ->
-                if (!checkOpenshiftTemplateExists(service.name))
+                if (!checkOpenshiftTemplateExists(context,service.name))
                     return
 
                 script.sh("oc adm policy add-scc-to-user anyuid -z ${service.name} -n ${context.job.deployProject}")
