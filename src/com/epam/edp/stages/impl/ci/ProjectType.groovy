@@ -15,7 +15,7 @@ limitations under the License.*/
 package com.epam.edp.stages.impl.ci
 
 enum ProjectType {
-    APPLICATION("application"), AUTOTESTS("autotest")
+    APPLICATION("application"), AUTOTESTS("autotests")
 
     private String value
 
