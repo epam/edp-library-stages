@@ -58,7 +58,7 @@ class AutomationTests {
                 script.error "[JENKINS][ERROR] Tests from ${context.autotest.name} have been failed. Reason - ${ex}"
             }
             finally {
-                switch (context.autotest.config.report_framework.toLowerCase()) {
+                switch (context.autotest.config.testreportframework.toLowerCase()) {
                     case "allure":
                         script.allure([
                                 includeProperties: false,
