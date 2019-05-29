@@ -29,7 +29,7 @@ class GerritCheckout {
                              submoduleCfg                     : [],
                              userRemoteConfigs                : [[refspec      : "${context.gerrit.refspecName}:${context.gerrit.changeName}",
                                                                   credentialsId: "${context.gerrit.credentialsId}",
-                                                                  url          : "${context.application.config.cloneUrl}"]]])
+                                                                  url          : "${context.codebase.config.cloneUrl}"]]])
         }
         context.factory.loadCustomStages("${context.workDir}/stages").each() { context.factory.add(it) }
     }

@@ -32,8 +32,8 @@ class SonarGradleApplication {
                         script.sh "${context.buildTool.command} -PnexusLogin=${script.USERNAME} " +
                                 "-PnexusPassword=${script.PASSWORD} " +
                                 "sonarqube -Dsonar.analysis.mode=preview -Dsonar.report.export.path=sonar-report.json" +
-                                " -Dsonar.branch=codereview -Dsonar.projectKey=${context.application.name}" +
-                                " -Dsonar.projectName=${context.application.name}" +
+                                " -Dsonar.branch=codereview -Dsonar.projectKey=${context.codebase.name}" +
+                                " -Dsonar.projectName=${context.codebase.name}" +
                                 " -Dsonar.java.binaries=build/classes"
                     }
                 }
@@ -52,8 +52,8 @@ class SonarGradleApplication {
                 script.withSonarQubeEnv('Sonar') {
                     script.sh "${context.buildTool.command} -PnexusLogin=${script.USERNAME} " +
                             "-PnexusPassword=${script.PASSWORD} " +
-                            "sonarqube -Dsonar.projectKey=${context.application.name} " +
-                            "-Dsonar.projectName=${context.application.name} " +
+                            "sonarqube -Dsonar.projectKey=${context.codebase.name} " +
+                            "-Dsonar.projectName=${context.codebase.name} " +
                             "-Dsonar.branch=" +
                             "${context.job.type == "codereview" ? context.gerrit.changeName : context.gerrit.branch}"
                 }

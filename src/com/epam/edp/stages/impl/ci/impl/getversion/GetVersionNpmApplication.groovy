@@ -24,16 +24,16 @@ class GetVersionNpmApplication {
 
     void run(context) {
         script.dir("${context.workDir}") {
-            context.application.version = script.sh(
+            context.codebase.version = script.sh(
                     script: """
                         node -p "require('./package.json').version"
                     """,
                     returnStdout: true
             ).trim().toLowerCase()
         }
-        context.job.setDisplayName("${script.currentBuild.number}-${context.gerrit.branch}-${context.application.version}")
-        context.application.buildVersion = "${context.application.version}-${script.BUILD_NUMBER}"
-        context.application.deployableModuleDir = "${context.workDir}"
-        script.println("[JENKINS][DEBUG] Application version - ${context.application.version}")
+        context.job.setDisplayName("${script.currentBuild.number}-${context.gerrit.branch}-${context.codebase.version}")
+        context.codebase.buildVersion = "${context.codebase.version}-${script.BUILD_NUMBER}"
+        context.codebase.deployableModuleDir = "${context.workDir}"
+        script.println("[JENKINS][DEBUG] Application version - ${context.codebase.version}")
     }
 }

@@ -22,9 +22,9 @@ class BuildImageNpmApplication {
     Script script
 
     void run(context) {
-        context.application.imageBuildArgs = []
-        context.application.imageBuildArgs.push("--binary=true")
-        context.application.imageBuildArgs.push("-e NGINX_STATIC_DIR=build")
+        context.codebase.imageBuildArgs = []
+        context.codebase.imageBuildArgs.push("--binary=true")
+        context.codebase.imageBuildArgs.push("-e NGINX_STATIC_DIR=build")
         new BuildImageApplication(script: script).run(context)
     }
 }

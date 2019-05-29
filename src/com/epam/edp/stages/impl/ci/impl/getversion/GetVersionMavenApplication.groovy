@@ -24,23 +24,23 @@ class GetVersionMavenApplication {
 
     void run(context) {
         script.dir("${context.workDir}") {
-            context.application.version = script.sh(
+            context.codebase.version = script.sh(
                     script: """
                         mvn org.apache.maven.plugins:maven-help-plugin:2.1.1:evaluate \
                         -Dexpression=project.version|grep -Ev '(^\\[|Download\\w+:)'
                     """,
                     returnStdout: true
             ).trim().toLowerCase()
-            context.application.deployableModule = script.sh(
+            context.codebase.deployableModule = script.sh(
                     script: "cat pom.xml | grep -Poh '<deployable.module>\\K[^<]*' || echo \"\"",
                     returnStdout: true
             ).trim()
-            context.job.setDisplayName("${script.currentBuild.number}-${context.gerrit.branch}-${context.application.version}")
-            context.application.buildVersion = "${context.application.version}-${script.BUILD_NUMBER}"
-            script.println("[JENKINS][DEBUG] Deployable module: ${context.application.config.deployableModule}")
-            context.application.deployableModuleDir = context.application.deployableModule.isEmpty() ? "${context.workDir}/target" :
-                    "${context.workDir}/${context.application.deployableModule}/target"
+            context.job.setDisplayName("${script.currentBuild.number}-${context.gerrit.branch}-${context.codebase.version}")
+            context.codebase.buildVersion = "${context.codebase.version}-${script.BUILD_NUMBER}"
+            script.println("[JENKINS][DEBUG] Deployable module: ${context.codebase.config.deployableModule}")
+            context.codebase.deployableModuleDir = context.codebase.deployableModule.isEmpty() ? "${context.workDir}/target" :
+                    "${context.workDir}/${context.codebase.deployableModule}/target"
         }
-        script.println("[JENKINS][DEBUG] Application version - ${context.application.version}")
+        script.println("[JENKINS][DEBUG] Application version - ${context.codebase.version}")
     }
 }

@@ -22,8 +22,8 @@ class BuildImageMavenGradle {
     Script script
 
     void run(context) {
-        context.application.imageBuildArgs = []
-        context.application.imageBuildArgs.push("--binary=true")
+        context.codebase.imageBuildArgs = []
+        context.codebase.imageBuildArgs.push("--binary=true")
         new BuildImageApplication(script: script).run(context)
     }
 }

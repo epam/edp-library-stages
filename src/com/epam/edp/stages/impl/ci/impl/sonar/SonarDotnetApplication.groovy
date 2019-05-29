@@ -29,10 +29,10 @@ class SonarDotnetApplication {
             if (context.job.type == "codereview") {
                 script.withSonarQubeEnv('Sonar') {
                     script.sh """
-                dotnet ${scannerHome}/SonarScanner.MSBuild.dll begin /k:${context.application.name} \
+                dotnet ${scannerHome}/SonarScanner.MSBuild.dll begin /k:${context.codebase.name} \
                 /d:sonar.analysis.mode=preview \
-                /k:${context.application.name} \
-                /n:${context.application.name} \
+                /k:${context.codebase.name} \
+                /n:${context.codebase.name} \
                 /d:sonar.report.export.path=sonar-report.json \
                 /d:sonar.branch=codereview
                 dotnet build ${context.buildTool.sln_filename}
@@ -51,9 +51,9 @@ class SonarDotnetApplication {
 
             script.withSonarQubeEnv('Sonar') {
                 script.sh """
-                dotnet ${scannerHome}/SonarScanner.MSBuild.dll begin /k:${context.application.name} \
-                /k:${context.application.name} \
-                /n:${context.application.name} \
+                dotnet ${scannerHome}/SonarScanner.MSBuild.dll begin /k:${context.codebase.name} \
+                /k:${context.codebase.name} \
+                /n:${context.codebase.name} \
                 /d:sonar.branch=${context.job.type == "codereview" ? context.gerrit.changeName : context.gerrit.branch} \
                 /d:sonar.cs.opencover.reportsPaths=${context.workDir}/*Tests*/*.xml
                 dotnet build ${context.buildTool.sln_filename}

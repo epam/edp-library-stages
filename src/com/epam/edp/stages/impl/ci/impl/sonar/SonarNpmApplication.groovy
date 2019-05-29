@@ -42,8 +42,8 @@ class SonarNpmApplication {
 
             script.withSonarQubeEnv('Sonar') {
                 script.sh "${scannerHome}/bin/sonar-scanner " +
-                        "-Dsonar.projectKey=${context.application.name} " +
-                        "-Dsonar.projectName=${context.application.name} " +
+                        "-Dsonar.projectKey=${context.codebase.name} " +
+                        "-Dsonar.projectName=${context.codebase.name} " +
                         "-Dsonar.branch=" +
                         "${context.job.type == "codereview" ? context.gerrit.changeName : context.gerrit.branch}"
             }

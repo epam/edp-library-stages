@@ -24,20 +24,20 @@ class GetVersionDotnetApplication {
 
     void run(context) {
         script.dir("${context.workDir}") {
-            context.application.deployableModule = script.sh(
+            context.codebase.deployableModule = script.sh(
                     script: "find ./ -name *.csproj | xargs grep -Poh '<DeployableModule>\\K[^<]*' ",
                     returnStdout: true
             ).trim()
 
-            context.application.version = script.sh(
-                    script: "find ${context.application.deployableModule} -name *.csproj | xargs grep -Po '<Version>\\K[^<]*'",
+            context.codebase.version = script.sh(
+                    script: "find ${context.codebase.deployableModule} -name *.csproj | xargs grep -Po '<Version>\\K[^<]*'",
                     returnStdout: true
             ).trim().toLowerCase()
-            context.job.setDisplayName("${script.currentBuild.number}-${context.gerrit.branch}-${context.application.version}")
-            context.application.buildVersion = "${context.application.version}-${script.BUILD_NUMBER}"
-            script.println("[JENKINS][DEBUG] Deployable module: ${context.application.deployableModule}")
-            context.application.deployableModuleDir = "${context.workDir}"
+            context.job.setDisplayName("${script.currentBuild.number}-${context.gerrit.branch}-${context.codebase.version}")
+            context.codebase.buildVersion = "${context.codebase.version}-${script.BUILD_NUMBER}"
+            script.println("[JENKINS][DEBUG] Deployable module: ${context.codebase.deployableModule}")
+            context.codebase.deployableModuleDir = "${context.workDir}"
         }
-        script.println("[JENKINS][DEBUG] Application version - ${context.application.version}")
+        script.println("[JENKINS][DEBUG] Application version - ${context.codebase.version}")
     }
 }

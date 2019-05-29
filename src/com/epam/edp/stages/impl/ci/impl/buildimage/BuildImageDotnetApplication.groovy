@@ -22,9 +22,9 @@ class BuildImageDotnetApplication {
     Script script
 
     void run(context) {
-        context.application.imageBuildArgs = []
-        context.application.imageBuildArgs.push("--binary=true")
-        context.application.imageBuildArgs.push("--env DOTNET_STARTUP_PROJECT=${context.application.deployableModule}")
+        context.codebase.imageBuildArgs = []
+        context.codebase.imageBuildArgs.push("--binary=true")
+        context.codebase.imageBuildArgs.push("--env DOTNET_STARTUP_PROJECT=${context.codebase.deployableModule}")
         new BuildImageApplication(script: script).run(context)
     }
 }

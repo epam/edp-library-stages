@@ -26,7 +26,7 @@ class GetVersionGradleApplication {
         script.dir("${context.workDir}") {
             script.withCredentials([script.usernamePassword(credentialsId: "${context.nexus.credentialsId}",
                     passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]) {
-                context.application.version = script.sh(
+                context.codebase.version = script.sh(
                         script: """
                         set +x
                         ${context.buildTool.command} -PnexusLogin=${script.USERNAME} -PnexusPassword=${script.PASSWORD} properties -q | grep "version:" | awk '{print \$2}'    
@@ -34,10 +34,10 @@ class GetVersionGradleApplication {
                         returnStdout: true
                 ).trim().toLowerCase()
             }
-            context.job.setDisplayName("${script.currentBuild.number}-${context.gerrit.branch}-${context.application.version}")
-            context.application.buildVersion = "${context.application.version}-${script.BUILD_NUMBER}"
-            context.application.deployableModuleDir = "${context.workDir}/build/libs"
+            context.job.setDisplayName("${script.currentBuild.number}-${context.gerrit.branch}-${context.codebase.version}")
+            context.codebase.buildVersion = "${context.codebase.version}-${script.BUILD_NUMBER}"
+            context.codebase.deployableModuleDir = "${context.workDir}/build/libs"
         }
-        script.println("[JENKINS][DEBUG] Artifact version - ${context.application.version}")
+        script.println("[JENKINS][DEBUG] Artifact version - ${context.codebase.version}")
     }
 }

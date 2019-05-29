@@ -51,9 +51,9 @@ class Deploy {
                     verifyReplicaCount: 'true', waitTime: '600', waitUnit: 'sec'
             if (type == 'application' && getDeploymentVersion(context, object) != object.currentDeploymentVersion) {
                 script.println("[JENKINS][DEBUG] Deployment ${object.name} in project ${context.job.deployProject} has been rolled out")
-                context.environment.updatedApplicaions.push(object)
+                context.environment.updatedCodebases.push(object)
             } else
-                script.println("[JENKINS][DEBUG] New version of application ${object.name} hasn't been deployed, because the save version")
+                script.println("[JENKINS][DEBUG] New version of codebase ${object.name} hasn't been deployed, because the save version")
         }
         catch (Exception verifyDeploymentException) {
             if (type == "application" && object.currentDeploymentVersion != 0) {
@@ -70,18 +70,18 @@ class Deploy {
 
     }
 
-    def getDeploymentVersion(context, application) {
+    def getDeploymentVersion(context, codebase) {
         def deploymentExists = script.sh(
-                script: "oc -n ${context.job.deployProject} get dc ${application.name} --no-headers | awk '{print \$1}'",
+                script: "oc -n ${context.job.deployProject} get dc ${codebase.name} --no-headers | awk '{print \$1}'",
                 returnStdout: true
         ).trim()
         if (deploymentExists == "") {
-            script.println("[JENKINS][WARNING] Deployment config ${application.name} doesn't exist in the project ${context.job.deployProject}\r\n" +
+            script.println("[JENKINS][WARNING] Deployment config ${codebase.name} doesn't exist in the project ${context.job.deployProject}\r\n" +
                     "[JENKINS][WARNING] We will roll it out")
             return null
         }
         def version = script.sh(
-                script: "oc -n ${context.job.deployProject} get dc ${application.name} -o jsonpath=\'{.status.latestVersion}\'",
+                script: "oc -n ${context.job.deployProject} get dc ${codebase.name} -o jsonpath=\'{.status.latestVersion}\'",
                 returnStdout: true
         ).trim().toInteger()
         return (version)
@@ -110,21 +110,21 @@ class Deploy {
         return true
     }
 
-    def getNumericVersion(context, application) {
+    def getNumericVersion(context, codebase) {
         def hash = script.sh(
-                script: "oc -n ${context.job.metaProject} get is ${application.normalizedName} -o jsonpath=\'{@.spec.tags[?(@.name==\"${application.version}\")].from.name}\'",
+                script: "oc -n ${context.job.metaProject} get is ${codebase.normalizedName} -o jsonpath=\'{@.spec.tags[?(@.name==\"${codebase.version}\")].from.name}\'",
                 returnStdout: true
         ).trim()
         def tags = script.sh(
-                script: "oc -n ${context.job.metaProject} get is ${application.normalizedName} -o jsonpath=\'{@.spec.tags[?(@.from.name==\"${hash}\")].name}\'",
+                script: "oc -n ${context.job.metaProject} get is ${codebase.normalizedName} -o jsonpath=\'{@.spec.tags[?(@.from.name==\"${hash}\")].name}\'",
                 returnStdout: true
         ).trim().tokenize()
         tags.removeAll { it == "latest" }
         tags.removeAll { it == "stable" }
-        script.println("[JENKINS][DEBUG] Application ${application.name} has the following numeric tag, which corresponds to tag ${application.version} - ${tags}")
+        script.println("[JENKINS][DEBUG] Codebase ${codebase.name} has the following numeric tag, which corresponds to tag ${codebase.version} - ${tags}")
         switch (tags.size()) {
             case 0:
-                script.println("[JENKINS][WARNING] Application ${application.name} has no numeric version for tag ${application.version}\r\n" +
+                script.println("[JENKINS][WARNING] Codebase ${codebase.name} has no numeric version for tag ${codebase.version}\r\n" +
                         "[JENKINS][WARNING] Deploy will be skipped")
                 return null
                 break
@@ -132,68 +132,68 @@ class Deploy {
                 return (tags[0])
                 break
             default:
-                script.println("[JENKINS][WARNING] Application ${application.name} has more than one numeric tag for tag ${application.version}\r\n" +
+                script.println("[JENKINS][WARNING] Codebase ${codebase.name} has more than one numeric tag for tag ${codebase.version}\r\n" +
                         "[JENKINS][WARNING] We will use the first one")
                 return (tags[0])
                 break
         }
     }
 
-    def cloneProject(context, application) {
-        def gitApplicationUrl = "ssh://${context.gerrit.autouser}@${context.gerrit.host}:${context.gerrit.sshPort}/${application.name}"
+    def cloneProject(context, codebase) {
+        def gitCodebaseUrl = "ssh://${context.gerrit.autouser}@${context.gerrit.host}:${context.gerrit.sshPort}/${codebase.name}"
 
         try {
-            script.checkout([$class                           : 'GitSCM', branches: [[name: "refs/tags/${application.branch}-${application.version}"]],
+            script.checkout([$class                           : 'GitSCM', branches: [[name: "refs/tags/${codebase.branch}-${codebase.version}"]],
                              doGenerateSubmoduleConfigurations: false, extensions: [],
                              submoduleCfg                     : [],
                              userRemoteConfigs                : [[credentialsId: "${context.gerrit.credentialsId}",
-                                                                  refspec      : "refs/tags/${application.branch}-${application.version}",
-                                                                  url          : "${gitApplicationUrl}"]]])
+                                                                  refspec      : "refs/tags/${codebase.branch}-${codebase.version}",
+                                                                  url          : "${gitCodebaseUrl}"]]])
         }
         catch (Exception ex) {
-            script.println("[JENKINS][WARNING] Project ${application.name} cloning has failed with ${ex}\r\n" +
+            script.println("[JENKINS][WARNING] Project ${codebase.name} cloning has failed with ${ex}\r\n" +
                     "[JENKINS][WARNING] Deploy will be skipped\r\n" +
-                    "[JENKINS][WARNING] Check if tag ${application.version} exists in repository")
+                    "[JENKINS][WARNING] Check if tag ${codebase.version} exists in repository")
             script.currentBuild.result = 'UNSTABLE'
-            script.currentBuild.description = "${script.currentBuild.description}\r\n${application.name} deploy failed"
+            script.currentBuild.description = "${script.currentBuild.description}\r\n${codebase.name} deploy failed"
             return false
         }
-        script.println("[JENKINS][DEBUG] Project ${application.name} has been successfully cloned")
+        script.println("[JENKINS][DEBUG] Project ${codebase.name} has been successfully cloned")
         return true
     }
 
-    def deployConfigMapTemplate(context, application, deployTemplatesPath) {
-        def templateName = application.name + '-deploy-config-' + context.job.stageWithoutPrefixName
+    def deployConfigMapTemplate(context, codebase, deployTemplatesPath) {
+        def templateName = codebase.name + '-deploy-config-' + context.job.stageWithoutPrefixName
         if (!checkTemplateExists(templateName, deployTemplatesPath))
             return
 
         script.sh("oc -n ${context.job.deployProject} process -f ${deployTemplatesPath}/${templateName}.yaml " +
                 "--local=true -o json | oc -n ${context.job.deployProject} apply -f -")
-        script.println("[JENKINS][DEBUG] Config map with name ${templateName}.yaml for application ${application.name} has been deployed")
+        script.println("[JENKINS][DEBUG] Config map with name ${templateName}.yaml for codebase ${codebase.name} has been deployed")
     }
 
-    def deployApplicationTemplate(context, application, deployTemplatesPath) {
-        application.currentDeploymentVersion = getDeploymentVersion(context, application)
-        def templateName = "${application.name}-install-${context.job.stageWithoutPrefixName}"
+    def deployCodebaseTemplate(context, codebase, deployTemplatesPath) {
+        codebase.currentDeploymentVersion = getDeploymentVersion(context, codebase)
+        def templateName = "${codebase.name}-install-${context.job.stageWithoutPrefixName}"
 
-        if (application.need_database)
-            script.sh("oc adm policy add-scc-to-user anyuid -z ${application.name} -n ${context.job.deployProject}")
+        if (codebase.need_database)
+            script.sh("oc adm policy add-scc-to-user anyuid -z ${codebase.name} -n ${context.job.deployProject}")
 
         if (!checkTemplateExists(templateName, deployTemplatesPath)) {
-            script.println("[JENKSIN][INFO] Trying to find out default template ${application.name}.yaml")
-            templateName = application.name
+            script.println("[JENKSIN][INFO] Trying to find out default template ${codebase.name}.yaml")
+            templateName = codebase.name
             if (!checkTemplateExists(templateName, deployTemplatesPath))
                 return
         }
 
-        def imageName = application.inputIs ? application.inputIs : application.normalizedName
+        def imageName = codebase.inputIs ? codebase.inputIs : codebase.normalizedName
         script.sh("oc -n ${context.job.deployProject} process -f ${deployTemplatesPath}/${templateName}.yaml " +
                 "-p IMAGE_NAME=${context.job.metaProject}/${imageName} " +
-                "-p APP_VERSION=${application.version} " +
+                "-p APP_VERSION=${codebase.version} " +
                 "-p NAMESPACE=${context.job.deployProject} " +
                 "--local=true -o json | oc -n ${context.job.deployProject} apply -f -")
 
-        checkDeployment(context, application, 'application')
+        checkDeployment(context, codebase, 'application')
     }
 
     def checkTemplateExists(templateName, deployTemplatesPath) {
@@ -250,35 +250,35 @@ class Deploy {
                 checkDeployment(context, service, 'service')
             }
 
-            context.job.applicationsList.each() { application ->
-                if (!checkImageExists(context, application))
+            context.job.codebasesList.each() { codebase ->
+                if (!checkImageExists(context, codebase))
                     return
 
-                if (application.version =~ "stable|latest") {
-                    application.version = getNumericVersion(context, application)
-                    if (!application.version)
+                if (codebase.version =~ "stable|latest") {
+                    codebase.version = getNumericVersion(context, codebase)
+                    if (!codebase.version)
                         return
                 }
 
 
-                script.sh("oc adm policy add-scc-to-user anyuid -z ${application.name} -n ${context.job.deployProject}")
-                script.sh("oc adm policy add-role-to-user view system:serviceaccount:${context.job.deployProject}:${application.name} -n ${context.job.deployProject}")
-                def appDir = "${script.WORKSPACE}/${RandomStringUtils.random(10, true, true)}/${application.name}"
-                def deployTemplatesPath = "${appDir}/${context.job.deployTemplatesDirectory}"
-                script.dir("${appDir}") {
-                    if (!cloneProject(context, application))
+                script.sh("oc adm policy add-scc-to-user anyuid -z ${codebase.name} -n ${context.job.deployProject}")
+                script.sh("oc adm policy add-role-to-user view system:serviceaccount:${context.job.deployProject}:${codebase.name} -n ${context.job.deployProject}")
+                def codebaseDir = "${script.WORKSPACE}/${RandomStringUtils.random(10, true, true)}/${codebase.name}"
+                def deployTemplatesPath = "${codebaseDir}/${context.job.deployTemplatesDirectory}"
+                script.dir("${codebaseDir}") {
+                    if (!cloneProject(context, codebase))
                         return
-                    deployConfigMapTemplate(context, application, deployTemplatesPath)
+                    deployConfigMapTemplate(context, codebase, deployTemplatesPath)
                     try {
-                        deployApplicationTemplate(context, application, deployTemplatesPath)
+                        deployCodebaseTemplate(context, codebase, deployTemplatesPath)
                     }
                     catch (Exception ex) {
-                        script.println("[JENKINS][WARNING] Deployment of application ${application.name} has been failed. Reason - ${ex}.")
+                        script.println("[JENKINS][WARNING] Deployment of codebase ${codebase.name} has been failed. Reason - ${ex}.")
                         script.currentBuild.result = 'UNSTABLE'
                     }
                 }
             }
-            script.println("[JENKINS][DEBUG] Applications that have been updated - ${context.environment.updatedApplicaions}")
+            script.println("[JENKINS][DEBUG] Codebases that have been updated - ${context.environment.updatedCodebases}")
         }
     }
 }
