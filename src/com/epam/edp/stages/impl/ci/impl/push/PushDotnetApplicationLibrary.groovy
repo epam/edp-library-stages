@@ -12,24 +12,23 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
 
-package com.epam.edp.stages.impl.ci.impl.build
-
+package com.epam.edp.stages.impl.ci.impl.push
 
 import com.epam.edp.stages.impl.ci.ProjectType
 import com.epam.edp.stages.impl.ci.Stage
 
-@Stage(name = "build", buildTool = "gradle", type = ProjectType.APPLICATION)
-class BuildGradleApplication {
+@Stage(name = "push", buildTool = ["dotnet"], type = [ProjectType.APPLICATION, ProjectType.LIBRARY])
+class PushDotnetApplicationLibrary {
     Script script
 
     void run(context) {
+
         script.dir("${context.workDir}") {
-            script.withCredentials([script.usernamePassword(credentialsId: "${context.nexus.credentialsId}",
-                    passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]) {
-                script.sh "${context.buildTool.command} -PnexusLogin=${script.USERNAME} " +
-                        "-PnexusPassword=${script.PASSWORD} build -x test"
-            }
+            def nugetPackagesPath = "/tmp/${context.gerrit.project}-nupkgs/"
+
+            script.sh "dotnet pack ${context.buildTool.sln_filename} --no-build --output ${nugetPackagesPath}"
+            script.sh "dotnet nuget push ${nugetPackagesPath} -k ${context.buildTool.nugetApiKey} " +
+                    "-s ${context.buildTool.hostedRepository}"
         }
     }
 }
-

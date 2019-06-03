@@ -17,10 +17,10 @@ package com.epam.edp.stages.impl.ci.impl.sonar
 
 import com.epam.edp.stages.impl.ci.ProjectType
 import com.epam.edp.stages.impl.ci.Stage
-import com.epam.edp.stages.impl.ci.impl.sonarcleanup.SonarCleanupApplication
+import com.epam.edp.stages.impl.ci.impl.sonarcleanup.SonarCleanupApplicationLibrary
 
-@Stage(name = "sonar", buildTool = ["gradle"], type = [ProjectType.APPLICATION])
-class SonarGradleApplication {
+@Stage(name = "sonar", buildTool = ["gradle"], type = [ProjectType.APPLICATION, ProjectType.LIBRARY])
+class SonarGradleApplicationLibrary {
     Script script
 
     void run(context) {
@@ -66,7 +66,7 @@ class SonarGradleApplication {
             }
 
             if (context.job.type == "build")
-                new SonarCleanupApplication(script: script).run(context)
+                new SonarCleanupApplicationLibrary(script: script).run(context)
         }
     }
 }

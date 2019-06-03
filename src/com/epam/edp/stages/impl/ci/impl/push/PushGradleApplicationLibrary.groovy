@@ -17,8 +17,8 @@ package com.epam.edp.stages.impl.ci.impl.push
 import com.epam.edp.stages.impl.ci.ProjectType
 import com.epam.edp.stages.impl.ci.Stage
 
-@Stage(name = "push", buildTool = ["gradle"], type = ProjectType.APPLICATION)
-class PushGradleApplication {
+@Stage(name = "push", buildTool = ["gradle"], type = [ProjectType.APPLICATION, ProjectType.LIBRARY])
+class PushGradleApplicationLibrary {
     Script script
 
     void run(context) {

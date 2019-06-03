@@ -18,8 +18,8 @@ package com.epam.edp.stages.impl.ci.impl.checkout
 import com.epam.edp.stages.impl.ci.ProjectType
 import com.epam.edp.stages.impl.ci.Stage
 
-@Stage(name = "checkout", buildTool = ["maven", "npm", "dotnet", "gradle"], type = [ProjectType.APPLICATION, ProjectType.AUTOTESTS])
-class CheckoutApplication  {
+@Stage(name = "checkout", buildTool = ["maven", "npm", "dotnet", "gradle"], type = [ProjectType.APPLICATION, ProjectType.AUTOTESTS, ProjectType.LIBRARY])
+class Checkout {
     Script script
 
     void run(context) {

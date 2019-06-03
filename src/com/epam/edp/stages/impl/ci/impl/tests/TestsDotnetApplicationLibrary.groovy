@@ -12,23 +12,20 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
 
-package com.epam.edp.stages.impl.ci.impl.push
+package com.epam.edp.stages.impl.ci.impl.tests
+
 
 import com.epam.edp.stages.impl.ci.ProjectType
 import com.epam.edp.stages.impl.ci.Stage
 
-@Stage(name = "push", buildTool = ["dotnet"], type = ProjectType.APPLICATION)
-class PushDotnetApplication {
+@Stage(name = "tests", buildTool = "dotnet", type = [ProjectType.APPLICATION, ProjectType.LIBRARY])
+class TestsDotnetApplicationLibrary {
     Script script
 
     void run(context) {
-
         script.dir("${context.workDir}") {
-            def nugetPackagesPath = "/tmp/${context.gerrit.project}-nupkgs/"
-
-            script.sh "dotnet pack ${context.buildTool.sln_filename} --no-build --output ${nugetPackagesPath}"
-            script.sh "dotnet nuget push ${nugetPackagesPath} -k ${context.buildTool.nugetApiKey} " +
-                    "-s ${context.buildTool.hostedRepository}"
+                script.sh "ls *Tests*/*.csproj | xargs -L1 dotnet test /p:CollectCoverage=true " +
+                        "/p:CoverletOutputFormat=opencover"
         }
     }
 }

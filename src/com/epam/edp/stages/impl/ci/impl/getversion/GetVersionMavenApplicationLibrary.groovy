@@ -18,8 +18,8 @@ package com.epam.edp.stages.impl.ci.impl.getversion
 import com.epam.edp.stages.impl.ci.ProjectType
 import com.epam.edp.stages.impl.ci.Stage
 
-@Stage(name = "get-version", buildTool = ["maven"], type = ProjectType.APPLICATION)
-class GetVersionMavenApplication {
+@Stage(name = "get-version", buildTool = ["maven"], type = [ProjectType.APPLICATION, ProjectType.LIBRARY])
+class GetVersionMavenApplicationLibrary {
     Script script
 
     void run(context) {

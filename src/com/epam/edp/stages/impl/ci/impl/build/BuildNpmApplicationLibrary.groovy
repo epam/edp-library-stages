@@ -12,13 +12,14 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
 
-package com.epam.edp.stages.impl.ci.impl.push
+package com.epam.edp.stages.impl.ci.impl.build
+
 
 import com.epam.edp.stages.impl.ci.ProjectType
 import com.epam.edp.stages.impl.ci.Stage
 
-@Stage(name = "push", buildTool = ["npm"], type = ProjectType.APPLICATION)
-class PushNpmApplication {
+@Stage(name = "build", buildTool = "npm", type = [ProjectType.APPLICATION, ProjectType.LIBRARY])
+class BuildNpmApplicationLibrary {
     Script script
 
     void run(context) {
@@ -28,20 +29,17 @@ class PushNpmApplication {
                 def token = script.sh(script: """
         curl -s -H "Accept: application/json" -H "Content-Type:application/json" -X PUT --data \
         '{"name": "${script.USERNAME}", "password": "${script.PASSWORD}"}' \
-        ${context.buildTool.hostedRepository}-/user/org.couchdb.user:${script.USERNAME} | \
+        ${context.buildTool.groupRepository}-/user/org.couchdb.user:${script.USERNAME} | \
         grep -oE 'NpmToken\\.[0-9a-zA-Z-]+'
         """,
                         returnStdout: true)
-
-                script.sh (script: """
-            set +x
-            npm set registry ${context.buildTool.hostedRepository}
-            auth=\$(echo -n '${script.USERNAME}:${script.PASSWORD}' | base64); npm set _auth=\$auth
-            npm set //${context.buildTool.hostedRepository}:_authToken ${token}
-            npm set email=${context.gerrit.autouser}@epam.com
-            """, returnStdout: false)
             }
-            script.sh ("npm publish")
+            script.sh(script: """
+            set +x
+            npm set registry ${context.buildTool.groupRepository}
+            """)
+
+            script.sh "npm install && npm run build:prod"
         }
     }
 }

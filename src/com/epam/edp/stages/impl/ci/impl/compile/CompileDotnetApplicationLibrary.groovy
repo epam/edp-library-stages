@@ -12,28 +12,22 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
 
-package com.epam.edp.stages.impl.ci.impl.getversion
-
+package com.epam.edp.stages.impl.ci.impl.compile
 
 import com.epam.edp.stages.impl.ci.ProjectType
 import com.epam.edp.stages.impl.ci.Stage
 
-@Stage(name = "get-version", buildTool = ["npm"], type = ProjectType.APPLICATION)
-class GetVersionNpmApplication {
+@Stage(name = "compile", buildTool = "dotnet", type = [ProjectType.APPLICATION, ProjectType.LIBRARY])
+class CompileDotnetApplicationLibrary {
     Script script
 
     void run(context) {
         script.dir("${context.workDir}") {
-            context.codebase.version = script.sh(
-                    script: """
-                        node -p "require('./package.json').version"
-                    """,
+            context.buildTool.sln_filename = script.sh(
+                    script: "ls *.sln",
                     returnStdout: true
-            ).trim().toLowerCase()
+            ).trim()
+            script.sh "dotnet build ${context.buildTool.sln_filename}"
         }
-        context.job.setDisplayName("${script.currentBuild.number}-${context.gerrit.branch}-${context.codebase.version}")
-        context.codebase.buildVersion = "${context.codebase.version}-${script.BUILD_NUMBER}"
-        context.codebase.deployableModuleDir = "${context.workDir}"
-        script.println("[JENKINS][DEBUG] Application version - ${context.codebase.version}")
     }
 }

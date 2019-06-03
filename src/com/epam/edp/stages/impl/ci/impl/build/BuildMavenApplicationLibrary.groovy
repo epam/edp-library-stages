@@ -12,33 +12,24 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
 
-package com.epam.edp.stages.impl.ci.impl.compile
+package com.epam.edp.stages.impl.ci.impl.build
+
 
 import com.epam.edp.stages.impl.ci.ProjectType
 import com.epam.edp.stages.impl.ci.Stage
 
-@Stage(name = "compile", buildTool = "npm", type = ProjectType.APPLICATION)
-class CompileNpmApplication {
+@Stage(name = "build", buildTool = "maven", type = [ProjectType.APPLICATION, ProjectType.LIBRARY])
+class BuildMavenApplicationLibrary {
     Script script
 
     void run(context) {
         script.dir("${context.workDir}") {
             script.withCredentials([script.usernamePassword(credentialsId: "${context.nexus.credentialsId}",
                     passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]) {
-                def token = script.sh(script: """
-        curl -s -H "Accept: application/json" -H "Content-Type:application/json" -X PUT --data \
-        '{"name": "${script.USERNAME}", "password": "${script.PASSWORD}"}' \
-        ${context.buildTool.groupRepository}-/user/org.couchdb.user:${script.USERNAME} | \
-        grep -oE 'NpmToken\\.[0-9a-zA-Z-]+'
-        """,
-                        returnStdout: true)
+                script.sh "${context.buildTool.command} -Dartifactory.username=${script.USERNAME} -Dartifactory.password=${script.PASSWORD}" +
+                        " clean package -B -DskipTests=true"
             }
-            script.sh(script: """
-            set +x
-            npm set registry ${context.buildTool.groupRepository}
-            """)
-
-            script.sh "npm install && npm run build:clean"
         }
     }
 }
+

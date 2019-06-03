@@ -12,24 +12,25 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
 
-package com.epam.edp.stages.impl.ci.impl.build
+package com.epam.edp.stages.impl.ci.impl.tests
 
 
 import com.epam.edp.stages.impl.ci.ProjectType
 import com.epam.edp.stages.impl.ci.Stage
 
-@Stage(name = "build", buildTool = "maven", type = ProjectType.APPLICATION)
-class BuildMavenApplication {
+@Stage(name = "tests", buildTool = "maven", type = [ProjectType.APPLICATION, ProjectType.LIBRARY])
+class TestsMavenApplicationLibrary {
     Script script
 
     void run(context) {
         script.dir("${context.workDir}") {
             script.withCredentials([script.usernamePassword(credentialsId: "${context.nexus.credentialsId}",
                     passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]) {
-                script.sh "${context.buildTool.command} -Dartifactory.username=${script.USERNAME} -Dartifactory.password=${script.PASSWORD}" +
-                        " clean package -B -DskipTests=true"
+                script.sh "${context.buildTool.command} -Dartifactory.username=${script.USERNAME} -Dartifactory.password=${script.PASSWORD} " +
+                        "org.jacoco:jacoco-maven-plugin:prepare-agent -Dmaven.test.failure.ignore=true verify " +
+                        "org.jacoco:jacoco-maven-plugin:report -B"
             }
+            script.junit "target/*-reports/*.xml, */target/*-reports/*.xml"
         }
     }
 }
-

@@ -17,7 +17,7 @@ package com.epam.edp.stages.impl.ci.impl.createbranch
 import com.epam.edp.stages.impl.ci.ProjectType
 import com.epam.edp.stages.impl.ci.Stage
 
-@Stage(name = "create-branch", buildTool = ["maven", "npm", "dotnet","gradle"], type = [ProjectType.APPLICATION, ProjectType.AUTOTESTS])
+@Stage(name = "create-branch", buildTool = ["maven", "npm", "dotnet","gradle"], type = [ProjectType.APPLICATION, ProjectType.AUTOTESTS, ProjectType.LIBRARY])
 class CreateBranch {
     Script script
 

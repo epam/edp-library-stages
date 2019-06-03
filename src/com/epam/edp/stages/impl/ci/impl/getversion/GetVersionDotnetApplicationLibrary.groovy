@@ -18,26 +18,26 @@ package com.epam.edp.stages.impl.ci.impl.getversion
 import com.epam.edp.stages.impl.ci.ProjectType
 import com.epam.edp.stages.impl.ci.Stage
 
-@Stage(name = "get-version", buildTool = ["gradle"], type = ProjectType.APPLICATION)
-class GetVersionGradleApplication {
+@Stage(name = "get-version", buildTool = ["dotnet"], type = [ProjectType.APPLICATION, ProjectType.LIBRARY])
+class GetVersionDotnetApplicationLibrary {
     Script script
 
     void run(context) {
         script.dir("${context.workDir}") {
-            script.withCredentials([script.usernamePassword(credentialsId: "${context.nexus.credentialsId}",
-                    passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]) {
-                context.codebase.version = script.sh(
-                        script: """
-                        set +x
-                        ${context.buildTool.command} -PnexusLogin=${script.USERNAME} -PnexusPassword=${script.PASSWORD} properties -q | grep "version:" | awk '{print \$2}'    
-                    """,
-                        returnStdout: true
-                ).trim().toLowerCase()
-            }
+            context.codebase.deployableModule = script.sh(
+                    script: "find ./ -name *.csproj | xargs grep -Poh '<DeployableModule>\\K[^<]*' ",
+                    returnStdout: true
+            ).trim()
+
+            context.codebase.version = script.sh(
+                    script: "find ${context.codebase.deployableModule} -name *.csproj | xargs grep -Po '<Version>\\K[^<]*'",
+                    returnStdout: true
+            ).trim().toLowerCase()
             context.job.setDisplayName("${script.currentBuild.number}-${context.gerrit.branch}-${context.codebase.version}")
             context.codebase.buildVersion = "${context.codebase.version}-${script.BUILD_NUMBER}"
-            context.codebase.deployableModuleDir = "${context.workDir}/build/libs"
+            script.println("[JENKINS][DEBUG] Deployable module: ${context.codebase.deployableModule}")
+            context.codebase.deployableModuleDir = "${context.workDir}"
         }
-        script.println("[JENKINS][DEBUG] Artifact version - ${context.codebase.version}")
+        script.println("[JENKINS][DEBUG] Application version - ${context.codebase.version}")
     }
 }

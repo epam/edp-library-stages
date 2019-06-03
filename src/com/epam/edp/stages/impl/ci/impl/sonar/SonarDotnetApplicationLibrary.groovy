@@ -17,10 +17,10 @@ package com.epam.edp.stages.impl.ci.impl.sonar
 
 import com.epam.edp.stages.impl.ci.ProjectType
 import com.epam.edp.stages.impl.ci.Stage
-import com.epam.edp.stages.impl.ci.impl.sonarcleanup.SonarCleanupApplication
+import com.epam.edp.stages.impl.ci.impl.sonarcleanup.SonarCleanupApplicationLibrary
 
-@Stage(name = "sonar", buildTool = ["dotnet"], type = [ProjectType.APPLICATION])
-class SonarDotnetApplication {
+@Stage(name = "sonar", buildTool = ["dotnet"], type = [ProjectType.APPLICATION, ProjectType.LIBRARY])
+class SonarDotnetApplicationLibrary {
     Script script
 
     void run(context) {
@@ -68,7 +68,7 @@ class SonarDotnetApplication {
             }
 
             if (context.job.type == "build")
-                new SonarCleanupApplication(script: script).run(context)
+                new SonarCleanupApplicationLibrary(script: script).run(context)
         }
     }
 }

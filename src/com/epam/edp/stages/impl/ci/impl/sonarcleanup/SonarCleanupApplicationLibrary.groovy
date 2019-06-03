@@ -17,8 +17,8 @@ package com.epam.edp.stages.impl.ci.impl.sonarcleanup
 import com.epam.edp.stages.impl.ci.ProjectType
 import com.epam.edp.stages.impl.ci.Stage
 
-@Stage(name = "sonar-cleanup", buildTool = ["maven", "npm", "dotnet", "gradle"], type = [ProjectType.APPLICATION])
-class SonarCleanupApplication {
+@Stage(name = "sonar-cleanup", buildTool = ["maven", "npm", "dotnet", "gradle"], type = [ProjectType.APPLICATION, ProjectType.LIBRARY])
+class SonarCleanupApplicationLibrary {
     Script script
 
     void run(context) {

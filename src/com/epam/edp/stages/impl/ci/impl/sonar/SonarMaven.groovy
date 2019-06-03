@@ -17,10 +17,10 @@ package com.epam.edp.stages.impl.ci.impl.sonar
 
 import com.epam.edp.stages.impl.ci.ProjectType
 import com.epam.edp.stages.impl.ci.Stage
-import com.epam.edp.stages.impl.ci.impl.sonarcleanup.SonarCleanupApplication
+import com.epam.edp.stages.impl.ci.impl.sonarcleanup.SonarCleanupApplicationLibrary
 import org.apache.commons.lang.RandomStringUtils
 
-@Stage(name = "sonar", buildTool = ["maven"], type = [ProjectType.APPLICATION,ProjectType.AUTOTESTS])
+@Stage(name = "sonar", buildTool = ["maven"], type = [ProjectType.APPLICATION,ProjectType.AUTOTESTS, ProjectType.LIBRARY])
 class SonarMaven {
     Script script
 
@@ -99,6 +99,6 @@ class SonarMaven {
         }
 
         if (context.job.type == "build")
-            new SonarCleanupApplication(script: script).run(context)
+            new SonarCleanupApplicationLibrary(script: script).run(context)
     }
 }

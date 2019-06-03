@@ -12,23 +12,24 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
 
-package com.epam.edp.stages.impl.ci.impl.compile
+package com.epam.edp.stages.impl.ci.impl.push
 
 import com.epam.edp.stages.impl.ci.ProjectType
 import com.epam.edp.stages.impl.ci.Stage
 
-@Stage(name = "compile", buildTool = "gradle", type = ProjectType.APPLICATION)
-class CompileGradleApplication {
+@Stage(name = "push", buildTool = ["maven"], type = [ProjectType.APPLICATION, ProjectType.LIBRARY])
+class PushMavenApplicationLibrary {
     Script script
 
     void run(context) {
         script.dir("${context.workDir}") {
+            def nexusRepositoryUrl = context.codebase.version.contains("snapshot") ?
+                    "${context.buildTool.hostedRepository}-snapshots" : "${context.buildTool.hostedRepository}-releases"
             script.withCredentials([script.usernamePassword(credentialsId: "${context.nexus.credentialsId}",
                     passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]) {
-                script.sh "${context.buildTool.command} -PnexusLogin=${script.USERNAME} " +
-                        "-PnexusPassword=${script.PASSWORD} clean compileJava -x test"
+                script.sh "${context.buildTool.command} -Dartifactory.username=${script.USERNAME} -Dartifactory.password=${script.PASSWORD}" +
+                        " deploy -B -DskipTests=true -DaltDeploymentRepository=nexus::default::${nexusRepositoryUrl}"
             }
         }
     }
 }
-

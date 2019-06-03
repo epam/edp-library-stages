@@ -18,26 +18,22 @@ package com.epam.edp.stages.impl.ci.impl.getversion
 import com.epam.edp.stages.impl.ci.ProjectType
 import com.epam.edp.stages.impl.ci.Stage
 
-@Stage(name = "get-version", buildTool = ["dotnet"], type = ProjectType.APPLICATION)
-class GetVersionDotnetApplication {
+@Stage(name = "get-version", buildTool = ["npm"], type = [ProjectType.APPLICATION, ProjectType.LIBRARY])
+class GetVersionNpmApplicationLibrary {
     Script script
 
     void run(context) {
         script.dir("${context.workDir}") {
-            context.codebase.deployableModule = script.sh(
-                    script: "find ./ -name *.csproj | xargs grep -Poh '<DeployableModule>\\K[^<]*' ",
-                    returnStdout: true
-            ).trim()
-
             context.codebase.version = script.sh(
-                    script: "find ${context.codebase.deployableModule} -name *.csproj | xargs grep -Po '<Version>\\K[^<]*'",
+                    script: """
+                        node -p "require('./package.json').version"
+                    """,
                     returnStdout: true
             ).trim().toLowerCase()
-            context.job.setDisplayName("${script.currentBuild.number}-${context.gerrit.branch}-${context.codebase.version}")
-            context.codebase.buildVersion = "${context.codebase.version}-${script.BUILD_NUMBER}"
-            script.println("[JENKINS][DEBUG] Deployable module: ${context.codebase.deployableModule}")
-            context.codebase.deployableModuleDir = "${context.workDir}"
         }
+        context.job.setDisplayName("${script.currentBuild.number}-${context.gerrit.branch}-${context.codebase.version}")
+        context.codebase.buildVersion = "${context.codebase.version}-${script.BUILD_NUMBER}"
+        context.codebase.deployableModuleDir = "${context.workDir}"
         script.println("[JENKINS][DEBUG] Application version - ${context.codebase.version}")
     }
 }
