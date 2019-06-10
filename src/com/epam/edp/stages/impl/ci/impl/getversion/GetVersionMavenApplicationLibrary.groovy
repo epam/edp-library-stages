@@ -27,7 +27,7 @@ class GetVersionMavenApplicationLibrary {
             context.codebase.version = script.sh(
                     script: """
                         mvn org.apache.maven.plugins:maven-help-plugin:2.1.1:evaluate \
-                        -Dexpression=project.version|grep -Ev '(^\\[|Download\\w+:)'
+                        -Dexpression=project.version -B |grep -Ev '(^\\[|Download\\w+:)'
                     """,
                     returnStdout: true
             ).trim().toLowerCase()
@@ -37,7 +37,7 @@ class GetVersionMavenApplicationLibrary {
             ).trim()
             context.job.setDisplayName("${script.currentBuild.number}-${context.gerrit.branch}-${context.codebase.version}")
             context.codebase.buildVersion = "${context.codebase.version}-${script.BUILD_NUMBER}"
-            script.println("[JENKINS][DEBUG] Deployable module: ${context.codebase.config.deployableModule}")
+            script.println("[JENKINS][DEBUG] Deployable module: ${context.codebase.deployableModule}")
             context.codebase.deployableModuleDir = context.codebase.deployableModule.isEmpty() ? "${context.workDir}/target" :
                     "${context.workDir}/${context.codebase.deployableModule}/target"
         }

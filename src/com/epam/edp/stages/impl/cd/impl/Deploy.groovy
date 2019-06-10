@@ -244,7 +244,6 @@ class Deploy {
 
                 script.sh("oc adm policy add-scc-to-user anyuid -z ${service.name} -n ${context.job.deployProject}")
                 script.sh("oc -n ${context.job.edpName}-edp-cicd process ${service.name} " +
-                        "-p SERVICE_IMAGE=${service.image} " +
                         "-p SERVICE_VERSION=${service.version} " +
                         "-o json | oc -n ${context.job.deployProject} apply -f -")
                 checkDeployment(context, service, 'service')
