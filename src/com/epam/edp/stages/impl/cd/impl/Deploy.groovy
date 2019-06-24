@@ -250,6 +250,11 @@ class Deploy {
             }
 
             context.job.codebasesList.each() { codebase ->
+                if ((codebase.version == "No deploy") || (codebase.version == "noImageExists")) {
+                    script.println("[JENKINS][WARNING] Application ${codebase.name} deploy skipped")
+                    return
+                }
+
                 if (!checkImageExists(context, codebase))
                     return
 
