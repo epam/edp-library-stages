@@ -13,6 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 
 package com.epam.edp.stages.impl.cd.impl
+
 import org.apache.commons.lang.RandomStringUtils
 import com.epam.edp.stages.impl.cd.Stage
 import groovy.json.JsonSlurperClassic
@@ -23,62 +24,61 @@ class AutomationTests {
     Script script
 
     void run(context) {
-        context.job.stageAutotestsList.each() { item ->
-            def codebaseDir = "${script.WORKSPACE}/${RandomStringUtils.random(10, true, true)}/${item.name}"
-            script.dir("${codebaseDir}") {
-                def gitCodebaseUrl = "ssh://${context.gerrit.autouser}@${context.gerrit.host}:${context.gerrit.sshPort}/${item.name}"
+        def codebaseDir = "${script.WORKSPACE}/${RandomStringUtils.random(10, true, true)}/${context.job.autotestName}"
+        script.dir("${codebaseDir}") {
+            def gitCodebaseUrl = "ssh://${context.gerrit.autouser}@${context.gerrit.host}:${context.gerrit.sshPort}/${context.job.autotestName}"
 
-                script.checkout([$class                           : 'GitSCM', branches: [[name: "master"]],
-                                 doGenerateSubmoduleConfigurations: false, extensions: [],
-                                 submoduleCfg                     : [],
-                                 userRemoteConfigs                : [[credentialsId: "${context.gerrit.credentialsId}",
-                                                                      url          : "${gitCodebaseUrl}"]]])
+            script.checkout([$class                           : 'GitSCM', branches: [[name: "${context.job.autotestBranch}"]],
+                             doGenerateSubmoduleConfigurations: false, extensions: [],
+                             submoduleCfg                     : [],
+                             userRemoteConfigs                : [[credentialsId: "${context.gerrit.credentialsId}",
+                                                                  url          : "${gitCodebaseUrl}"]]])
 
-                if (!script.fileExists("${codebaseDir}/run.json"))
-                    script.error "[JENKINS][ERROR] There is no run.json file in the project ${item.name}. " +
-                            "Can't define command to run autotests"
+            if (!script.fileExists("${codebaseDir}/run.json"))
+                script.error "[JENKINS][ERROR] There is no run.json file in the project ${context.job.autotestName}. " +
+                        "Can't define command to run autotests"
 
-                def runCommandFile = ""
-                if (script.env['NODE_NAME'].equals("master")) {
-                    def jsonFile = new File("${codebaseDir}/run.json")
-                    runCommandFile = new FilePath(jsonFile).readToString()
-                } else {
-                    runCommandFile = new FilePath(
-                            Jenkins.getInstance().getComputer(script.env['NODE_NAME']).getChannel(),
-                            "${codebaseDir}/run.json").readToString()
-                }
+            def runCommandFile = ""
+            if (script.env['NODE_NAME'].equals("master")) {
+                def jsonFile = new File("${codebaseDir}/run.json")
+                runCommandFile = new FilePath(jsonFile).readToString()
+            } else {
+                runCommandFile = new FilePath(
+                        Jenkins.getInstance().getComputer(script.env['NODE_NAME']).getChannel(),
+                        "${codebaseDir}/run.json").readToString()
+            }
 
-                def parsedRunCommandJson = new JsonSlurperClassic().parseText(runCommandFile)
+            def parsedRunCommandJson = new JsonSlurperClassic().parseText(runCommandFile)
 
-                if (!(context.job.stageName in parsedRunCommandJson.keySet()))
-                    script.error "[JENKINS][ERROR] Haven't found ${context.job.stageName} command in file run.json. " +
-                            "It's mandatory to be specified, please check"
+            if (!(context.job.stageName in parsedRunCommandJson.keySet()))
+                script.error "[JENKINS][ERROR] Haven't found ${context.job.stageName} command in file run.json. " +
+                        "It's mandatory to be specified, please check"
 
-                def runCommand = parsedRunCommandJson["${context.job.stageName}"]
-                try {
-                    script.sh "${runCommand} -B --settings ${context.buildTool.settings}"
-                }
-                catch (Exception ex) {
-                    script.error "[JENKINS][ERROR] Tests from ${item.name} have been failed. Reason - ${ex}"
-                }
-                finally {
-                    switch (item.testReportFramework) {
-                        case "allure":
-                            script.allure([
-                                    includeProperties: false,
-                                    jdk              : '',
-                                    properties       : [],
-                                    reportBuildPolicy: 'ALWAYS',
-                                    results          : [[path: 'target/allure-results']]
-                            ])
-                            break
-                        default:
-                            script.println("[JENKINS][WARNING] Can't publish test results. Testing framework is undefined.")
-                            break
-                    }
+            def runCommand = parsedRunCommandJson["${context.job.stageName}"]
+            try {
+                script.sh "${runCommand} -B --settings ${context.buildTool.settings}"
+            }
+            catch (Exception ex) {
+                script.error "[JENKINS][ERROR] Tests from ${context.job.autotestName} have been failed. Reason - ${ex}"
+            }
+            finally {
+                switch ("${context.job.testReportFramework}") {
+                    case "allure":
+                        script.allure([
+                                includeProperties: false,
+                                jdk              : '',
+                                properties       : [],
+                                reportBuildPolicy: 'ALWAYS',
+                                results          : [[path: 'target/allure-results']]
+                        ])
+                        break
+                    default:
+                        script.println("[JENKINS][WARNING] Can't publish test results. Testing framework is undefined.")
+                        break
                 }
             }
         }
+
     }
 }
 
