@@ -35,7 +35,7 @@ class Deploy {
         ).trim()
     }
 
-    def checkOpenshiftTemplateExists(context,templateName) {
+    def checkOpenshiftTemplateExists(context, templateName) {
         if (!script.openshift.selector("template", templateName).exists()) {
             script.println("[JENKINS][WARNING] Template which called ${templateName} doesn't exist in ${context.job.edpName}-edp-cicd namespace")
             return false
@@ -205,6 +205,23 @@ class Deploy {
         return true
     }
 
+    def deployCodebase(version, name, context, codebase) {
+        def codebaseDir = "${script.WORKSPACE}/${RandomStringUtils.random(10, true, true)}/${name}"
+        def deployTemplatesPath = "${codebaseDir}/${context.job.deployTemplatesDirectory}"
+        script.dir("${codebaseDir}") {
+            if (!cloneProject(context, codebase))
+                return
+            deployConfigMapTemplate(context, codebase, deployTemplatesPath)
+            try {
+                deployCodebaseTemplate(context, codebase, deployTemplatesPath)
+            }
+            catch (Exception ex) {
+                script.println("[JENKINS][WARNING] Deployment of codebase ${name} has been failed. Reason - ${ex}.")
+                script.currentBuild.result = 'UNSTABLE'
+            }
+        }
+    }
+
     void run(context) {
         script.openshift.withCluster() {
             if (!script.openshift.selector("project", context.job.deployProject).exists()) {
@@ -223,7 +240,8 @@ class Deploy {
                 def secretName = sharedSecretName.replace(context.job.sharedSecretsMask, '')
                 if (sharedSecretName =~ /${context.job.sharedSecretsMask}/) {
                     if (!script.openshift.withProject(context.job.deployProject) {
-                        script.openshift.selector('secrets', secretName).exists()}) {
+                        script.openshift.selector('secrets', secretName).exists()
+                    }) {
                         script.sh("oc get --export -o yaml secret ${sharedSecretName} | " +
                                 "sed -e 's/name: ${sharedSecretName}/name: ${secretName}/' | " +
                                 "oc -n ${context.job.deployProject} apply -f -")
@@ -239,7 +257,7 @@ class Deploy {
             }
 
             context.job.servicesList.each() { service ->
-                if (!checkOpenshiftTemplateExists(context,service.name))
+                if (!checkOpenshiftTemplateExists(context, service.name))
                     return
 
                 script.sh("oc adm policy add-scc-to-user anyuid -z ${service.name} -n ${context.job.deployProject}")
@@ -249,6 +267,7 @@ class Deploy {
                 checkDeployment(context, service, 'service')
             }
 
+            def parallelCodebases = [:]
             context.job.codebasesList.each() { codebase ->
                 if ((codebase.version == "No deploy") || (codebase.version == "noImageExists")) {
                     script.println("[JENKINS][WARNING] Application ${codebase.name} deploy skipped")
@@ -263,25 +282,14 @@ class Deploy {
                     if (!codebase.version)
                         return
                 }
-
-
                 script.sh("oc adm policy add-scc-to-user anyuid -z ${codebase.name} -n ${context.job.deployProject}")
                 script.sh("oc adm policy add-role-to-user view system:serviceaccount:${context.job.deployProject}:${codebase.name} -n ${context.job.deployProject}")
-                def codebaseDir = "${script.WORKSPACE}/${RandomStringUtils.random(10, true, true)}/${codebase.name}"
-                def deployTemplatesPath = "${codebaseDir}/${context.job.deployTemplatesDirectory}"
-                script.dir("${codebaseDir}") {
-                    if (!cloneProject(context, codebase))
-                        return
-                    deployConfigMapTemplate(context, codebase, deployTemplatesPath)
-                    try {
-                        deployCodebaseTemplate(context, codebase, deployTemplatesPath)
-                    }
-                    catch (Exception ex) {
-                        script.println("[JENKINS][WARNING] Deployment of codebase ${codebase.name} has been failed. Reason - ${ex}.")
-                        script.currentBuild.result = 'UNSTABLE'
-                    }
+
+                parallelCodebases["${codebase.name}"] = {
+                    deployCodebase(codebase.version, codebase.name, context, codebase)
                 }
             }
+            script.parallel parallelCodebases
             script.println("[JENKINS][DEBUG] Codebases that have been updated - ${context.environment.updatedCodebases}")
         }
     }
