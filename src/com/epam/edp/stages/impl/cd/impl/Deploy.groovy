@@ -256,16 +256,22 @@ class Deploy {
                 script.sh("oc adm policy add-role-to-user admin ${context.job.buildUser} -n ${context.job.deployProject}")
             }
 
+            def parallelServices = [:]
             context.job.servicesList.each() { service ->
                 if (!checkOpenshiftTemplateExists(context, service.name))
                     return
 
                 script.sh("oc adm policy add-scc-to-user anyuid -z ${service.name} -n ${context.job.deployProject}")
-                script.sh("oc -n ${context.job.edpName}-edp-cicd process ${service.name} " +
-                        "-p SERVICE_VERSION=${service.version} " +
-                        "-o json | oc -n ${context.job.deployProject} apply -f -")
-                checkDeployment(context, service, 'service')
+
+                parallelServices["${service.name}"] = {
+                    script.sh("oc -n ${context.job.edpName}-edp-cicd process ${service.name} " +
+                            "-p SERVICE_VERSION=${service.version} " +
+                            "-o json | oc -n ${context.job.deployProject} apply -f -")
+                    checkDeployment(context, service, 'service')
+                }
             }
+
+            script.parallel parallelServices
 
             def parallelCodebases = [:]
             context.job.codebasesList.each() { codebase ->
