@@ -222,6 +222,15 @@ class Deploy {
         }
     }
 
+    def getNElements(entities, max_apps) {
+        def tempEntityList = entities.stream()
+                .limit(max_apps.toInteger())
+                .collect()
+        entities.removeAll(tempEntityList)
+
+        return tempEntityList
+    }
+
     void run(context) {
         script.openshift.withCluster() {
             if (!script.openshift.selector("project", context.job.deployProject).exists()) {
@@ -256,46 +265,55 @@ class Deploy {
                 script.sh("oc adm policy add-role-to-user admin ${context.job.buildUser} -n ${context.job.deployProject}")
             }
 
-            def parallelServices = [:]
-            context.job.servicesList.each() { service ->
-                if (!checkOpenshiftTemplateExists(context, service.name))
-                    return
+            while(!context.job.servicesList.isEmpty()) {
+                def parallelServices = [:]
+                def tempServiceList = getNElements(context.job.servicesList, context.job.maxOfParallelDeployServices)
 
-                script.sh("oc adm policy add-scc-to-user anyuid -z ${service.name} -n ${context.job.deployProject}")
-
-                parallelServices["${service.name}"] = {
-                    script.sh("oc -n ${context.job.edpName}-edp-cicd process ${service.name} " +
-                            "-p SERVICE_VERSION=${service.version} " +
-                            "-o json | oc -n ${context.job.deployProject} apply -f -")
-                    checkDeployment(context, service, 'service')
-                }
-            }
-
-            script.parallel parallelServices
-
-            def parallelCodebases = [:]
-            context.job.codebasesList.each() { codebase ->
-                if ((codebase.version == "No deploy") || (codebase.version == "noImageExists")) {
-                    script.println("[JENKINS][WARNING] Application ${codebase.name} deploy skipped")
-                    return
-                }
-
-                if (!checkImageExists(context, codebase))
-                    return
-
-                if (codebase.version =~ "stable|latest") {
-                    codebase.version = getNumericVersion(context, codebase)
-                    if (!codebase.version)
+                tempServiceList.each() { service ->
+                    if (!checkOpenshiftTemplateExists(context, service.name))
                         return
-                }
-                script.sh("oc adm policy add-scc-to-user anyuid -z ${codebase.name} -n ${context.job.deployProject}")
-                script.sh("oc adm policy add-role-to-user view system:serviceaccount:${context.job.deployProject}:${codebase.name} -n ${context.job.deployProject}")
 
-                parallelCodebases["${codebase.name}"] = {
-                    deployCodebase(codebase.version, codebase.name, context, codebase)
+                    script.sh("oc adm policy add-scc-to-user anyuid -z ${service.name} -n ${context.job.deployProject}")
+
+                    parallelServices["${service.name}"] = {
+                        script.sh("oc -n ${context.job.edpName}-edp-cicd process ${service.name} " +
+                                "-p SERVICE_VERSION=${service.version} " +
+                                "-o json | oc -n ${context.job.deployProject} apply -f -")
+                        checkDeployment(context, service, 'service')
+                    }
                 }
+
+                script.parallel parallelServices
             }
-            script.parallel parallelCodebases
+
+            while(!context.job.codebasesList.isEmpty()) {
+                def parallelCodebases = [:]
+                def tempAppList = getNElements(context.job.codebasesList, context.job.maxOfParallelDeployApps)
+
+                tempAppList.each() { codebase ->
+                    if ((codebase.version == "No deploy") || (codebase.version == "noImageExists")) {
+                        script.println("[JENKINS][WARNING] Application ${codebase.name} deploy skipped")
+                        return
+                    }
+
+                    if (!checkImageExists(context, codebase))
+                        return
+
+                    if (codebase.version =~ "stable|latest") {
+                        codebase.version = getNumericVersion(context, codebase)
+                        if (!codebase.version)
+                            return
+                    }
+                    script.sh("oc adm policy add-scc-to-user anyuid -z ${codebase.name} -n ${context.job.deployProject}")
+                    script.sh("oc adm policy add-role-to-user view system:serviceaccount:${context.job.deployProject}:${codebase.name} -n ${context.job.deployProject}")
+
+                    parallelCodebases["${codebase.name}"] = {
+                        deployCodebase(codebase.version, codebase.name, context, codebase)
+                    }
+                }
+                script.parallel parallelCodebases
+            }
+
             script.println("[JENKINS][DEBUG] Codebases that have been updated - ${context.environment.updatedCodebases}")
         }
     }
