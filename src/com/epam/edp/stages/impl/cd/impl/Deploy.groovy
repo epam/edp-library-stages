@@ -296,14 +296,23 @@ class Deploy {
                         return
                     }
 
-                    if (!checkImageExists(context, codebase))
-                        return
-
-                    if (codebase.version =~ "stable|latest") {
-                        codebase.version = getNumericVersion(context, codebase)
+                    if (codebase.version == "latest") {
+                        codebase.version = codebase.latest
+                        script.println("[JENKINS][DEBUG] Latest tag equals to ${codebase.latest} version")
                         if (!codebase.version)
                             return
                     }
+
+                    if (codebase.version == "stable") {
+                        codebase.version = codebase.stable
+                        script.println("[JENKINS][DEBUG] Stable tag equals to ${codebase.stable} version")
+                        if (!codebase.version)
+                            return
+                    }
+
+                    if (!checkImageExists(context, codebase))
+                        return
+
                     script.sh("oc adm policy add-scc-to-user anyuid -z ${codebase.name} -n ${context.job.deployProject}")
                     script.sh("oc adm policy add-role-to-user view system:serviceaccount:${context.job.deployProject}:${codebase.name} -n ${context.job.deployProject}")
 

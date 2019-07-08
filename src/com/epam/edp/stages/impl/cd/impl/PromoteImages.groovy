@@ -25,17 +25,9 @@ class PromoteImages {
             script.openshift.withProject() {
                 context.environment.updatedCodebases.each() { codebase ->
                     script.openshift.tag("${context.job.promotion.sourceProject}/${codebase.normalizedName}:${codebase.version}",
-                            "${context.job.promotion.sourceProject}/${codebase.normalizedName}:stable")
-                    script.openshift.tag("${context.job.promotion.sourceProject}/${codebase.normalizedName}:${codebase.version}",
-                            "${context.job.promotion.targetProject}/${codebase.normalizedName}:latest")
-                    script.openshift.tag("${context.job.promotion.sourceProject}/${codebase.normalizedName}:${codebase.version}",
                             "${context.job.promotion.targetProject}/${codebase.normalizedName}:${codebase.version}")
 
                     if (codebase.outputIs) {
-                        script.openshift.tag("${context.job.promotion.sourceProject}/${codebase.normalizedName}:${codebase.version}",
-                                "${context.job.promotion.sourceProject}/${codebase.outputIs}:stable")
-                        script.openshift.tag("${context.job.promotion.sourceProject}/${codebase.normalizedName}:${codebase.version}",
-                                "${context.job.promotion.targetProject}/${codebase.outputIs}:latest")
                         script.openshift.tag("${context.job.promotion.sourceProject}/${codebase.normalizedName}:${codebase.version}",
                                 "${context.job.promotion.targetProject}/${codebase.outputIs}:${codebase.version}")
                     }
