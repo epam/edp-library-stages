@@ -14,10 +14,8 @@ limitations under the License.*/
 
 package com.epam.edp.stages.impl.cd.impl
 
-import org.apache.commons.lang.RandomStringUtils
-
-
 import com.epam.edp.stages.impl.cd.Stage
+import org.apache.commons.lang.RandomStringUtils
 
 @Stage(name = "deploy")
 class Deploy {
@@ -41,6 +39,15 @@ class Deploy {
             return false
         }
         return true
+    }
+
+    def deployConfigMaps(codebaseDir, name) {
+        File folder = new File("${codebaseDir}/configmaps")
+        for (file in folder.listFiles()) {
+            String configsDir = file.getName().split("\\.")[0].replaceAll("[^\\p{L}\\p{Nd}]+", "-").toLowerCase()
+            script.sh("oc create configmap ${name}-${configsDir} --from-file=${codebaseDir}/configmaps/${file.getName()} --dry-run -o yaml | oc apply -f -")
+            script.println("[JENKINS][DEBUG] Configmap ${configsDir} has been created")
+        }
     }
 
     def checkDeployment(context, object, type) {
@@ -208,6 +215,7 @@ class Deploy {
         def codebaseDir = "${script.WORKSPACE}/${RandomStringUtils.random(10, true, true)}/${name}"
         def deployTemplatesPath = "${codebaseDir}/${context.job.deployTemplatesDirectory}"
         script.dir("${codebaseDir}") {
+            deployConfigMaps(codebaseDir,name)
             if (!cloneProject(context, codebase))
                 return
             deployConfigMapTemplate(context, codebase, deployTemplatesPath)
