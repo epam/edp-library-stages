@@ -24,15 +24,12 @@ class PromoteImages {
         script.openshift.withCluster() {
             script.openshift.withProject() {
                 context.environment.updatedCodebases.each() { codebase ->
-                    script.openshift.tag("${context.job.promotion.sourceProject}/${codebase.normalizedName}:${codebase.version}",
-                            "${context.job.promotion.targetProject}/${codebase.normalizedName}:${codebase.version}")
-
-                    if (codebase.outputIs) {
+                    if (codebase.name in context.job.applicationsToPromote) {
                         script.openshift.tag("${context.job.promotion.sourceProject}/${codebase.normalizedName}:${codebase.version}",
-                                "${context.job.promotion.targetProject}/${codebase.outputIs}:${codebase.version}")
-                    }
+                                "${context.job.promotion.sourceProject}/${codebase.outputIs}:${codebase.version}")
 
-                    script.println("[JENKINS][INFO] Image ${codebase.normalizedName}:${codebase.version} has been promoted to ${context.job.promotion.targetProject} project")
+                        script.println("[JENKINS][INFO] Image ${codebase.normalizedName}:${codebase.version} has been promoted to ${codebase.outputIs}")
+                    }
                 }
             }
         }
