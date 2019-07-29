@@ -51,7 +51,6 @@ class Deploy {
                     verifyReplicaCount: 'true', waitTime: '600', waitUnit: 'sec'
             if (type == 'application' && getDeploymentVersion(context, object) != object.currentDeploymentVersion) {
                 script.println("[JENKINS][DEBUG] Deployment ${object.name} in project ${context.job.deployProject} has been rolled out")
-                context.environment.updatedCodebases.push(object)
             } else
                 script.println("[JENKINS][DEBUG] New version of codebase ${object.name} hasn't been deployed, because the save version")
         }
@@ -286,9 +285,10 @@ class Deploy {
                 script.parallel parallelServices
             }
 
-            while(!context.job.codebasesList.isEmpty()) {
+            def deployCodebasesList = context.job.codebasesList.clone()
+            while(!deployCodebasesList.isEmpty()) {
                 def parallelCodebases = [:]
-                def tempAppList = getNElements(context.job.codebasesList, context.job.maxOfParallelDeployApps)
+                def tempAppList = getNElements(deployCodebasesList, context.job.maxOfParallelDeployApps)
 
                 tempAppList.each() { codebase ->
                     if ((codebase.version == "No deploy") || (codebase.version == "noImageExists")) {
@@ -322,8 +322,6 @@ class Deploy {
                 }
                 script.parallel parallelCodebases
             }
-
-            script.println("[JENKINS][DEBUG] Codebases that have been updated - ${context.environment.updatedCodebases}")
         }
     }
 }

@@ -23,7 +23,7 @@ class PromoteImages {
     void run(context) {
         script.openshift.withCluster() {
             script.openshift.withProject() {
-                context.environment.updatedCodebases.each() { codebase ->
+                context.job.codebasesList.each() { codebase ->
                     if (codebase.name in context.job.applicationsToPromote) {
                         script.openshift.tag("${context.job.promotion.sourceProject}/${codebase.normalizedName}:${codebase.version}",
                                 "${context.job.promotion.sourceProject}/${codebase.outputIs}:${codebase.version}")
