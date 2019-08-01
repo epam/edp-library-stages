@@ -42,10 +42,12 @@ class Deploy {
     }
 
     def deployConfigMaps(codebaseDir, name) {
-        File folder = new File("${codebaseDir}/configmaps")
+        File folder = new File("${codebaseDir}/config-files")
         for (file in folder.listFiles()) {
+            if (file.isFile() && file.getName() == "Readme.md")
+                continue
             String configsDir = file.getName().split("\\.")[0].replaceAll("[^\\p{L}\\p{Nd}]+", "-").toLowerCase()
-            script.sh("oc create configmap ${name}-${configsDir} --from-file=${codebaseDir}/configmaps/${file.getName()} --dry-run -o yaml | oc apply -f -")
+            script.sh("oc create configmap ${name}-${configsDir} --from-file=${codebaseDir}/config-files/${file.getName()} --dry-run -o yaml | oc apply -f -")
             script.println("[JENKINS][DEBUG] Configmap ${configsDir} has been created")
         }
     }
@@ -215,9 +217,9 @@ class Deploy {
         def codebaseDir = "${script.WORKSPACE}/${RandomStringUtils.random(10, true, true)}/${name}"
         def deployTemplatesPath = "${codebaseDir}/${context.job.deployTemplatesDirectory}"
         script.dir("${codebaseDir}") {
-            deployConfigMaps(codebaseDir,name)
             if (!cloneProject(context, codebase))
                 return
+            deployConfigMaps(codebaseDir, name)
             deployConfigMapTemplate(context, codebase, deployTemplatesPath)
             try {
                 deployCodebaseTemplate(context, codebase, deployTemplatesPath)
@@ -272,7 +274,7 @@ class Deploy {
                 script.sh("oc adm policy add-role-to-user admin ${context.job.buildUser} -n ${context.job.deployProject}")
             }
 
-            while(!context.job.servicesList.isEmpty()) {
+            while (!context.job.servicesList.isEmpty()) {
                 def parallelServices = [:]
                 def tempServiceList = getNElements(context.job.servicesList, context.job.maxOfParallelDeployServices)
 
@@ -294,7 +296,7 @@ class Deploy {
             }
 
             def deployCodebasesList = context.job.codebasesList.clone()
-            while(!deployCodebasesList.isEmpty()) {
+            while (!deployCodebasesList.isEmpty()) {
                 def parallelCodebases = [:]
                 def tempAppList = getNElements(deployCodebasesList, context.job.maxOfParallelDeployApps)
 
