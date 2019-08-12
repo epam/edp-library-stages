@@ -41,13 +41,13 @@ class Deploy {
         return true
     }
 
-    def deployConfigMaps(codebaseDir, name) {
+    def deployConfigMaps(codebaseDir, name, context) {
         File folder = new File("${codebaseDir}/config-files")
         for (file in folder.listFiles()) {
             if (file.isFile() && file.getName() == "Readme.md")
                 continue
             String configsDir = file.getName().split("\\.")[0].replaceAll("[^\\p{L}\\p{Nd}]+", "-").toLowerCase()
-            script.sh("oc create configmap ${name}-${configsDir} --from-file=${codebaseDir}/config-files/${file.getName()} --dry-run -o yaml | oc apply -f -")
+            script.sh("oc create configmap ${name}-${configsDir} -n ${context.job.deployProject} --from-file=${codebaseDir}/config-files/${file.getName()} --dry-run -o yaml | oc apply -f -")
             script.println("[JENKINS][DEBUG] Configmap ${configsDir} has been created")
         }
     }
@@ -219,7 +219,7 @@ class Deploy {
         script.dir("${codebaseDir}") {
             if (!cloneProject(context, codebase))
                 return
-            deployConfigMaps(codebaseDir, name)
+            deployConfigMaps(codebaseDir, name, context)
             deployConfigMapTemplate(context, codebase, deployTemplatesPath)
             try {
                 deployCodebaseTemplate(context, codebase, deployTemplatesPath)
