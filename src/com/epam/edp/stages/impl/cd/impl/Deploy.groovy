@@ -147,14 +147,42 @@ class Deploy {
         }
     }
 
+    def getRepositoryPath(codebase) {
+        if (codebase.strategy == "import") {
+            return codebase.gitprojectpath
+        }
+        return "/" + codebase.name
+    }
+
     def cloneProject(context, codebase) {
-        def gitCodebaseUrl = "ssh://${context.gerrit.autouser}@${context.gerrit.host}:${context.gerrit.sshPort}/${codebase.name}"
+        script.println("[JENKINS][DEBUG] Start fetching Git Server info for ${codebase.name} from ${codebase.gitserver} CR")
+
+        def gitServerCrVersion = context.job.getParameterValue("GIT_SERVER_CR_VERSION")
+        def gitServerName = "gitservers.${gitServerCrVersion}.edp.epam.com"
+
+        script.println("[JENKINS][DEBUG] Git Server CR Version: ${gitServerCrVersion}")
+        script.println("[JENKINS][DEBUG] Git Server Name: ${gitServerName}")
+
+        def autouser = context.platform.getJsonPathValue(gitServerName, codebase.gitserver, ".spec.gitUser")
+        def host = context.platform.getJsonPathValue(gitServerName, codebase.gitserver, ".spec.gitHost")
+        def sshPort = context.platform.getJsonPathValue(gitServerName, codebase.gitserver, ".spec.sshPort")
+        def credentialsId = context.platform.getJsonPathValue(gitServerName, codebase.gitserver, ".spec.nameSshKeySecret")
+
+        script.println("[JENKINS][DEBUG] autouser: ${autouser}")
+        script.println("[JENKINS][DEBUG] host: ${host}")
+        script.println("[JENKINS][DEBUG] sshPort: ${sshPort}")
+        script.println("[JENKINS][DEBUG] credentialsId: ${credentialsId}")
+
+        def repoPath = getRepositoryPath(codebase)
+        script.println("[JENKINS][DEBUG] Repository path: ${repoPath}")
+
+        def gitCodebaseUrl = "ssh://${autouser}@${host}:${sshPort}${repoPath}"
 
         try {
             script.checkout([$class                           : 'GitSCM', branches: [[name: "refs/tags/${codebase.branch}-${codebase.version}"]],
                              doGenerateSubmoduleConfigurations: false, extensions: [],
                              submoduleCfg                     : [],
-                             userRemoteConfigs                : [[credentialsId: "${context.gerrit.credentialsId}",
+                             userRemoteConfigs                : [[credentialsId: "${credentialsId}",
                                                                   refspec      : "refs/tags/${codebase.branch}-${codebase.version}",
                                                                   url          : "${gitCodebaseUrl}"]]])
         }
