@@ -33,7 +33,7 @@ class GetVersionDotnetApplicationLibrary {
                     script: "find ${context.codebase.deployableModule} -name *.csproj | xargs grep -Po '<Version>\\K[^<]*'",
                     returnStdout: true
             ).trim().toLowerCase()
-            context.job.setDisplayName("${script.currentBuild.number}-${context.gerrit.branch}-${context.codebase.version}")
+            context.job.setDisplayName("${script.currentBuild.number}-${context.git.branch}-${context.codebase.version}")
             context.codebase.buildVersion = "${context.codebase.version}-${script.BUILD_NUMBER}"
             script.println("[JENKINS][DEBUG] Deployable module: ${context.codebase.deployableModule}")
             context.codebase.deployableModuleDir = "${context.workDir}"

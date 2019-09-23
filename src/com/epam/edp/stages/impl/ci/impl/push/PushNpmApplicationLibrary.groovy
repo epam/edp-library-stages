@@ -38,7 +38,7 @@ class PushNpmApplicationLibrary {
             npm set registry ${context.buildTool.hostedRepository}
             auth=\$(echo -n '${script.USERNAME}:${script.PASSWORD}' | base64); npm set _auth=\$auth
             npm set //${context.buildTool.hostedRepository}:_authToken ${token}
-            npm set email=${context.gerrit.autouser}@epam.com
+            npm set email=${context.git.autouser}@epam.com
             """, returnStdout: false)
             }
             script.sh ("npm publish")

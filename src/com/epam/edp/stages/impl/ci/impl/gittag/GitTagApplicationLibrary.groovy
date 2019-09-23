@@ -24,17 +24,17 @@ class GitTagApplicationLibrary {
 
     void run(context) {
         script.dir("${context.workDir}") {
-            script.withCredentials([script.sshUserPrivateKey(credentialsId: "${context.gerrit.credentialsId}",
+            script.withCredentials([script.sshUserPrivateKey(credentialsId: "${context.git.credentialsId}",
                     keyFileVariable: 'key', passphraseVariable: '', usernameVariable: 'git_user')]) {
                 script.sh """
                 eval `ssh-agent`
                 ssh-add ${script.key}
                 mkdir -p ~/.ssh
-                ssh-keyscan -p ${context.gerrit.sshPort} ${context.gerrit.host} >> ~/.ssh/known_hosts
-                git config --global user.email ${context.gerrit.autouser}@epam.com
-                git config --global user.name ${context.gerrit.autouser}
-                git tag -a ${context.gerrit.branch}-${context.codebase.buildVersion} -m 'Tag is added automatically by \
-                     ${context.gerrit.autouser} user'
+                ssh-keyscan -p ${context.git.sshPort} ${context.git.host} >> ~/.ssh/known_hosts
+                git config --global user.email ${context.git.autouser}@epam.com
+                git config --global user.name ${context.git.autouser}
+                git tag -a ${context.git.branch}-${context.codebase.buildVersion} -m 'Tag is added automatically by \
+                     ${context.git.autouser} user'
                 git push --tags"""
             }
         }

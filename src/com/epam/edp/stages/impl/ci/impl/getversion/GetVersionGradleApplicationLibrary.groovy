@@ -34,7 +34,7 @@ class GetVersionGradleApplicationLibrary {
                         returnStdout: true
                 ).trim().toLowerCase()
             }
-            context.job.setDisplayName("${script.currentBuild.number}-${context.gerrit.branch}-${context.codebase.version}")
+            context.job.setDisplayName("${script.currentBuild.number}-${context.git.branch}-${context.codebase.version}")
             context.codebase.buildVersion = "${context.codebase.version}-${script.BUILD_NUMBER}"
             context.codebase.deployableModuleDir = "${context.workDir}/build/libs"
         }

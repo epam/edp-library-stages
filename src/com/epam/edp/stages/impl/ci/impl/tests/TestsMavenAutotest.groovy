@@ -32,7 +32,7 @@ class TestsMavenAutotest {
             )
             if (!runCommandFile.exists())
                 script.error "[JENKINS][ERROR] There is no run.json file in the project " +
-                        "${context.gerrit.project}. Can't define command to run autotests"
+                        "${context.git.project}. Can't define command to run autotests"
 
             def parsedRunCommandJson = new JsonSlurperClassic().parseText(runCommandFile.readToString())
             if (!("codereview" in parsedRunCommandJson.keySet()))

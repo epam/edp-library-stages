@@ -55,7 +55,7 @@ class SonarGradleApplicationLibrary {
                             "sonarqube -Dsonar.projectKey=${context.codebase.name} " +
                             "-Dsonar.projectName=${context.codebase.name} " +
                             "-Dsonar.branch=" +
-                            "${context.job.type == "codereview" ? context.gerrit.changeName : context.gerrit.branch}"
+                            "${context.job.type == "codereview" ? context.git.changeName : context.git.branch}"
                 }
             }
             script.timeout(time: 10, unit: 'MINUTES') {

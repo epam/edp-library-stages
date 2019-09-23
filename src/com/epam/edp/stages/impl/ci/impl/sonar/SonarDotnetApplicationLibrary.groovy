@@ -54,7 +54,7 @@ class SonarDotnetApplicationLibrary {
                 dotnet ${scannerHome}/SonarScanner.MSBuild.dll begin /k:${context.codebase.name} \
                 /k:${context.codebase.name} \
                 /n:${context.codebase.name} \
-                /d:sonar.branch=${context.job.type == "codereview" ? context.gerrit.changeName : context.gerrit.branch} \
+                /d:sonar.branch=${context.job.type == "codereview" ? context.git.changeName : context.git.branch} \
                 /d:sonar.cs.opencover.reportsPaths=${context.workDir}/*Tests*/*.xml
                 dotnet build ${context.buildTool.sln_filename}
                 dotnet ${scannerHome}/SonarScanner.MSBuild.dll end

@@ -26,12 +26,12 @@ class AutomationTests {
     void run(context) {
         def codebaseDir = "${script.WORKSPACE}/${RandomStringUtils.random(10, true, true)}/${context.job.autotestName}"
         script.dir("${codebaseDir}") {
-            def gitCodebaseUrl = "ssh://${context.gerrit.autouser}@${context.gerrit.host}:${context.gerrit.sshPort}/${context.job.autotestName}"
+            def gitCodebaseUrl = "ssh://${context.git.autouser}@${context.git.host}:${context.git.sshPort}/${context.job.autotestName}"
 
             script.checkout([$class                           : 'GitSCM', branches: [[name: "${context.job.autotestBranch}"]],
                              doGenerateSubmoduleConfigurations: false, extensions: [],
                              submoduleCfg                     : [],
-                             userRemoteConfigs                : [[credentialsId: "${context.gerrit.credentialsId}",
+                             userRemoteConfigs                : [[credentialsId: "${context.git.credentialsId}",
                                                                   url          : "${gitCodebaseUrl}"]]])
 
             if (!script.fileExists("${codebaseDir}/run.json"))

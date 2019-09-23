@@ -21,8 +21,8 @@ class BuildDockerfileImageApplication {
         if (!script.fileExists("${context.workDir}/Dockerfile"))
             script.error "[JENKINS][ERROR] There is no Dockerfile in the root directory of the project ${context.codebase.name}. "
 
-        def buildconfigName = "${context.codebase.name}-dockerfile-${context.gerrit.branch.replaceAll("[^\\p{L}\\p{Nd}]+", "-")}"
-        def outputImagestreamName = "${context.codebase.name}-${context.gerrit.branch.replaceAll("[^\\p{L}\\p{Nd}]+", "-")}"
+        def buildconfigName = "${context.codebase.name}-dockerfile-${context.git.branch.replaceAll("[^\\p{L}\\p{Nd}]+", "-")}"
+        def outputImagestreamName = "${context.codebase.name}-${context.git.branch.replaceAll("[^\\p{L}\\p{Nd}]+", "-")}"
         context.codebase.imageBuildArgs.push("--name=${buildconfigName}")
         context.codebase.imageBuildArgs.push("--to=${outputImagestreamName}")
         def resultTag

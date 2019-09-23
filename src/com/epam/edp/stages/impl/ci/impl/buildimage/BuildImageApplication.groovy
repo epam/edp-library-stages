@@ -18,7 +18,7 @@ class BuildImageApplication {
     Script script
 
     void run(context) {
-        def buildconfigName = "${context.codebase.name}-${context.gerrit.branch.replaceAll("[^\\p{L}\\p{Nd}]+", "-")}"
+        def buildconfigName = "${context.codebase.name}-${context.git.branch.replaceAll("[^\\p{L}\\p{Nd}]+", "-")}"
         context.codebase.imageBuildArgs.push("--name=${buildconfigName}")
         context.codebase.imageBuildArgs.push("--image-stream=s2i-${context.codebase.config.language.toLowerCase()}")
         def resultTag

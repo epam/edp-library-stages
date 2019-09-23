@@ -24,7 +24,7 @@ class PushDotnetApplicationLibrary {
     void run(context) {
 
         script.dir("${context.workDir}") {
-            def nugetPackagesPath = "/tmp/${context.gerrit.project}-nupkgs/"
+            def nugetPackagesPath = "/tmp/${context.git.project}-nupkgs/"
 
             script.sh "dotnet pack ${context.buildTool.sln_filename} --no-build --output ${nugetPackagesPath}"
             script.sh "dotnet nuget push ${nugetPackagesPath} -k ${context.buildTool.nugetApiKey} " +

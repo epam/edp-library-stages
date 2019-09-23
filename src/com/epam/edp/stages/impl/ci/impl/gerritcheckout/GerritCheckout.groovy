@@ -24,11 +24,11 @@ class GerritCheckout {
 
     def run(context) {
         script.dir("${context.workDir}") {
-            script.checkout([$class                           : 'GitSCM', branches: [[name: "${context.gerrit.changeName}"]],
+            script.checkout([$class                           : 'GitSCM', branches: [[name: "${context.git.changeName}"]],
                              doGenerateSubmoduleConfigurations: false, extensions: [],
                              submoduleCfg                     : [],
-                             userRemoteConfigs                : [[refspec      : "${context.gerrit.refspecName}:${context.gerrit.changeName}",
-                                                                  credentialsId: "${context.gerrit.credentialsId}",
+                             userRemoteConfigs                : [[refspec      : "${context.git.refspecName}:${context.git.changeName}",
+                                                                  credentialsId: "${context.git.credentialsId}",
                                                                   url          : "${context.codebase.config.cloneUrl}"]]])
         }
         context.factory.loadCustomStages("${context.workDir}/stages").each() { context.factory.add(it) }

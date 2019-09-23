@@ -25,10 +25,10 @@ class Checkout {
     void run(context) {
         script.sh "rm -rf ${context.workDir}*"
         script.dir("${context.workDir}") {
-            script.checkout([$class                           : 'GitSCM', branches: [[name: "${context.gerrit.branch}"]],
+            script.checkout([$class                           : 'GitSCM', branches: [[name: "${context.git.branch}"]],
                       doGenerateSubmoduleConfigurations: false, extensions: [],
                       submoduleCfg                     : [],
-                      userRemoteConfigs                : [[credentialsId: "${context.gerrit.credentialsId}",
+                      userRemoteConfigs                : [[credentialsId: "${context.git.credentialsId}",
                                                            url          : "${context.codebase.config.cloneUrl}"]]])
         }
         context.factory.loadCustomStages("${context.workDir}/stages").each() { context.factory.add(it) }
