@@ -45,7 +45,7 @@ class SonarGradleApplicationLibrary {
 //                        reviewConfig: [issueFilterConfig: [newIssuesOnly: false, changedLinesOnly: false,
 //                                                           severity: 'CRITICAL']],
 //                        scoreConfig: [category: 'Sonar-Verified', issueFilterConfig: [severity: 'CRITICAL']]
-//            }
+            }
 
             script.withCredentials([script.usernamePassword(credentialsId: "${context.nexus.credentialsId}",
                     passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]) {
