@@ -31,13 +31,13 @@ class SonarNpmApplicationLibrary {
                             "-Dsonar.report.export.path=sonar-report.json" +
                             " -Dsonar.branch=codereview"
                 }
-                script.sonarToGerrit inspectionConfig: [baseConfig: [projectPath: "",
-                         sonarReportPath: '.scannerwork/sonar-report.json'], serverURL: "${context.sonar.route}"],
-                        notificationConfig: [commentedIssuesNotificationRecipient: 'NONE',
-                                             negativeScoreNotificationRecipient: 'NONE'],
-                        reviewConfig: [issueFilterConfig: [newIssuesOnly: false, changedLinesOnly: false,
-                                                           severity: 'CRITICAL']],
-                        scoreConfig: [category: 'Sonar-Verified', issueFilterConfig: [severity: 'CRITICAL']]
+//                script.sonarToGerrit inspectionConfig: [baseConfig: [projectPath: "",
+//                         sonarReportPath: '.scannerwork/sonar-report.json'], serverURL: "${context.sonar.route}"],
+//                        notificationConfig: [commentedIssuesNotificationRecipient: 'NONE',
+//                                             negativeScoreNotificationRecipient: 'NONE'],
+//                        reviewConfig: [issueFilterConfig: [newIssuesOnly: false, changedLinesOnly: false,
+//                                                           severity: 'CRITICAL']],
+//                        scoreConfig: [category: 'Sonar-Verified', issueFilterConfig: [severity: 'CRITICAL']]
             }
 
             script.withSonarQubeEnv('Sonar') {

@@ -39,14 +39,14 @@ class SonarDotnetApplicationLibrary {
                 dotnet ${scannerHome}/SonarScanner.MSBuild.dll end
             """
                 }
-                script.sonarToGerrit inspectionConfig: [baseConfig:
-                        [projectPath: "", sonarReportPath: ".sonarqube/out/.sonar/sonar-report.json"],
-                                                        serverURL: "${context.sonar.route}"],
-                        notificationConfig: [commentedIssuesNotificationRecipient: 'NONE',
-                                             negativeScoreNotificationRecipient: 'NONE'],
-                        reviewConfig: [issueFilterConfig: [newIssuesOnly: false, changedLinesOnly: false,
-                                                           severity: 'MAJOR']],
-                        scoreConfig: [category: 'Sonar-Verified', issueFilterConfig: [severity: 'MAJOR']]
+//                script.sonarToGerrit inspectionConfig: [baseConfig:
+//                        [projectPath: "", sonarReportPath: ".sonarqube/out/.sonar/sonar-report.json"],
+//                                                        serverURL: "${context.sonar.route}"],
+//                        notificationConfig: [commentedIssuesNotificationRecipient: 'NONE',
+//                                             negativeScoreNotificationRecipient: 'NONE'],
+//                        reviewConfig: [issueFilterConfig: [newIssuesOnly: false, changedLinesOnly: false,
+//                                                           severity: 'MAJOR']],
+//                        scoreConfig: [category: 'Sonar-Verified', issueFilterConfig: [severity: 'MAJOR']]
             }
 
             script.withSonarQubeEnv('Sonar') {

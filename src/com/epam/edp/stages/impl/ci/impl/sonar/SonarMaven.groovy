@@ -68,13 +68,13 @@ class SonarMaven {
                                 "-Dsonar.projectKey=${context.codebase.name}"
                     }
                 }
-                script.sonarToGerrit inspectionConfig: [baseConfig: [projectPath: ""],
-                                                        serverURL: "${context.sonar.route}"],
-                        notificationConfig: [commentedIssuesNotificationRecipient: 'NONE',
-                                             negativeScoreNotificationRecipient: 'NONE'],
-                        reviewConfig: [issueFilterConfig: [newIssuesOnly: false, changedLinesOnly: false,
-                                                           severity: 'CRITICAL']],
-                        scoreConfig: [category: 'Sonar-Verified', issueFilterConfig: [severity: 'CRITICAL']]
+//                script.sonarToGerrit inspectionConfig: [baseConfig: [projectPath: ""],
+//                                                        serverURL: "${context.sonar.route}"],
+//                        notificationConfig: [commentedIssuesNotificationRecipient: 'NONE',
+//                                             negativeScoreNotificationRecipient: 'NONE'],
+//                        reviewConfig: [issueFilterConfig: [newIssuesOnly: false, changedLinesOnly: false,
+//                                                           severity: 'CRITICAL']],
+//                        scoreConfig: [category: 'Sonar-Verified', issueFilterConfig: [severity: 'CRITICAL']]
             }
         }
 

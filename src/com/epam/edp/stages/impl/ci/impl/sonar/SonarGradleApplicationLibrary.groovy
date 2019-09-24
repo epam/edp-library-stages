@@ -37,15 +37,15 @@ class SonarGradleApplicationLibrary {
                                 " -Dsonar.java.binaries=build/classes"
                     }
                 }
-                script.sonarToGerrit inspectionConfig: [baseConfig:
-                        [projectPath: "", sonarReportPath: 'build/sonar/sonar-report.json'],
-                                                        serverURL: "${context.sonarRoute}"],
-                        notificationConfig: [commentedIssuesNotificationRecipient: 'NONE',
-                                             negativeScoreNotificationRecipient: 'NONE'],
-                        reviewConfig: [issueFilterConfig: [newIssuesOnly: false, changedLinesOnly: false,
-                                                           severity: 'CRITICAL']],
-                        scoreConfig: [category: 'Sonar-Verified', issueFilterConfig: [severity: 'CRITICAL']]
-            }
+//                script.sonarToGerrit inspectionConfig: [baseConfig:
+//                        [projectPath: "", sonarReportPath: 'build/sonar/sonar-report.json'],
+//                                                        serverURL: "${context.sonarRoute}"],
+//                        notificationConfig: [commentedIssuesNotificationRecipient: 'NONE',
+//                                             negativeScoreNotificationRecipient: 'NONE'],
+//                        reviewConfig: [issueFilterConfig: [newIssuesOnly: false, changedLinesOnly: false,
+//                                                           severity: 'CRITICAL']],
+//                        scoreConfig: [category: 'Sonar-Verified', issueFilterConfig: [severity: 'CRITICAL']]
+//            }
 
             script.withCredentials([script.usernamePassword(credentialsId: "${context.nexus.credentialsId}",
                     passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]) {
