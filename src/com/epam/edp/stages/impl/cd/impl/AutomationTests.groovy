@@ -23,15 +23,21 @@ import hudson.FilePath
 class AutomationTests {
     Script script
 
+    def generateSshLink(context) {
+        return context.job.gitProjectPath?.trim() ?
+                "ssh://${context.job.autouser}@${context.job.host}:${context.job.sshPort}${context.job.gitProjectPath}" :
+                "ssh://${context.job.autouser}@${context.job.host}:${context.job.sshPort}/${context.job.autotestName}"
+    }
+
     void run(context) {
         def codebaseDir = "${script.WORKSPACE}/${RandomStringUtils.random(10, true, true)}/${context.job.autotestName}"
         script.dir("${codebaseDir}") {
-            def gitCodebaseUrl = "ssh://${context.git.autouser}@${context.git.host}:${context.git.sshPort}/${context.job.autotestName}"
+            def gitCodebaseUrl = generateSshLink(context)
 
             script.checkout([$class                           : 'GitSCM', branches: [[name: "${context.job.autotestBranch}"]],
                              doGenerateSubmoduleConfigurations: false, extensions: [],
                              submoduleCfg                     : [],
-                             userRemoteConfigs                : [[credentialsId: "${context.git.credentialsId}",
+                             userRemoteConfigs                : [[credentialsId: "${context.job.credentialsId}",
                                                                   url          : "${gitCodebaseUrl}"]]])
 
             if (!script.fileExists("${codebaseDir}/run.json"))
