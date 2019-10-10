@@ -74,7 +74,7 @@ class StageFactory {
     def getStage(name, buildTool = null, type = null) {
         def stageClass
         if (buildTool && type)
-            stageClass = stages.find { it.key == ciKey(name, buildTool, type) }?.value
+            stageClass = stages.get(ciKey(name, buildTool, type)) ?: stages.get(ciKey(name, "any", type))
         else
             stageClass = stages.find { it.key == cdKey(name) }?.value
 

@@ -17,7 +17,7 @@ package com.epam.edp.stages.impl.ci.impl.triggerjob
 import com.epam.edp.stages.impl.ci.ProjectType
 import com.epam.edp.stages.impl.ci.Stage
 
-@Stage(name = "trigger-job", buildTool = ["maven", "npm", "dotnet","gradle"], type = [ProjectType.APPLICATION, ProjectType.AUTOTESTS, ProjectType.LIBRARY])
+@Stage(name = "trigger-job", buildTool = ["maven", "npm", "dotnet","gradle", "any"], type = [ProjectType.APPLICATION, ProjectType.AUTOTESTS, ProjectType.LIBRARY])
 class TriggerJob {
     Script script
 
