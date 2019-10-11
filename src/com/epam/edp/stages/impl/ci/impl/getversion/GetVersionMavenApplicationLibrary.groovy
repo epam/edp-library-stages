@@ -24,13 +24,18 @@ class GetVersionMavenApplicationLibrary {
 
     void run(context) {
         script.dir("${context.workDir}") {
-            context.codebase.version = script.sh(
-                    script: """
-                        mvn org.apache.maven.plugins:maven-help-plugin:2.1.1:evaluate \
+            script.withCredentials([script.usernamePassword(credentialsId: "${context.nexus.credentialsId}",
+                    passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]) {
+                context.codebase.version = script.sh(
+                        script: """
+                        ${context.buildTool.command} -Dartifactory.username=${script.USERNAME} -Dartifactory.password=${script.PASSWORD} \
+                        org.apache.maven.plugins:maven-help-plugin:2.1.1:evaluate \
                         -Dexpression=project.version -B |grep -Ev '(^\\[|Download\\w+:)'
                     """,
-                    returnStdout: true
-            ).trim().toLowerCase()
+                        returnStdout: true
+                ).trim().toLowerCase()
+            }
+
             context.codebase.deployableModule = script.sh(
                     script: "cat pom.xml | grep -Poh '<deployable.module>\\K[^<]*' || echo \"\"",
                     returnStdout: true
