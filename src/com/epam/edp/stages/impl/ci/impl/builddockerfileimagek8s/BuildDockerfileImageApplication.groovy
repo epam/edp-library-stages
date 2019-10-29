@@ -24,8 +24,8 @@ class BuildDockerfileImageApplication {
     Script script
 
     def setEnvVariable(envList, name, value, overwrite = false) {
-        if (!envList.find{ it.name == name } && overwrite)
-            envList.find{ it.name == name }.value = value
+        if (envList.find { it.name == name } && overwrite)
+            envList.find { it.name == name }.value = value
         else
             envList.add(['name': name, 'value': value])
     }
@@ -40,7 +40,7 @@ class BuildDockerfileImageApplication {
         setEnvVariable(awsCliInitContainerEnvs, "REPO_NAME", resultImageName, true)
         setEnvVariable(awsCliInitContainerEnvs, "AWS_DEFAULT_REGION", dockerRegistry.region)
 
-        dockerRegistry.region =  awsCliInitContainerEnvs.find{ it.name == "AWS_DEFAULT_REGION" }.value
+        dockerRegistry.region = awsCliInitContainerEnvs.find { it.name == "AWS_DEFAULT_REGION" }.value
         dockerRegistry.host = "${dockerRegistry.accountId}.dkr.ecr.${dockerRegistry.region}.amazonaws.com"
         parsedKanikoTemplateData.spec.containers[0].args[0] = "--destination=${dockerRegistry.host}/${resultImageName}:${context.codebase.buildVersion}"
         def jsonData = JsonOutput.toJson(parsedKanikoTemplateData)
@@ -57,8 +57,38 @@ class BuildDockerfileImageApplication {
             dockerRegistry.region = parsedMetadata.region
             return dockerRegistry
         }
-        catch(Exception ex) {
+        catch (Exception ex) {
             return null
+        }
+    }
+
+    def setCodebaseImageStreamTemplate(outputFilePath, cbisName, fullImageName, context) {
+        def cbisTemplateFilePath = new FilePath(Jenkins.getInstance().getComputer(script.env['NODE_NAME']).getChannel(), outputFilePath)
+        def cbisTemplateData = context.platform.getJsonPathValue("cm", "cbis-template", ".data.cbis\\.json")
+        def parsedCbisTemplateData = new JsonSlurperClassic().parseText(cbisTemplateData)
+        parsedCbisTemplateData.metadata.name = cbisName
+        parsedCbisTemplateData.spec.imageName = fullImageName
+
+        def jsonData = JsonOutput.toJson(parsedCbisTemplateData)
+        cbisTemplateFilePath.write(jsonData, null)
+        return cbisTemplateFilePath
+    }
+
+    def updateCodebaseimagestreams(cbisName, repositoryName, imageTag, context) {
+        def crApiGroup = "${context.job.getParameterValue("GIT_SERVER_CR_VERSION")}.edp.epam.com"
+        if (!context.platform.checkObjectExists("cbis.${crApiGroup}", cbisName)) {
+            script.println("[JENKINS][DEBUG] CodebaseImagestream not found. Creating new CodebaseImagestream")
+            def cbisTemplateFilePath = setCodebaseImageStreamTemplate("${context.workDir}/cbis-template.json", cbisName, repositoryName, context)
+            context.platform.apply(cbisTemplateFilePath.getRemote())
+        }
+        def cbisResource = context.platform.getJsonValue("cbis.${crApiGroup}", cbisName)
+        def parsedCbisResource = new JsonSlurperClassic().parseText(cbisResource)
+        def cbisTags = parsedCbisResource.spec.tags ? parsedCbisResource.spec.tags : []
+
+        if (!cbisTags.find{ it.name == imageTag }) {
+            cbisTags.add(['name':imageTag])
+            def newCbisTags = JsonOutput.toJson(cbisTags)
+            script.sh("kubectl patch --type=merge cbis.${crApiGroup} ${cbisName} -p '{\"spec\":{\"tags\":${newCbisTags}}}'")
         }
     }
 
@@ -99,12 +129,14 @@ class BuildDockerfileImageApplication {
                 }
 
                 script.println("[JENKINS][DEBUG] Build config ${buildconfigName} for application ${context.codebase.name} has been completed")
+
+                updateCodebaseimagestreams(resultImageName, "${dockerRegistry.host}/${resultImageName}", context.codebase.buildVersion, context)
             }
             catch (Exception ex) {
                 script.error("[JENKINS][ERROR] Building image for ${context.codebase.name} failed")
             }
             finally {
-                def podToDelete = "build-${context.codebase.name}-${context.git.branch.replaceAll("[^\\p{L}\\p{Nd}]+", "-")}-${script.BUILD_NUMBER.toInteger()-1}"
+                def podToDelete = "build-${context.codebase.name}-${context.git.branch.replaceAll("[^\\p{L}\\p{Nd}]+", "-")}-${script.BUILD_NUMBER.toInteger() - 1}"
                 context.platform.deleteObject("pod", podToDelete, true)
             }
         }
