@@ -47,7 +47,7 @@ class Deploy {
             if (file.isFile() && file.getName() == "Readme.md")
                 continue
             String configsDir = file.getName().split("\\.")[0].replaceAll("[^\\p{L}\\p{Nd}]+", "-").toLowerCase()
-            script.sh("oc create configmap ${name}-${configsDir} -n ${context.job.deployProject} --from-file=${codebaseDir}/config-files/${file.getName()} --dry-run -o yaml | oc apply -f -")
+            context.platform.createConfigMapFromFile("${name}-${configsDir}", context.job.deployProject, "${codebaseDir}/config-files/${file.getName()}")
             script.println("[JENKINS][DEBUG] Configmap ${configsDir} has been created")
         }
     }
@@ -55,62 +55,44 @@ class Deploy {
     def checkDeployment(context, object, type) {
         script.println("[JENKINS][DEBUG] Validate deployment - ${object.name} in ${context.job.deployProject}")
         try {
-            script.openshiftVerifyDeployment apiURL: '', authToken: '', depCfg: "${object.name}",
-                    namespace: "${context.job.deployProject}", verbose: 'false',
-                    verifyReplicaCount: 'true', waitTime: '600', waitUnit: 'sec'
+            context.platform.verifyDeployedCodebase(object.name, context.job.deployProject)
             if (type == 'application' && getDeploymentVersion(context, object) != object.currentDeploymentVersion) {
                 script.println("[JENKINS][DEBUG] Deployment ${object.name} in project ${context.job.deployProject} has been rolled out")
             } else
-                script.println("[JENKINS][DEBUG] New version of codebase ${object.name} hasn't been deployed, because the save version")
+                script.println("[JENKINS][DEBUG] New version of codebase ${object.name} hasn't been deployed, because the same version")
         }
         catch (Exception verifyDeploymentException) {
             if (type == "application" && object.currentDeploymentVersion != 0) {
                 script.println("[JENKINS][WARNING] Rolling out of ${object.name} with version ${object.version} has been failed.\r\n" +
                         "[JENKINS][WARNING] Rolling back to the previous version")
-                script.sh("oc -n ${context.job.deployProject} rollout undo dc ${object.name}")
-                script.openshiftVerifyDeployment apiURL: '', authToken: '', depCfg: "${object.name}",
-                        namespace: "${context.job.deployProject}", verbose: 'false',
-                        verifyReplicaCount: 'true', waitTime: '600', waitUnit: 'sec'
+                context.platform.rollbackDeployedCodebase(object.name, context.job.deployProject)
+                context.platform.verifyDeployedCodebase(object.name, context.job.deployProject)
                 script.println("[JENKINS][WARNING] Rolling out of ${object.name} with version ${object.version} has been failed.")
             } else
                 script.println("[JENKINS][WARNING] ${object.name} deploy has been failed. Reason - ${verifyDeploymentException}")
         }
-
     }
 
     def getDeploymentVersion(context, codebase) {
-        def deploymentExists = script.sh(
-                script: "oc -n ${context.job.deployProject} get dc ${codebase.name} --no-headers | awk '{print \$1}'",
-                returnStdout: true
-        ).trim()
-        if (deploymentExists == "") {
+        if (!context.platform.checkObjectExists("dc", codebase.name, context.job.deployProject)) {
             script.println("[JENKINS][WARNING] Deployment config ${codebase.name} doesn't exist in the project ${context.job.deployProject}\r\n" +
                     "[JENKINS][WARNING] We will roll it out")
             return null
         }
-        def version = script.sh(
-                script: "oc -n ${context.job.deployProject} get dc ${codebase.name} -o jsonpath=\'{.status.latestVersion}\'",
-                returnStdout: true
-        ).trim().toInteger()
-        return (version)
+        def version = context.platform.getJsonPathValue("dc", codebase.name, ".status.latestVersion", context.job.deployProject)
+        return (version.toInteger())
     }
 
     def checkImageExists(context, object) {
-        def imageExists = script.sh(
-                script: "oc -n ${context.job.metaProject} get is ${object.normalizedName} --no-headers | awk '{print \$1}'",
-                returnStdout: true
-        ).trim()
+        def imageExists = context.platform.getImageStream(object.normalizedName, context.job.crApiVersion)
         if (imageExists == "") {
             script.println("[JENKINS][WARNING] Image stream ${object.name} doesn't exist in the project ${context.job.metaProject}\r\n" +
                     "[JENKINS][WARNING] Deploy will be skipped")
             return false
         }
 
-        def tagExist = script.sh(
-                script: "oc -n ${context.job.metaProject} get is ${object.normalizedName} -o jsonpath='{.spec.tags[?(@.name==\"${object.version}\")].name}'",
-                returnStdout: true
-        ).trim()
-        if (tagExist == "") {
+        def tagExist = context.platform.getImageStreamTags(object.normalizedName, context.job.crApiVersion)
+        if (!tagExist) {
             script.println("[JENKINS][WARNING] Image stream ${object.name} with tag ${object.version} doesn't exist in the project ${context.job.metaProject}\r\n" +
                     "[JENKINS][WARNING] Deploy will be skipped")
             return false
@@ -149,24 +131,23 @@ class Deploy {
 
     def getRepositoryPath(codebase) {
         if (codebase.strategy == "import") {
-            return codebase.gitprojectpath
+            return codebase.gitProjectPath
         }
         return "/" + codebase.name
     }
 
     def cloneProject(context, codebase) {
-        script.println("[JENKINS][DEBUG] Start fetching Git Server info for ${codebase.name} from ${codebase.gitserver} CR")
+        script.println("[JENKINS][DEBUG] Start fetching Git Server info for ${codebase.name} from ${codebase.gitServer} CR")
 
-        def gitServerCrVersion = context.job.getParameterValue("GIT_SERVER_CR_VERSION")
-        def gitServerName = "gitservers.${gitServerCrVersion}.edp.epam.com"
+        def gitServerName = "gitservers.${context.job.crApiVersion}.edp.epam.com"
 
-        script.println("[JENKINS][DEBUG] Git Server CR Version: ${gitServerCrVersion}")
+        script.println("[JENKINS][DEBUG] Git Server CR Version: ${context.job.crApiVersion}")
         script.println("[JENKINS][DEBUG] Git Server Name: ${gitServerName}")
 
-        def autouser = context.platform.getJsonPathValue(gitServerName, codebase.gitserver, ".spec.gitUser")
-        def host = context.platform.getJsonPathValue(gitServerName, codebase.gitserver, ".spec.gitHost")
-        def sshPort = context.platform.getJsonPathValue(gitServerName, codebase.gitserver, ".spec.sshPort")
-        def credentialsId = context.platform.getJsonPathValue(gitServerName, codebase.gitserver, ".spec.nameSshKeySecret")
+        def autouser = context.platform.getJsonPathValue(gitServerName, codebase.gitServer, ".spec.gitUser")
+        def host = context.platform.getJsonPathValue(gitServerName, codebase.gitServer, ".spec.gitHost")
+        def sshPort = context.platform.getJsonPathValue(gitServerName, codebase.gitServer, ".spec.sshPort")
+        def credentialsId = context.platform.getJsonPathValue(gitServerName, codebase.gitServer, ".spec.nameSshKeySecret")
 
         script.println("[JENKINS][DEBUG] autouser: ${autouser}")
         script.println("[JENKINS][DEBUG] host: ${host}")
@@ -198,16 +179,6 @@ class Deploy {
         return true
     }
 
-    def deployConfigMapTemplate(context, codebase, deployTemplatesPath) {
-        def templateName = codebase.name + '-deploy-config-' + context.job.stageWithoutPrefixName
-        if (!checkTemplateExists(templateName, deployTemplatesPath))
-            return
-
-        script.sh("oc -n ${context.job.deployProject} process -f ${deployTemplatesPath}/${templateName}.yaml " +
-                "--local=true -o json | oc -n ${context.job.deployProject} apply -f -")
-        script.println("[JENKINS][DEBUG] Config map with name ${templateName}.yaml for codebase ${codebase.name} has been deployed")
-    }
-
     def deployCodebaseTemplate(context, codebase, deployTemplatesPath) {
         codebase.currentDeploymentVersion = getDeploymentVersion(context, codebase)
         def templateName = "${codebase.name}-install-${context.job.stageWithoutPrefixName}"
@@ -223,12 +194,12 @@ class Deploy {
         }
 
         def imageName = codebase.inputIs ? codebase.inputIs : codebase.normalizedName
-        script.sh("oc -n ${context.job.deployProject} process -f ${deployTemplatesPath}/${templateName}.yaml " +
-                "-p IMAGE_NAME=${context.job.metaProject}/${imageName} " +
-                "-p APP_VERSION=${codebase.version} " +
-                "-p NAMESPACE=${context.job.deployProject} " +
-                "--local=true -o json | oc -n ${context.job.deployProject} apply -f -")
-
+        context.platform.deployCodebase(
+                context.job.deployProject,
+                "${deployTemplatesPath}/${templateName}.yaml",
+                "${context.job.metaProject}/${imageName}",
+                codebase, context.job.dnsWildcard
+        )
         checkDeployment(context, codebase, 'application')
     }
 
@@ -248,7 +219,6 @@ class Deploy {
             if (!cloneProject(context, codebase))
                 return
             deployConfigMaps(codebaseDir, name, context)
-            deployConfigMapTemplate(context, codebase, deployTemplatesPath)
             try {
                 deployCodebaseTemplate(context, codebase, deployTemplatesPath)
             }
@@ -270,36 +240,22 @@ class Deploy {
 
     void run(context) {
         script.openshift.withCluster() {
-            if (!script.openshift.selector("namespace", context.job.deployProject).exists()) {
-                script.openshift.newProject(context.job.deployProject)
-                def groupList = ["${context.job.edpName}-edp-super-admin", "${context.job.edpName}-edp-admin"]
-                groupList.each() { group ->
-                    script.sh("oc adm policy add-role-to-group admin ${group} -n ${context.job.deployProject}")
-                }
-                script.sh("oc adm policy add-role-to-group view ${context.job.edpName}-edp-view -n ${context.job.deployProject}")
-            }
+            context.platform.createProjectIfNotExist(context.job.deployProject, context.job.edpName)
+            def secretSelector = context.platform.getObjectList("secret")
 
-            def secretSelector = script.openshift.selector('secrets')
-
-            secretSelector.withEach { item ->
-                def sharedSecretName = item.name().split('/')[1]
+            secretSelector.withEach { secret ->
+                def sharedSecretName = secret.name().split('/')[1]
                 def secretName = sharedSecretName.replace(context.job.sharedSecretsMask, '')
-                if (sharedSecretName =~ /${context.job.sharedSecretsMask}/) {
-                    if (!script.openshift.withProject(context.job.deployProject) {
-                        script.openshift.selector('secrets', secretName).exists()
-                    }) {
-                        script.sh("oc get --export -o yaml secret ${sharedSecretName} | " +
-                                "sed -e 's/name: ${sharedSecretName}/name: ${secretName}/' | " +
-                                "oc -n ${context.job.deployProject} apply -f -")
-                    }
-                }
+                if (sharedSecretName =~ /${context.job.sharedSecretsMask}/)
+                    if (!context.platform.checkObjectExists('secrets', secretName))
+                        context.platform.copySharedSecrets(sharedSecretName, secretName, context.job.deployProject)
             }
 
             if (context.job.buildUser == null || context.job.buildUser == "")
                 context.job.buildUser = getBuildUserFromLog(context)
 
             if (context.job.buildUser != null && context.job.buildUser != "") {
-                script.sh("oc adm policy add-role-to-user admin ${context.job.buildUser} -n ${context.job.deployProject}")
+                context.platform.createRoleBinding(context.job.buildUser, context.job.deployProject)
             }
 
             while (!context.job.servicesList.isEmpty()) {
