@@ -270,7 +270,7 @@ class Deploy {
 
     void run(context) {
         script.openshift.withCluster() {
-            if (!script.openshift.selector("project", context.job.deployProject).exists()) {
+            if (!script.openshift.selector("namespace", context.job.deployProject).exists()) {
                 script.openshift.newProject(context.job.deployProject)
                 def groupList = ["${context.job.edpName}-edp-super-admin", "${context.job.edpName}-edp-admin"]
                 groupList.each() { group ->
