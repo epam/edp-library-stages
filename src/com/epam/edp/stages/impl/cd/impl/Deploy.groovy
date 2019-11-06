@@ -70,6 +70,7 @@ class Deploy {
                 script.println("[JENKINS][WARNING] Rolling out of ${object.name} with version ${object.version} has been failed.")
             } else
                 script.println("[JENKINS][WARNING] ${object.name} deploy has been failed. Reason - ${verifyDeploymentException}")
+            throw(verifyDeploymentException)
         }
     }
 
@@ -168,10 +169,10 @@ class Deploy {
                                                                   url          : "${gitCodebaseUrl}"]]])
         }
         catch (Exception ex) {
-            script.println("[JENKINS][WARNING] Project ${codebase.name} cloning has failed with ${ex}\r\n" +
+            script.unstable("[JENKINS][WARNING] Project ${codebase.name} cloning has failed with ${ex}\r\n" +
                     "[JENKINS][WARNING] Deploy will be skipped\r\n" +
                     "[JENKINS][WARNING] Check if tag ${codebase.version} exists in repository")
-            script.currentBuild.result = 'UNSTABLE'
+            script.currentBuild.setResult('UNSTABLE')
             script.currentBuild.description = "${script.currentBuild.description}\r\n${codebase.name} deploy failed"
             return false
         }
@@ -216,15 +217,18 @@ class Deploy {
         def codebaseDir = "${script.WORKSPACE}/${RandomStringUtils.random(10, true, true)}/${name}"
         def deployTemplatesPath = "${codebaseDir}/${context.job.deployTemplatesDirectory}"
         script.dir("${codebaseDir}") {
-            if (!cloneProject(context, codebase))
+            if (!cloneProject(context, codebase)) {
+                context.job.applicationsToPromote.remove(codebase.name)
                 return
+            }
             deployConfigMaps(codebaseDir, name, context)
             try {
                 deployCodebaseTemplate(context, codebase, deployTemplatesPath)
             }
             catch (Exception ex) {
-                script.println("[JENKINS][WARNING] Deployment of codebase ${name} has been failed. Reason - ${ex}.")
-                script.currentBuild.result = 'UNSTABLE'
+                script.unstable("[JENKINS][WARNING] Deployment of codebase ${name} has been failed. Reason - ${ex}.")
+                script.currentBuild.setResult('UNSTABLE')
+                context.job.applicationsToPromote.remove(codebase.name)
             }
         }
     }
