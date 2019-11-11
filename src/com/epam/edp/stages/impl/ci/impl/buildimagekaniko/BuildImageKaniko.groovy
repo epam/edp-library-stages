@@ -11,7 +11,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 
 See the License for the specific language governing permissions and
 limitations under the License.*/
-package com.epam.edp.stages.impl.ci.impl.builddockerfileimagek8s
+package com.epam.edp.stages.impl.ci.impl.buildimagekaniko
 
 import groovy.json.JsonOutput
 import groovy.json.JsonSlurperClassic
@@ -19,8 +19,8 @@ import com.epam.edp.stages.impl.ci.ProjectType
 import com.epam.edp.stages.impl.ci.Stage
 import hudson.FilePath
 
-@Stage(name = "build-image-from-dockerfile-k8s", buildTool = ["maven", "npm", "gradle", "dotnet"], type = [ProjectType.APPLICATION])
-class BuildDockerfileImageApplication {
+@Stage(name = "build-image-kaniko", buildTool = ["maven", "npm", "gradle", "dotnet"], type = [ProjectType.APPLICATION])
+class BuildImageKaniko {
     Script script
 
     def setEnvVariable(envList, name, value, overwrite = false) {
