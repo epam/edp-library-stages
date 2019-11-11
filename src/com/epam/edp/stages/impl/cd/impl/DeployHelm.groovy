@@ -185,6 +185,8 @@ class DeployHelm {
 
         def dockerRegistry = getDockerRegistryInfo()
         dockerRegistry.host = "${dockerRegistry.accountId}.dkr.ecr.${dockerRegistry.region}.amazonaws.com"
+        codebase.cdPipelineName = context.job.pipelineName
+        codebase.cdPipelineStageName = context.job.stageName
 
         def imageName = codebase.inputIs ? codebase.inputIs : codebase.normalizedName
         context.platform.deployCodebase(
