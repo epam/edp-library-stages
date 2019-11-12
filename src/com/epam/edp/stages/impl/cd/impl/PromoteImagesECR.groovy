@@ -108,7 +108,7 @@ class PromoteImagesECR {
                         def dockerfileFile = new File("${context.workDir}/Dockerfile")
                         def dockerfilePath = new FilePath(dockerfileFile)
 
-                        def sourceImageName = "${codebase.normalizedName}:${codebase.version}"
+                        def sourceImageName = "${codebase.inputIs}:${codebase.version}"
                         def resultImageName = "${codebase.outputIs}:${codebase.version}"
                         def buildconfigName = "promote-${codebase.outputIs}-${script.BUILD_NUMBER}"
                         def dockerfileContents = "FROM ${dockerRegistry.accountId}.dkr.ecr.${dockerRegistry.region}.amazonaws.com/${sourceImageName}"
@@ -150,7 +150,7 @@ class PromoteImagesECR {
                             }
                         }
 
-                        script.println("[JENKINS][INFO] Image ${codebase.normalizedName}:${codebase.version} has been promoted to ${codebase.outputIs}")
+                        script.println("[JENKINS][INFO] Image ${codebase.inputIs}:${codebase.version} has been promoted to ${codebase.outputIs}")
                     }
                 }
             }

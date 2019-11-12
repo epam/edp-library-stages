@@ -85,14 +85,14 @@ class Deploy {
     }
 
     def checkImageExists(context, object) {
-        def imageExists = context.platform.getImageStream(object.normalizedName, context.job.crApiVersion)
+        def imageExists = context.platform.getImageStream(object.inputIs, context.job.crApiVersion)
         if (imageExists == "") {
             script.println("[JENKINS][WARNING] Image stream ${object.name} doesn't exist in the project ${context.job.metaProject}\r\n" +
                     "[JENKINS][WARNING] Deploy will be skipped")
             return false
         }
 
-        def tagExist = context.platform.getImageStreamTags(object.normalizedName, context.job.crApiVersion)
+        def tagExist = context.platform.getImageStreamTags(object.inputIs, context.job.crApiVersion)
         if (!tagExist) {
             script.println("[JENKINS][WARNING] Image stream ${object.name} with tag ${object.version} doesn't exist in the project ${context.job.metaProject}\r\n" +
                     "[JENKINS][WARNING] Deploy will be skipped")
@@ -103,11 +103,11 @@ class Deploy {
 
     def getNumericVersion(context, codebase) {
         def hash = script.sh(
-                script: "oc -n ${context.job.metaProject} get is ${codebase.normalizedName} -o jsonpath=\'{@.spec.tags[?(@.name==\"${codebase.version}\")].from.name}\'",
+                script: "oc -n ${context.job.metaProject} get is ${codebase.inputIs} -o jsonpath=\'{@.spec.tags[?(@.name==\"${codebase.version}\")].from.name}\'",
                 returnStdout: true
         ).trim()
         def tags = script.sh(
-                script: "oc -n ${context.job.metaProject} get is ${codebase.normalizedName} -o jsonpath=\'{@.spec.tags[?(@.from.name==\"${hash}\")].name}\'",
+                script: "oc -n ${context.job.metaProject} get is ${codebase.inputIs} -o jsonpath=\'{@.spec.tags[?(@.from.name==\"${hash}\")].name}\'",
                 returnStdout: true
         ).trim().tokenize()
         tags.removeAll { it == "latest" }
@@ -161,11 +161,11 @@ class Deploy {
         def gitCodebaseUrl = "ssh://${autouser}@${host}:${sshPort}${repoPath}"
 
         try {
-            script.checkout([$class                           : 'GitSCM', branches: [[name: "refs/tags/${codebase.branch}-${codebase.version}"]],
+            script.checkout([$class                           : 'GitSCM', branches: [[name: "refs/tags/${codebase.version}"]],
                              doGenerateSubmoduleConfigurations: false, extensions: [],
                              submoduleCfg                     : [],
                              userRemoteConfigs                : [[credentialsId: "${credentialsId}",
-                                                                  refspec      : "refs/tags/${codebase.branch}-${codebase.version}",
+                                                                  refspec      : "refs/tags/${codebase.version}",
                                                                   url          : "${gitCodebaseUrl}"]]])
         }
         catch (Exception ex) {

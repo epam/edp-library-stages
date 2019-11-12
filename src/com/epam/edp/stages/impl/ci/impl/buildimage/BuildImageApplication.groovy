@@ -23,6 +23,8 @@ class BuildImageApplication {
         context.codebase.imageBuildArgs.push("--image-stream=s2i-${context.codebase.config.language.toLowerCase()}")
         def resultTag
         def targetTags = [context.codebase.buildVersion, "latest"]
+        script.println("[JENKINS][DEBUG] Target tags for ${context.codebase.name} codebase: ${targetTags}")
+
         script.openshift.withCluster() {
             script.openshift.withProject() {
                 if (!script.openshift.selector("buildconfig", "${buildconfigName}").exists())
@@ -41,7 +43,7 @@ class BuildImageApplication {
 
                 targetTags.each() { tagName ->
                     script.openshift.tag("${script.openshift.project()}/${buildconfigName}@${resultTag}",
-                            "${script.openshift.project()}/${buildconfigName}:${tagName}")
+                            "${script.openshift.project()}/${buildconfigName}:${context.git.branch}-${tagName}")
                 }
             }
         }

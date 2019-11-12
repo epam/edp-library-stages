@@ -42,7 +42,7 @@ class BuildImageKaniko {
 
         dockerRegistry.region = awsCliInitContainerEnvs.find { it.name == "AWS_DEFAULT_REGION" }.value
         dockerRegistry.host = "${dockerRegistry.accountId}.dkr.ecr.${dockerRegistry.region}.amazonaws.com"
-        parsedKanikoTemplateData.spec.containers[0].args[0] = "--destination=${dockerRegistry.host}/${resultImageName}:${context.codebase.buildVersion}"
+        parsedKanikoTemplateData.spec.containers[0].args[0] = "--destination=${dockerRegistry.host}/${resultImageName}:${context.git.branch}-${context.codebase.buildVersion}"
         def jsonData = JsonOutput.toJson(parsedKanikoTemplateData)
         kanikoTemplateFilePath.write(jsonData, null)
         return kanikoTemplateFilePath
