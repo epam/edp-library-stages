@@ -13,10 +13,10 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 package com.epam.edp.stages.impl.ci.impl.buildimagekaniko
 
-import groovy.json.JsonOutput
-import groovy.json.JsonSlurperClassic
 import com.epam.edp.stages.impl.ci.ProjectType
 import com.epam.edp.stages.impl.ci.Stage
+import groovy.json.JsonOutput
+import groovy.json.JsonSlurperClassic
 import hudson.FilePath
 
 @Stage(name = "build-image-kaniko", buildTool = ["maven", "npm", "gradle", "dotnet"], type = [ProjectType.APPLICATION])
@@ -85,8 +85,8 @@ class BuildImageKaniko {
         def parsedCbisResource = new JsonSlurperClassic().parseText(cbisResource)
         def cbisTags = parsedCbisResource.spec.tags ? parsedCbisResource.spec.tags : []
 
-        if (!cbisTags.find{ it.name == imageTag }) {
-            cbisTags.add(['name':imageTag])
+        if (!cbisTags.find { it.name == imageTag }) {
+            cbisTags.add(['name': imageTag])
             def newCbisTags = JsonOutput.toJson(cbisTags)
             script.sh("kubectl patch --type=merge cbis.${crApiGroup} ${cbisName} -p '{\"spec\":{\"tags\":${newCbisTags}}}'")
         }
@@ -130,7 +130,8 @@ class BuildImageKaniko {
 
                 script.println("[JENKINS][DEBUG] Build config ${buildconfigName} for application ${context.codebase.name} has been completed")
 
-                updateCodebaseimagestreams(resultImageName, "${dockerRegistry.host}/${resultImageName}", context.codebase.buildVersion, context)
+                updateCodebaseimagestreams(resultImageName, "${dockerRegistry.host}/${resultImageName}",
+                        "${context.git.branch}-${context.codebase.buildVersion}", context)
             }
             catch (Exception ex) {
                 script.error("[JENKINS][ERROR] Building image for ${context.codebase.name} failed")
