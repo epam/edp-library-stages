@@ -24,7 +24,7 @@ class Deploy {
     def getBuildUserFromLog(context) {
         def jenkinsCred = "admin:${context.jenkins.token}".bytes.encodeBase64().toString()
         def jobUrl = "${context.job.buildUrl}".replaceFirst("${context.job.jenkinsUrl}", '')
-        def response = script.httpRequest url: "http://jenkins.${context.job.edpName}-edp-cicd:8080/${jobUrl}consoleText",
+        def response = script.httpRequest url: "http://jenkins.${context.job.ciProject}:8080/${jobUrl}consoleText",
                 httpMode: 'GET',
                 customHeaders: [[name: 'Authorization', value: "Basic ${jenkinsCred}"]]
         return script.sh(
@@ -35,7 +35,7 @@ class Deploy {
 
     def checkOpenshiftTemplateExists(context, templateName) {
         if (!script.openshift.selector("template", templateName).exists()) {
-            script.println("[JENKINS][WARNING] Template which called ${templateName} doesn't exist in ${context.job.edpName}-edp-cicd namespace")
+            script.println("[JENKINS][WARNING] Template which called ${templateName} doesn't exist in ${context.job.ciProject} namespace")
             return false
         }
         return true
@@ -273,7 +273,7 @@ class Deploy {
                     script.sh("oc adm policy add-scc-to-user anyuid -z ${service.name} -n ${context.job.deployProject}")
 
                     parallelServices["${service.name}"] = {
-                        script.sh("oc -n ${context.job.edpName}-edp-cicd process ${service.name} " +
+                        script.sh("oc -n ${context.job.ciProject} process ${service.name} " +
                                 "-p SERVICE_VERSION=${service.version} " +
                                 "-o json | oc -n ${context.job.deployProject} apply -f -")
                         checkDeployment(context, service, 'service')
