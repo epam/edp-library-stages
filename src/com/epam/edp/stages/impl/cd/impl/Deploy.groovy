@@ -87,14 +87,14 @@ class Deploy {
     def checkImageExists(context, object) {
         def imageExists = context.platform.getImageStream(object.inputIs, context.job.crApiVersion)
         if (imageExists == "") {
-            script.println("[JENKINS][WARNING] Image stream ${object.name} doesn't exist in the project ${context.job.metaProject}\r\n" +
+            script.println("[JENKINS][WARNING] Image stream ${object.name} doesn't exist in the project ${context.job.ciProject}\r\n" +
                     "[JENKINS][WARNING] Deploy will be skipped")
             return false
         }
 
         def tagExist = context.platform.getImageStreamTags(object.inputIs, context.job.crApiVersion)
         if (!tagExist) {
-            script.println("[JENKINS][WARNING] Image stream ${object.name} with tag ${object.version} doesn't exist in the project ${context.job.metaProject}\r\n" +
+            script.println("[JENKINS][WARNING] Image stream ${object.name} with tag ${object.version} doesn't exist in the project ${context.job.ciProject}\r\n" +
                     "[JENKINS][WARNING] Deploy will be skipped")
             return false
         }
@@ -103,11 +103,11 @@ class Deploy {
 
     def getNumericVersion(context, codebase) {
         def hash = script.sh(
-                script: "oc -n ${context.job.metaProject} get is ${codebase.inputIs} -o jsonpath=\'{@.spec.tags[?(@.name==\"${codebase.version}\")].from.name}\'",
+                script: "oc -n ${context.job.ciProject} get is ${codebase.inputIs} -o jsonpath=\'{@.spec.tags[?(@.name==\"${codebase.version}\")].from.name}\'",
                 returnStdout: true
         ).trim()
         def tags = script.sh(
-                script: "oc -n ${context.job.metaProject} get is ${codebase.inputIs} -o jsonpath=\'{@.spec.tags[?(@.from.name==\"${hash}\")].name}\'",
+                script: "oc -n ${context.job.ciProject} get is ${codebase.inputIs} -o jsonpath=\'{@.spec.tags[?(@.from.name==\"${hash}\")].name}\'",
                 returnStdout: true
         ).trim().tokenize()
         tags.removeAll { it == "latest" }
@@ -198,7 +198,7 @@ class Deploy {
         context.platform.deployCodebase(
                 context.job.deployProject,
                 "${deployTemplatesPath}/${templateName}.yaml",
-                "${context.job.metaProject}/${imageName}",
+                "${context.job.ciProject}/${imageName}",
                 codebase, context.job.dnsWildcard
         )
         checkDeployment(context, codebase, 'application')

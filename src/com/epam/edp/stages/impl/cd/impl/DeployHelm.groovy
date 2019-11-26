@@ -98,14 +98,14 @@ class DeployHelm {
     def checkImageExists(context, object) {
         def imageExists = context.platform.getImageStream(object.inputIs, context.job.crApiVersion)
         if (imageExists == "") {
-            script.println("[JENKINS][WARNING] Image stream ${object.name} doesn't exist in the project ${context.job.metaProject}\r\n" +
+            script.println("[JENKINS][WARNING] Image stream ${object.name} doesn't exist in the project ${context.job.ciProject}\r\n" +
                     "[JENKINS][WARNING] Deploy will be skipped")
             return false
         }
 
         def tagExist = context.platform.getImageStreamTags(object.inputIs, context.job.crApiVersion)
         if (!tagExist) {
-            script.println("[JENKINS][WARNING] Image stream ${object.name} with tag ${object.version} doesn't exist in the project ${context.job.metaProject}\r\n" +
+            script.println("[JENKINS][WARNING] Image stream ${object.name} with tag ${object.version} doesn't exist in the project ${context.job.ciProject}\r\n" +
                     "[JENKINS][WARNING] Deploy will be skipped")
             return false
         }
