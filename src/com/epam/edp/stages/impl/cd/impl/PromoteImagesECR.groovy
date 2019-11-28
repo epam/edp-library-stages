@@ -19,6 +19,9 @@ import groovy.json.JsonSlurperClassic
 import hudson.FilePath
 import org.apache.commons.lang.RandomStringUtils
 
+import java.text.DateFormat
+import java.text.SimpleDateFormat
+
 @Stage(name = "promote-images-ecr")
 class PromoteImagesECR {
     Script script
@@ -89,7 +92,8 @@ class PromoteImagesECR {
         def cbisTags = parsedCbisResource.spec.tags ? parsedCbisResource.spec.tags : []
 
         if (!cbisTags.find { it.name == imageTag }) {
-            cbisTags.add(['name': imageTag])
+            DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss")
+            cbisTags.add(['name': imageTag, 'created': dateFormat.format(new Date())])
             def newCbisTags = JsonOutput.toJson(cbisTags)
             script.sh("kubectl patch --type=merge cbis.${crApiGroup} ${cbisName} -p '{\"spec\":{\"tags\":${newCbisTags}}}'")
         }
