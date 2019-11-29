@@ -22,7 +22,7 @@ class BuildImageApplication {
         context.codebase.imageBuildArgs.push("--name=${buildconfigName}")
         context.codebase.imageBuildArgs.push("--image-stream=s2i-${context.codebase.config.language.toLowerCase()}")
         def resultTag
-        def targetTags = [context.codebase.buildVersion, "latest"]
+        def targetTags = [context.codebase.buildVersion]
         script.println("[JENKINS][DEBUG] Target tags for ${context.codebase.name} codebase: ${targetTags}")
 
         script.openshift.withCluster() {
