@@ -18,73 +18,83 @@ import org.apache.commons.lang.RandomStringUtils
 import com.epam.edp.stages.impl.cd.Stage
 import groovy.json.JsonSlurperClassic
 import hudson.FilePath
+import com.epam.edp.buildtool.BuildToolFactory
 
-@Stage(name = "automation-tests")
+@Stage(name = "autotests")
 class AutomationTests {
     Script script
 
-    def generateSshLink(context) {
-        return context.job.gitProjectPath?.trim() ?
-                "ssh://${context.job.autouser}@${context.job.host}:${context.job.sshPort}${context.job.gitProjectPath}" :
-                "ssh://${context.job.autouser}@${context.job.host}:${context.job.sshPort}/${context.job.autotestName}"
+    def generateSshLink(context, qualityGate) {
+        def commonSshLinkPart = "ssh://${context.job.autouser}@${context.job.host}:${context.job.sshPort}"
+        return qualityGate.autotest.gitProjectPath?.trim() ?
+                "${commonSshLinkPart}${qualityGate.autotest.gitProjectPath}" :
+                "${commonSshLinkPart}/${qualityGate.autotest.name}"
     }
 
     void run(context) {
-        def codebaseDir = "${script.WORKSPACE}/${RandomStringUtils.random(10, true, true)}/${context.job.autotestName}"
-        script.dir("${codebaseDir}") {
-            def gitCodebaseUrl = generateSshLink(context)
+        def qualityGate = context.job.qualityGates.find{it.stepName == context.stepName}
+        script.println("[JENKINS][DEBUG] Quality gate content - ${qualityGate}")
 
-            script.checkout([$class                           : 'GitSCM', branches: [[name: "${context.job.autotestBranch}"]],
-                             doGenerateSubmoduleConfigurations: false, extensions: [],
-                             submoduleCfg                     : [],
-                             userRemoteConfigs                : [[credentialsId: "${context.job.credentialsId}",
-                                                                  url          : "${gitCodebaseUrl}"]]])
+        script.node(qualityGate.autotest.build_tool.toLowerCase()) {
+            context.buildTool = new BuildToolFactory().getBuildToolImpl(qualityGate.autotest.build_tool, script, context.nexus)
+            context.buildTool.init()
+            context.job.setGitServerDataToJobContext(qualityGate.autotest.gitServer)
 
-            if (!script.fileExists("${codebaseDir}/run.json"))
-                script.error "[JENKINS][ERROR] There is no run.json file in the project ${context.job.autotestName}. " +
-                        "Can't define command to run autotests"
+            def codebaseDir = "${script.WORKSPACE}/${RandomStringUtils.random(10, true, true)}/${qualityGate.autotest.name}"
+            script.dir("${codebaseDir}") {
+                def gitCodebaseUrl = generateSshLink(context, qualityGate)
 
-            def runCommandFile = ""
-            if (script.env['NODE_NAME'].equals("master")) {
-                def jsonFile = new File("${codebaseDir}/run.json")
-                runCommandFile = new FilePath(jsonFile).readToString()
-            } else {
-                runCommandFile = new FilePath(
-                        Jenkins.getInstance().getComputer(script.env['NODE_NAME']).getChannel(),
-                        "${codebaseDir}/run.json").readToString()
-            }
+                script.checkout([$class                           : 'GitSCM', branches: [[name: "${qualityGate.codebaseBranch.branchName}"]],
+                                 doGenerateSubmoduleConfigurations: false, extensions: [],
+                                 submoduleCfg                     : [],
+                                 userRemoteConfigs                : [[credentialsId: "${context.job.credentialsId}",
+                                                                      url          : "${gitCodebaseUrl}"]]])
 
-            def parsedRunCommandJson = new JsonSlurperClassic().parseText(runCommandFile)
+                if (!script.fileExists("${codebaseDir}/run.json"))
+                    script.error "[JENKINS][ERROR] There is no run.json file in the project ${qualityGate.autotest.name}. " +
+                            "Can't define command to run autotests"
 
-            if (!(context.job.stageName in parsedRunCommandJson.keySet()))
-                script.error "[JENKINS][ERROR] Haven't found ${context.job.stageName} command in file run.json. " +
-                        "It's mandatory to be specified, please check"
+                def runCommandFile = ""
+                if (script.env['NODE_NAME'].equals("master")) {
+                    def jsonFile = new File("${codebaseDir}/run.json")
+                    runCommandFile = new FilePath(jsonFile).readToString()
+                } else {
+                    runCommandFile = new FilePath(
+                            Jenkins.getInstance().getComputer(script.env['NODE_NAME']).getChannel(),
+                            "${codebaseDir}/run.json").readToString()
+                }
 
-            def runCommand = parsedRunCommandJson["${context.job.stageName}"]
-            try {
-                script.sh "${runCommand} -B --settings ${context.buildTool.settings}"
-            }
-            catch (Exception ex) {
-                script.error "[JENKINS][ERROR] Tests from ${context.job.autotestName} have been failed. Reason - ${ex}"
-            }
-            finally {
-                switch ("${context.job.testReportFramework}") {
-                    case "allure":
-                        script.allure([
-                                includeProperties: false,
-                                jdk              : '',
-                                properties       : [],
-                                reportBuildPolicy: 'ALWAYS',
-                                results          : [[path: 'target/allure-results']]
-                        ])
-                        break
-                    default:
-                        script.println("[JENKINS][WARNING] Can't publish test results. Testing framework is undefined.")
-                        break
+                def parsedRunCommandJson = new JsonSlurperClassic().parseText(runCommandFile)
+
+                if (!(context.job.stageName in parsedRunCommandJson.keySet()))
+                    script.error "[JENKINS][ERROR] Haven't found ${context.job.stageName} command in file run.json. " +
+                            "It's mandatory to be specified, please check"
+
+                def runCommand = parsedRunCommandJson["${context.job.stageName}"]
+                try {
+                    script.sh "${runCommand} -B --settings ${context.buildTool.settings}"
+                }
+                catch (Exception ex) {
+                    script.error "[JENKINS][ERROR] Tests from ${qualityGate.autotest.name} have been failed. Reason - ${ex}"
+                }
+                finally {
+                    switch ("${qualityGate.autotest.testReportFramework}") {
+                        case "allure":
+                            script.allure([
+                                    includeProperties: false,
+                                    jdk              : '',
+                                    properties       : [],
+                                    reportBuildPolicy: 'ALWAYS',
+                                    results          : [[path: 'target/allure-results']]
+                            ])
+                            break
+                        default:
+                            script.println("[JENKINS][WARNING] Can't publish test results. Testing framework is undefined.")
+                            break
+                    }
                 }
             }
         }
-
     }
 }
 
