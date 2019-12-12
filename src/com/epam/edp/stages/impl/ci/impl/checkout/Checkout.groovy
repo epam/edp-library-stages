@@ -31,7 +31,6 @@ class Checkout {
                       userRemoteConfigs                : [[credentialsId: "${context.git.credentialsId}",
                                                            url          : "${context.codebase.config.cloneUrl}"]]])
         }
-        context.factory.loadCustomStages("${context.workDir}/stages").each() { context.factory.add(it) }
     }
 }
 
