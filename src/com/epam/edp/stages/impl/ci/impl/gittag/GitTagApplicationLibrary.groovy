@@ -18,7 +18,7 @@ package com.epam.edp.stages.impl.ci.impl.gittag
 import com.epam.edp.stages.impl.ci.ProjectType
 import com.epam.edp.stages.impl.ci.Stage
 
-@Stage(name = "git-tag", buildTool = ["gradle", "maven", "dotnet", "npm"], type = [ProjectType.APPLICATION, ProjectType.LIBRARY])
+@Stage(name = "git-tag", buildTool = ["gradle", "maven", "dotnet", "npm", "any"], type = [ProjectType.APPLICATION, ProjectType.LIBRARY])
 class GitTagApplicationLibrary {
     Script script
 
