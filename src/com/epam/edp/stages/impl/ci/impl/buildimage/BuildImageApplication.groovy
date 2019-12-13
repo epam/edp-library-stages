@@ -40,11 +40,10 @@ class BuildImageApplication {
                 script.println("[JENKINS][DEBUG] Build config ${context.codebase.name} with result " +
                         "${buildconfigName}:${resultTag} has been completed")
 
-
-                targetTags.each() { tagName ->
-                    script.openshift.tag("${script.openshift.project()}/${buildconfigName}@${resultTag}",
-                            "${script.openshift.project()}/${buildconfigName}:${context.git.branch}-${tagName}")
-                }
+                script.openshift.tag(
+                        "${script.openshift.project()}/${buildconfigName}@${resultTag}",
+                        "${script.openshift.project()}/${buildconfigName}:${context.git.branch}-${context.codebase.buildVersion}"
+                )
             }
         }
     }

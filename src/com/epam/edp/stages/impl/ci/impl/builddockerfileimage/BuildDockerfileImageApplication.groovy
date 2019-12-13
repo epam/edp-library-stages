@@ -26,7 +26,6 @@ class BuildDockerfileImageApplication {
         context.codebase.imageBuildArgs.push("--name=${buildconfigName}")
         context.codebase.imageBuildArgs.push("--to=${outputImagestreamName}")
         def resultTag
-        def targetTags = [context.codebase.buildVersion, "latest"]
         script.openshift.withCluster() {
             script.openshift.withProject() {
                 if (!script.openshift.selector("buildconfig", "${buildconfigName}").exists())
@@ -45,11 +44,8 @@ class BuildDockerfileImageApplication {
                 script.println("[JENKINS][DEBUG] Build config ${context.codebase.name} with result " +
                         "${buildconfigName}:${resultTag} has been completed")
 
-
-                targetTags.each() { tagName ->
-                    script.openshift.tag("${script.openshift.project()}/${outputImagestreamName}@${resultTag}",
-                            "${script.openshift.project()}/${outputImagestreamName}:${tagName}")
-                }
+                script.openshift.tag("${script.openshift.project()}/${outputImagestreamName}@${resultTag}",
+                        "${script.openshift.project()}/${outputImagestreamName}:${context.git.branch}-${context.codebase.buildVersion}")
             }
         }
     }
