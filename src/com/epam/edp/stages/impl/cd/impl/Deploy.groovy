@@ -52,36 +52,20 @@ class Deploy {
         }
     }
 
-    def checkDeployment(context, object, type) {
-        script.println("[JENKINS][DEBUG] Validate deployment - ${object.name} in ${context.job.deployProject}")
+    def checkDeployment(context, codebaseName, type, codebaseKind = null) {
+        script.println("[JENKINS][DEBUG] Validate deployment - ${codebaseName} in ${context.job.deployProject}")
         try {
-            context.platform.verifyDeployedCodebase(object.name, context.job.deployProject)
-            if (type == 'application' && getDeploymentVersion(context, object) != object.currentDeploymentVersion) {
-                script.println("[JENKINS][DEBUG] Deployment ${object.name} in project ${context.job.deployProject} has been rolled out")
-            } else
-                script.println("[JENKINS][DEBUG] New version of codebase ${object.name} hasn't been deployed, because the same version")
+            context.platform.verifyDeployedCodebase(codebaseName, context.job.deployProject, codebaseKind)
+            script.println("[JENKINS][DEBUG] Workload ${codebaseName} in project ${context.job.deployProject} has been rolled out")
         }
         catch (Exception verifyDeploymentException) {
-            if (type == "application" && object.currentDeploymentVersion != 0) {
-                script.println("[JENKINS][WARNING] Rolling out of ${object.name} with version ${object.version} has been failed.\r\n" +
-                        "[JENKINS][WARNING] Rolling back to the previous version")
-                context.platform.rollbackDeployedCodebase(object.name, context.job.deployProject)
-                context.platform.verifyDeployedCodebase(object.name, context.job.deployProject)
-                script.println("[JENKINS][WARNING] Rolling out of ${object.name} with version ${object.version} has been failed.")
-            } else
-                script.println("[JENKINS][WARNING] ${object.name} deploy has been failed. Reason - ${verifyDeploymentException}")
-            throw(verifyDeploymentException)
+            script.println("[JENKINS][WARNING] Rolling out of ${codebaseName} has been failed.")
+            if (type == "application") {
+                context.platform.rollbackDeployedCodebase(codebaseName, context.job.deployProject, codebaseKind)
+                context.platform.verifyDeployedCodebase(codebaseName, context.job.deployProject, codebaseKind)
+            }
+            throw (verifyDeploymentException)
         }
-    }
-
-    def getDeploymentVersion(context, codebase) {
-        if (!context.platform.checkObjectExists("dc", codebase.name, context.job.deployProject)) {
-            script.println("[JENKINS][WARNING] Deployment config ${codebase.name} doesn't exist in the project ${context.job.deployProject}\r\n" +
-                    "[JENKINS][WARNING] We will roll it out")
-            return null
-        }
-        def version = context.platform.getJsonPathValue("dc", codebase.name, ".status.latestVersion", context.job.deployProject)
-        return (version.toInteger())
     }
 
     def checkImageExists(context, object) {
@@ -180,8 +164,29 @@ class Deploy {
         return true
     }
 
+    def getDeploymentWorkloadsList(deploymentTemplate, isFile = false) {
+        def deploymentWorkloadsList = []
+        ["Deployment", "DeploymentConfig"].each() { kind ->
+            def workloads = script.sh(
+                    script: "oc process ${isFile ? "-f" : ""} ${deploymentTemplate} " +
+                    "-p IMAGE_NAME=fake " +
+                    "-p NAMESPACE=fake " +
+                    "-p APP_VERSION=fake " +
+                    "--local=true " +
+                    "-o jsonpath='{range .items[?(@.kind==\"${kind}\")]}{.kind}{\"/\"}{.metadata.name}{\"\\n\"}{end}'",
+                    returnStdout: true
+            ).trim().tokenize("\n")
+            workloads.each() {
+                def workloadMap = [:]
+                workloadMap["kind"] = it.split("/")[0]
+                workloadMap["name"] = it.split("/")[1]
+                deploymentWorkloadsList.add(workloadMap)
+            }
+        }
+        return deploymentWorkloadsList
+    }
+
     def deployCodebaseTemplate(context, codebase, deployTemplatesPath) {
-        codebase.currentDeploymentVersion = getDeploymentVersion(context, codebase)
         def templateName = "${codebase.name}-install-${context.job.stageWithoutPrefixName}"
 
         if (codebase.need_database)
@@ -195,13 +200,16 @@ class Deploy {
         }
 
         def imageName = codebase.inputIs ? codebase.inputIs : codebase.normalizedName
+        def deploymentWorkloadsList = getDeploymentWorkloadsList("${deployTemplatesPath}/${templateName}.yaml", true)
         context.platform.deployCodebase(
                 context.job.deployProject,
                 "${deployTemplatesPath}/${templateName}.yaml",
                 "${context.job.ciProject}/${imageName}",
                 codebase, context.job.dnsWildcard
         )
-        checkDeployment(context, codebase, 'application')
+        deploymentWorkloadsList.each() { workload ->
+            checkDeployment(context, workload.name, 'application', workload.kind)
+        }
     }
 
     def checkTemplateExists(templateName, deployTemplatesPath) {
@@ -218,7 +226,8 @@ class Deploy {
         def deployTemplatesPath = "${codebaseDir}/${context.job.deployTemplatesDirectory}"
         script.dir("${codebaseDir}") {
             if (!cloneProject(context, codebase)) {
-                context.job.applicationsToPromote.remove(codebase.name)
+                if (codebase.name in context.job.applicationsToPromote)
+                    context.job.applicationsToPromote.remove(codebase.name)
                 return
             }
             deployConfigMaps(codebaseDir, name, context)
@@ -228,7 +237,8 @@ class Deploy {
             catch (Exception ex) {
                 script.unstable("[JENKINS][WARNING] Deployment of codebase ${name} has been failed. Reason - ${ex}.")
                 script.currentBuild.setResult('UNSTABLE')
-                context.job.applicationsToPromote.remove(codebase.name)
+                if (codebase.name in context.job.applicationsToPromote)
+                    context.job.applicationsToPromote.remove(codebase.name)
             }
         }
     }
@@ -272,6 +282,7 @@ class Deploy {
 
                     script.sh("oc adm policy add-scc-to-user anyuid -z ${service.name} -n ${context.job.deployProject}")
 
+                    def deploymentWorkloads = getDeploymentWorkloadsList(service.name)
                     parallelServices["${service.name}"] = {
                         script.sh("oc -n ${context.job.ciProject} process ${service.name} " +
                                 "-p SERVICE_VERSION=${service.version} " +
