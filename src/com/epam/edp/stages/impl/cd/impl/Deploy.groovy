@@ -164,15 +164,14 @@ class Deploy {
         return true
     }
 
-    def getDeploymentWorkloadsList(deploymentTemplate, isFile = false) {
+    def getDeploymentWorkloadsList(deploymentTemplate, isSvc = false) {
         def deploymentWorkloadsList = []
         ["Deployment", "DeploymentConfig"].each() { kind ->
             def workloads = script.sh(
-                    script: "oc process ${isFile ? "-f" : ""} ${deploymentTemplate} " +
-                    "-p IMAGE_NAME=fake " +
-                    "-p NAMESPACE=fake " +
-                    "-p APP_VERSION=fake " +
-                    "--local=true " +
+                    script: "oc process ${isSvc ? "" : "-f"} ${deploymentTemplate} " +
+                    "${isSvc ? "" : "-p IMAGE_NAME=fake "}" +
+                    "${isSvc ? "" : "-p NAMESPACE=fake "}" +
+                    "${isSvc ? "-p SERVICE_VERSION=fake " : "-p APP_VERSION=fake "}" +
                     "-o jsonpath='{range .items[?(@.kind==\"${kind}\")]}{.kind}{\"/\"}{.metadata.name}{\"\\n\"}{end}'",
                     returnStdout: true
             ).trim().tokenize("\n")
@@ -200,7 +199,7 @@ class Deploy {
         }
 
         def imageName = codebase.inputIs ? codebase.inputIs : codebase.normalizedName
-        def deploymentWorkloadsList = getDeploymentWorkloadsList("${deployTemplatesPath}/${templateName}.yaml", true)
+        def deploymentWorkloadsList = getDeploymentWorkloadsList("${deployTemplatesPath}/${templateName}.yaml", false)
         context.platform.deployCodebase(
                 context.job.deployProject,
                 "${deployTemplatesPath}/${templateName}.yaml",
@@ -282,12 +281,14 @@ class Deploy {
 
                     script.sh("oc adm policy add-scc-to-user anyuid -z ${service.name} -n ${context.job.deployProject}")
 
-                    def deploymentWorkloads = getDeploymentWorkloadsList(service.name)
+                    def deploymentWorkloadsList = getDeploymentWorkloadsList(service.name, true)
                     parallelServices["${service.name}"] = {
                         script.sh("oc -n ${context.job.ciProject} process ${service.name} " +
                                 "-p SERVICE_VERSION=${service.version} " +
                                 "-o json | oc -n ${context.job.deployProject} apply -f -")
-                        checkDeployment(context, service, 'service')
+                        deploymentWorkloadsList.each() { workload ->
+                            checkDeployment(context, workload.name, 'service', workload.kind)
+                        }
                     }
                 }
 
