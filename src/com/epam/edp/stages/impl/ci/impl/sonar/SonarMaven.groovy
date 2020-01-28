@@ -20,7 +20,7 @@ import com.epam.edp.stages.impl.ci.Stage
 import com.epam.edp.stages.impl.ci.impl.sonarcleanup.SonarCleanupApplicationLibrary
 import org.apache.commons.lang.RandomStringUtils
 
-@Stage(name = "sonar", buildTool = ["maven"], type = [ProjectType.APPLICATION,ProjectType.AUTOTESTS, ProjectType.LIBRARY])
+@Stage(name = "sonar", buildTool = ["maven"], type = [ProjectType.APPLICATION, ProjectType.AUTOTESTS, ProjectType.LIBRARY])
 class SonarMaven {
     Script script
 
@@ -57,25 +57,8 @@ class SonarMaven {
               ${codereviewAnalysisRunDir}; done
               """
                 }
-
-                script.withSonarQubeEnv('Sonar') {
-                    script.withCredentials([script.usernamePassword(credentialsId: "${context.nexus.credentialsId}",
-                            passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]) {
-                        script.sh "${context.buildTool.command} -Dartifactory.username=${script.USERNAME} -Dartifactory.password=${script.PASSWORD} " +
-                                "sonar:sonar -Dsonar.analysis.mode=preview " +
-                                "-Dsonar.report.export.path=sonar-report.json " +
-                                "-Dsonar.branch=codereview -B -Dsonar.projectName=${context.codebase.name} " +
-                                "-Dsonar.projectKey=${context.codebase.name}"
-                    }
-                }
-//                script.sonarToGerrit inspectionConfig: [baseConfig: [projectPath: ""],
-//                                                        serverURL: "${context.sonar.route}"],
-//                        notificationConfig: [commentedIssuesNotificationRecipient: 'NONE',
-//                                             negativeScoreNotificationRecipient: 'NONE'],
-//                        reviewConfig: [issueFilterConfig: [newIssuesOnly: false, changedLinesOnly: false,
-//                                                           severity: 'CRITICAL']],
-//                        scoreConfig: [category: 'Sonar-Verified', issueFilterConfig: [severity: 'CRITICAL']]
             }
+
         }
 
         script.dir("${codereviewAnalysisRunDir}") {
@@ -85,9 +68,7 @@ class SonarMaven {
                     script.sh "${context.buildTool.command} -Dartifactory.username=${script.USERNAME} -Dartifactory.password=${script.PASSWORD} " +
                             "sonar:sonar " +
                             "-Dsonar.projectKey=${context.codebase.name} " +
-                            "-Dsonar.projectName=${context.codebase.name} " +
-                            "-Dsonar.branch=" +
-                            "${context.job.type == "codereview" ? context.git.changeName : context.git.branch}"
+                            "-Dsonar.projectName=${context.codebase.name} "
                 }
             }
             script.timeout(time: 10, unit: 'MINUTES') {
