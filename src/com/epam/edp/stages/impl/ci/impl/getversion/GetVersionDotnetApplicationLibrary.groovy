@@ -21,6 +21,21 @@ import com.epam.edp.stages.impl.ci.Stage
 @Stage(name = "get-version", buildTool = ["dotnet"], type = [ProjectType.APPLICATION, ProjectType.LIBRARY])
 class GetVersionDotnetApplicationLibrary {
     Script script
+    def setVersionToArtifact(buildNumber, context) {
+       def newBuildNumber = ++buildNumber
+       script.sh """
+            sed -i "s#\\(<Version>\\).*\\(</Version>\\)#\\1${context.codebase.config.startFrom}-${newBuildNumber}\\2#" "${context.codebase.deployableModule}/${context.codebase.deployableModule}.csproj"
+        """
+
+       return "${context.codebase.config.startFrom}-${newBuildNumber}"
+    }
+
+    def updateCodebaseBranchCR(buildNumber, context) {
+        def newBuildNumber = ++buildNumber
+        script.sh"""
+            kubectl patch codebasebranches.v2.edp.epam.com ${context.codebase.config.name}-${context.git.branch} --type=merge -p '{\"spec\": {\"build\": "${newBuildNumber}"}}'
+        """
+    }
 
     void run(context) {
         script.dir("${context.workDir}") {
@@ -29,12 +44,20 @@ class GetVersionDotnetApplicationLibrary {
                     returnStdout: true
             ).trim()
 
-            context.codebase.version = script.sh(
-                    script: "find ${context.codebase.deployableModule} -name *.csproj | xargs grep -Po '<Version>\\K[^<]*'",
-                    returnStdout: true
-            ).trim().toLowerCase()
+            if (context.codebase.config.versioningType == "edp") {
+                context.codebase.version = setVersionToArtifact(context.codebase.config.codebase_branch.build_number.get(0).toInteger(), context)
+                context.codebase.buildVersion = "${context.codebase.version}"
+
+                updateCodebaseBranchCR(context.codebase.config.codebase_branch.build_number.get(0).toInteger(), context)
+            } else {
+                context.codebase.version = script.sh(
+                        script: "find ${context.codebase.deployableModule} -name *.csproj | xargs grep -Po '<Version>\\K[^<]*'",
+                        returnStdout: true
+                ).trim().toLowerCase()
+                context.codebase.buildVersion = "${context.codebase.version}-${script.BUILD_NUMBER}"
+             }
+
             context.job.setDisplayName("${script.currentBuild.number}-${context.git.branch}-${context.codebase.version}")
-            context.codebase.buildVersion = "${context.codebase.version}-${script.BUILD_NUMBER}"
             script.println("[JENKINS][DEBUG] Deployable module: ${context.codebase.deployableModule}")
             context.codebase.deployableModuleDir = "${context.workDir}"
         }
