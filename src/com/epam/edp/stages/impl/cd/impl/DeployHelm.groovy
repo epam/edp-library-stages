@@ -162,14 +162,9 @@ class DeployHelm {
         return true
     }
 
-    def getDockerRegistryInfo() {
-        def dockerRegistry = [:]
+    def getDockerRegistryInfo(context) {
         try {
-            def response = script.httpRequest timeout: 10, url: 'http://169.254.169.254/latest/dynamic/instance-identity/document'
-            def parsedMetadata = new JsonSlurperClassic().parseText(response.content)
-            dockerRegistry.accountId = "${parsedMetadata.accountId}"
-            dockerRegistry.region = parsedMetadata.region
-            return dockerRegistry
+            return context.platform.getJsonPathValue("edpcomponents", "docker-registry", ".spec.url")
         }
         catch (Exception ex) {
             script.println("[JENKINS][WARNING] Getting docker registry info failed.Reason:\r\n ${ex}")
@@ -183,8 +178,6 @@ class DeployHelm {
             return
         }
 
-        def dockerRegistry = getDockerRegistryInfo()
-        dockerRegistry.host = "${dockerRegistry.accountId}.dkr.ecr.${dockerRegistry.region}.amazonaws.com"
         codebase.cdPipelineName = context.job.pipelineName
         codebase.cdPipelineStageName = context.job.stageName
 
@@ -192,7 +185,7 @@ class DeployHelm {
         context.platform.deployCodebase(
                 context.job.deployProject,
                 "${deployTemplatesPath}",
-                "${dockerRegistry.host}/${imageName}",
+                "${context.environment.config.dockerRegistryHost}/${imageName}",
                 codebase, context.job.dnsWildcard,
                 "300",
                 context.platform.verifyDeployedCodebase(codebase.name, context.job.deployProject)
@@ -281,6 +274,7 @@ class DeployHelm {
                 if (!checkImageExists(context, codebase))
                     return
 
+                context.environment.config.dockerRegistryHost = getDockerRegistryInfo(context)
                 parallelCodebases["${codebase.name}"] = {
                     deployCodebase(codebase.version, codebase.name, context, codebase)
                 }
