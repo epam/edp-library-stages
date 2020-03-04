@@ -33,7 +33,7 @@ class PromoteImagesECR {
             envList.add(['name': name, 'value': value])
     }
 
-    def setKanikoTemplate(outputFilePath, buildPodName, resultImageName, dockerRegistry, context, codebase) {
+    def setKanikoTemplate(outputFilePath, buildPodName, resultImageName, dockerRegistryHost, context, codebase) {
         def kanikoFile = new File(outputFilePath)
         def kanikoTemplateFilePath = new FilePath(kanikoFile)
 
@@ -41,26 +41,23 @@ class PromoteImagesECR {
         def parsedKanikoTemplateData = new JsonSlurperClassic().parseText(kanikoTemplateData)
         parsedKanikoTemplateData.metadata.name = buildPodName
 
-        def awsCliInitContainerEnvs = parsedKanikoTemplateData.spec.initContainers[1].env
-        setEnvVariable(awsCliInitContainerEnvs, "REPO_NAME", resultImageName, true)
-        setEnvVariable(awsCliInitContainerEnvs, "AWS_DEFAULT_REGION", dockerRegistry.region)
+        def awsCliInitContainer = parsedKanikoTemplateData.spec.initContainers.find { it.name == "init-repository" }
+        if (awsCliInitContainer) {
+            setEnvVariable(awsCliInitContainer.env, "REPO_NAME", resultImageName, true)
+            setEnvVariable(awsCliInitContainer.env, "AWS_DEFAULT_REGION", getAwsRegion())
+        }
 
-        dockerRegistry.region = awsCliInitContainerEnvs.find { it.name == "AWS_DEFAULT_REGION" }.value
-        dockerRegistry.host = "${dockerRegistry.accountId}.dkr.ecr.${dockerRegistry.region}.amazonaws.com"
-        parsedKanikoTemplateData.spec.containers[0].args[0] = "--destination=${dockerRegistry.host}/${resultImageName}:${codebase.version}"
+        parsedKanikoTemplateData.spec.containers[0].args[0] = "--destination=${dockerRegistryHost}/${resultImageName}:${codebase.version}"
         def jsonData = JsonOutput.toJson(parsedKanikoTemplateData)
         kanikoTemplateFilePath.write(jsonData, null)
         return kanikoTemplateFilePath
     }
 
-    def getDockerRegistryInfo() {
-        def dockerRegistry = [:]
+    def getAwsRegion() {
         try {
             def response = script.httpRequest timeout: 10, url: 'http://169.254.169.254/latest/dynamic/instance-identity/document'
             def parsedMetadata = new JsonSlurperClassic().parseText(response.content)
-            dockerRegistry.accountId = "${parsedMetadata.accountId}"
-            dockerRegistry.region = parsedMetadata.region
-            return dockerRegistry
+            return parsedMetadata.region
         }
         catch (Exception ex) {
             return null
@@ -100,63 +97,54 @@ class PromoteImagesECR {
     }
 
     void run(context) {
-        def dockerRegistry = getDockerRegistryInfo()
-        if (!dockerRegistry)
+        def dockerRegistryHost = context.platform.getJsonPathValue("edpcomponent", "docker-registry", ".spec.url")
+        if (!dockerRegistryHost)
             script.error("[JENKINS][ERROR] Couldn't get docker registry server")
-        script.openshift.withCluster() {
-            script.openshift.withProject() {
-                context.job.codebasesList.each() { codebase ->
-                    if ((codebase.name in context.job.applicationsToPromote) && (codebase.version != "No deploy") && (codebase.version != "noImageExists")) {
-                        context.workDir = new File("/tmp/${RandomStringUtils.random(10, true, true)}")
-                        context.workDir.deleteDir()
-                        def dockerfileFile = new File("${context.workDir}/Dockerfile")
-                        def dockerfilePath = new FilePath(dockerfileFile)
 
-                        def sourceImageName = "${codebase.inputIs}:${codebase.version}"
-                        def resultImageName = "${codebase.outputIs}:${codebase.version}"
-                        def buildconfigName = "promote-${codebase.outputIs}-${script.BUILD_NUMBER}"
-                        def dockerfileContents = "FROM ${dockerRegistry.accountId}.dkr.ecr.${dockerRegistry.region}.amazonaws.com/${sourceImageName}"
+        context.job.codebasesList.each() { codebase ->
+            if ((codebase.name in context.job.applicationsToPromote) && (codebase.version != "No deploy") && (codebase.version != "noImageExists")) {
+                context.workDir = new File("/tmp/${RandomStringUtils.random(10, true, true)}")
+                context.workDir.deleteDir()
 
-                        dockerfilePath.write(dockerfileContents, null)
+                def sourceImageName = "${codebase.inputIs}:${codebase.version}"
+                def buildconfigName = "promote-${codebase.outputIs}-${script.BUILD_NUMBER}"
 
-                        if (!dockerfilePath.exists()) {
-                            script.error("[JENKINS][ERROR] There is no Dockerfile in the root of the repository, we are not able to perform build image")
+                def dockerfileContents = "FROM ${dockerRegistryHost}/${sourceImageName}"
+                def dockerfilePath = new FilePath(new File("${context.workDir}/Dockerfile"))
+                dockerfilePath.write(dockerfileContents, null)
+
+                script.dir("${context.workDir}") {
+                    try {
+                        def kanikoTemplateFilePath = setKanikoTemplate("${context.workDir}/kaniko-template.json", buildconfigName, codebase.outputIs, dockerRegistryHost, context, codebase)
+                        context.platform.apply(kanikoTemplateFilePath.getRemote())
+                        while (!context.platform.getObjectStatus("pod", buildconfigName)["initContainerStatuses"][0].state.keySet().contains("running")) {
+                            script.println("[JENKINS][DEBUG] Waiting for init container in Kaniko is started")
+                            script.sleep(5)
                         }
 
-                        script.dir("${context.workDir}") {
-                            try {
-                                def kanikoTemplateFilePath = setKanikoTemplate("${context.workDir}/kaniko-template.json", buildconfigName, codebase.outputIs, dockerRegistry, context, codebase)
-                                context.platform.apply(kanikoTemplateFilePath.getRemote())
-                                while (!context.platform.getObjectStatus("pod", buildconfigName)["initContainerStatuses"][0].state.keySet().contains("running")) {
-                                    script.println("[JENKINS][DEBUG] Waiting for init container in Kaniko is started")
-                                    script.sleep(5)
-                                }
+                        context.platform.copyToPod("Dockerfile", "/tmp/workspace", buildconfigName, null, "init-kaniko")
 
-                                context.platform.copyToPod("Dockerfile", "/tmp/workspace", buildconfigName, null, "init-kaniko")
-
-                                while (context.platform.getObjectStatus("pod", buildconfigName).phase != "Succeeded") {
-                                    if (context.platform.getObjectStatus("pod", buildconfigName).phase == "Failed")
-                                        script.error("[JENKINS][ERROR] Build pod ${buildconfigName} failed")
-                                    script.println("[JENKINS][DEBUG] Waiting for build ${buildconfigName}")
-                                    script.sleep(10)
-                                }
-
-                                script.println("[JENKINS][DEBUG] Promote ${buildconfigName} for application ${codebase.name} has been completed")
-
-                                updateCodebaseimagestreams(codebase.outputIs, "${dockerRegistry.host}/${codebase.outputIs}", codebase.version, context)
-                            }
-                            catch (Exception ex) {
-                                script.error("[JENKINS][ERROR] Promoting image for ${codebase.name} failed")
-                            }
-                            finally {
-                                def podToDelete = "promote-${codebase.outputIs}-${script.BUILD_NUMBER.toInteger() - 1}"
-                                       context.platform.deleteObject("pod", podToDelete, true)
-                            }
+                        while (context.platform.getObjectStatus("pod", buildconfigName).phase != "Succeeded") {
+                            if (context.platform.getObjectStatus("pod", buildconfigName).phase == "Failed")
+                                script.error("[JENKINS][ERROR] Build pod ${buildconfigName} failed")
+                            script.println("[JENKINS][DEBUG] Waiting for build ${buildconfigName}")
+                            script.sleep(10)
                         }
 
-                        script.println("[JENKINS][INFO] Image ${codebase.inputIs}:${codebase.version} has been promoted to ${codebase.outputIs}")
+                        script.println("[JENKINS][DEBUG] Promote ${buildconfigName} for application ${codebase.name} has been completed")
+
+                        updateCodebaseimagestreams(codebase.outputIs, "$dockerRegistryHost}/${codebase.outputIs}", codebase.version, context)
+                    }
+                    catch (Exception ex) {
+                        script.error("[JENKINS][ERROR] Promoting image for ${codebase.name} failed")
+                    }
+                    finally {
+                        def podToDelete = "promote-${codebase.outputIs}-${script.BUILD_NUMBER.toInteger() - 1}"
+                        context.platform.deleteObject("pod", podToDelete, true)
                     }
                 }
+
+                script.println("[JENKINS][INFO] Image ${codebase.inputIs}:${codebase.version} has been promoted to ${codebase.outputIs}")
             }
         }
     }
