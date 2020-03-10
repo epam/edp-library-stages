@@ -25,7 +25,11 @@ class GetVersionGradleApplicationLibrary {
     def setVersionToArtifact(context) {
         script.sh """
              set -eo pipefail
-             sed -i "s/version = ".*"/version = \\'${context.codebase.branchVersion}-${context.codebase.currentBuildNumber}\\'/" build.gradle
+             if ${context.codebase.isReleaseBranch}; then
+                sed -i "s/version = ".*"/version = \\'${context.codebase.branchVersion}-${context.codebase.currentBuildNumber}\\'/" build.gradle
+             else
+                sed -i "s/version = ".*"/version = \\\\'${context.codebase.branchVersion}\\\\'/" build.gradle
+             fi
              kubectl patch codebasebranches.v2.edp.epam.com ${context.codebase.config.name}-${context.git.branch.replaceAll(/\//, "-")} --type=merge -p '{\"spec\": {\"build\": "${context.codebase.currentBuildNumber}"}}'
         """
     }

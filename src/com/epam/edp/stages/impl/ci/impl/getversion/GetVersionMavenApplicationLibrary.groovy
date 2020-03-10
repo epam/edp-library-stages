@@ -25,7 +25,11 @@ class GetVersionMavenApplicationLibrary {
     def setVersionToArtifact(context) {
         script.sh """
             set -eo pipefail
-            sed -i "0,/<version>.*<\\/version>/s/<version>.*<\\/version>/<version>${context.codebase.branchVersion}-${context.codebase.currentBuildNumber}<\\/version>/" pom.xml
+            if ${context.codebase.isReleaseBranch}; then
+               sed -i "0,/<version>.*<\\/version>/s/<version>.*<\\/version>/<version>${context.codebase.branchVersion}-${context.codebase.currentBuildNumber}<\\/version>/" pom.xml
+            else
+               sed -i "0,/<version>.*<\\\\/version>/s/<version>.*<\\\\/version>/<version>${context.codebase.branchVersion}<\\\\/version>/" pom.xml
+            fi
             kubectl patch codebasebranches.v2.edp.epam.com ${context.codebase.config.name}-${context.git.branch.replaceAll(/\//, "-")} --type=merge -p '{\"spec\": {\"build\": "${context.codebase.currentBuildNumber}"}}'
         """
     }

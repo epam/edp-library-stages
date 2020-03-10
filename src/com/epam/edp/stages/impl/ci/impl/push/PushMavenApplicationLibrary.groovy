@@ -23,7 +23,7 @@ class PushMavenApplicationLibrary {
 
     void run(context) {
         script.dir("${context.workDir}") {
-            def nexusRepositoryUrl = context.codebase.version.contains("snapshot") ?
+            def nexusRepositoryUrl = context.codebase.version.toLowerCase().contains("snapshot") ?
                     "${context.buildTool.hostedRepository}-snapshots" : "${context.buildTool.hostedRepository}-releases"
             script.withCredentials([script.usernamePassword(credentialsId: "${context.nexus.credentialsId}",
                     passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]) {
