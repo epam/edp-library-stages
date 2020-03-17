@@ -29,7 +29,7 @@ class GetVersionMavenApplicationLibrary {
             kubectl patch codebasebranches.v2.edp.epam.com ${context.codebase.config.name}-${context.git.branch} --type=merge -p '{\"spec\": {\"build\": "${newBuildNumber}"}}'
         """
 
-       return "${branchVersion}-${newBuildNumber}"
+       return "${branchVersion}.${newBuildNumber}"
     }
 
     void run(context) {
@@ -43,6 +43,7 @@ class GetVersionMavenApplicationLibrary {
 
                     context.codebase.version = setVersionToArtifact(build, version, context)
                     context.codebase.buildVersion = context.codebase.version
+                    context.job.setDisplayName("${context.codebase.version}")
                  } else {
                     context.codebase.version = script.sh(
                             script: """
@@ -53,13 +54,13 @@ class GetVersionMavenApplicationLibrary {
                             returnStdout: true
                     ).trim().toLowerCase()
                     context.codebase.buildVersion = "${context.codebase.version}-${script.BUILD_NUMBER}"
+                    context.job.setDisplayName("${script.currentBuild.number}-${context.git.branch}-${context.codebase.version}")
                  }
             }
             context.codebase.deployableModule = script.sh(
                     script: "cat pom.xml | grep -Poh '<deployable.module>\\K[^<]*' || echo \"\"",
                     returnStdout: true
             ).trim()
-            context.job.setDisplayName("${script.currentBuild.number}-${context.git.branch}-${context.codebase.version}")
             script.println("[JENKINS][DEBUG] Deployable module: ${context.codebase.deployableModule}")
             context.codebase.deployableModuleDir = context.codebase.deployableModule.isEmpty() ? "${context.workDir}/target" :
                     "${context.workDir}/${context.codebase.deployableModule}/target"

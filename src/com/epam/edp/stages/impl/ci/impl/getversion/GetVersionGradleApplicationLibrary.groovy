@@ -29,7 +29,7 @@ class GetVersionGradleApplicationLibrary {
              kubectl patch codebasebranches.v2.edp.epam.com ${context.codebase.config.name}-${context.git.branch} --type=merge -p '{\"spec\": {\"build\": "${newBuildNumber}"}}'
         """
 
-       return "${branchVersion}-${newBuildNumber}"
+       return "${branchVersion}.${newBuildNumber}"
     }
 
     void run(context) {
@@ -43,6 +43,7 @@ class GetVersionGradleApplicationLibrary {
 
                     context.codebase.version = setVersionToArtifact(build, version, context)
                     context.codebase.buildVersion = context.codebase.version
+                    context.job.setDisplayName("${context.codebase.version}")
                 } else {
                     context.codebase.version = script.sh(
                             script: """
@@ -52,9 +53,9 @@ class GetVersionGradleApplicationLibrary {
                             returnStdout: true
                     ).trim().toLowerCase()
                     context.codebase.buildVersion = "${context.codebase.version}-${script.BUILD_NUMBER}"
+                    context.job.setDisplayName("${script.currentBuild.number}-${context.git.branch}-${context.codebase.version}")
                  }
             }
-            context.job.setDisplayName("${script.currentBuild.number}-${context.git.branch}-${context.codebase.version}")
             context.codebase.buildVersion = "${context.codebase.version}-${script.BUILD_NUMBER}"
             context.codebase.deployableModuleDir = "${context.workDir}/build/libs"
         }
