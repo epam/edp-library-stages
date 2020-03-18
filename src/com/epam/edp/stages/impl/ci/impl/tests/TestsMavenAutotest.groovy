@@ -42,7 +42,7 @@ class TestsMavenAutotest {
             try {
                 script.withCredentials([script.usernamePassword(credentialsId: "${context.nexus.credentialsId}",
                         passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]) {
-                    script.sh "${parsedRunCommandJson.codereview} -Dartifactory.username=${script.USERNAME} -Dartifactory.password=${script.PASSWORD} " +
+                    script.sh "${parsedRunCommandJson.codereview} ${context.buildTool.properties} -Dartifactory.username=${script.USERNAME} -Dartifactory.password=${script.PASSWORD} " +
                             "-B --settings ${context.buildTool.settings}"
                 }
             }
@@ -51,7 +51,7 @@ class TestsMavenAutotest {
                 script.error "[JENKINS][ERROR] Tests have been failed with error - ${ex}"
             }
             finally {
-                switch (context.codebase.config.testreportframework.toLowerCase()) {
+                switch (context.codebase.config.testReportFramework.toLowerCase()) {
                     case "allure":
                         script.allure([
                                 includeProperties: false,

@@ -72,7 +72,11 @@ class AutomationTests {
 
                 def runCommand = parsedRunCommandJson["${context.job.stageName}"]
                 try {
-                    script.sh "${runCommand} -B --settings ${context.buildTool.settings}"
+                    script.withCredentials([script.usernamePassword(credentialsId: "${context.nexus.credentialsId}",
+                            passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]) {
+                        script.sh "${runCommand} ${context.buildTool.properties} -Dartifactory.username=${script.USERNAME} -Dartifactory.password=${script.PASSWORD} " +
+                            "-B --settings ${context.buildTool.settings}"
+                    }
                 }
                 catch (Exception ex) {
                     script.error "[JENKINS][ERROR] Tests from ${qualityGate.autotest.name} have been failed. Reason - ${ex}"
