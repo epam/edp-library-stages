@@ -21,15 +21,13 @@ import com.epam.edp.stages.impl.ci.Stage
 @Stage(name = "get-version", buildTool = ["gradle"], type = [ProjectType.APPLICATION, ProjectType.LIBRARY])
 class GetVersionGradleApplicationLibrary {
     Script script
-    def setVersionToArtifact(buildNumber, branchVersion, context) {
-       def newBuildNumber = ++buildNumber
-       script.sh """
-             set -eo pipefail
-             sed -i "s/version = ".*"/version = \\'${branchVersion}-${newBuildNumber}\\'/" build.gradle
-             kubectl patch codebasebranches.v2.edp.epam.com ${context.codebase.config.name}-${context.git.branch} --type=merge -p '{\"spec\": {\"build\": "${newBuildNumber}"}}'
-        """
 
-       return "${branchVersion}.${newBuildNumber}"
+    def setVersionToArtifact(context) {
+        script.sh """
+             set -eo pipefail
+             sed -i "s/version = ".*"/version = \\'${context.codebase.branchVersion}-${context.codebase.currentBuildNumber}\\'/" build.gradle
+             kubectl patch codebasebranches.v2.edp.epam.com ${context.codebase.config.name}-${context.git.branch} --type=merge -p '{\"spec\": {\"build\": "${context.codebase.currentBuildNumber}"}}'
+        """
     }
 
     void run(context) {
@@ -37,13 +35,7 @@ class GetVersionGradleApplicationLibrary {
             script.withCredentials([script.usernamePassword(credentialsId: "${context.nexus.credentialsId}",
                     passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]) {
                 if (context.codebase.config.versioningType == "edp") {
-                    def branchIndex = context.codebase.config.codebase_branch.branchName.findIndexOf{it == context.git.branch}
-                    def build = context.codebase.config.codebase_branch.build_number.get(branchIndex).toInteger()
-                    def version = context.codebase.config.codebase_branch.version.get(branchIndex)
-
-                    context.codebase.version = setVersionToArtifact(build, version, context)
-                    context.codebase.buildVersion = context.codebase.version
-                    context.job.setDisplayName("${context.codebase.version}")
+                    setVersionToArtifact(context)
                 } else {
                     context.codebase.version = script.sh(
                             script: """
@@ -54,9 +46,8 @@ class GetVersionGradleApplicationLibrary {
                     ).trim().toLowerCase()
                     context.codebase.buildVersion = "${context.codebase.version}-${script.BUILD_NUMBER}"
                     context.job.setDisplayName("${script.currentBuild.number}-${context.git.branch}-${context.codebase.version}")
-                 }
+                }
             }
-            context.codebase.buildVersion = "${context.codebase.version}-${script.BUILD_NUMBER}"
             context.codebase.deployableModuleDir = "${context.workDir}/build/libs"
         }
         script.println("[JENKINS][DEBUG] Artifact version - ${context.codebase.version}")

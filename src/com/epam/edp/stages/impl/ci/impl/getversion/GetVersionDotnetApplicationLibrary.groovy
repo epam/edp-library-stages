@@ -21,15 +21,13 @@ import com.epam.edp.stages.impl.ci.Stage
 @Stage(name = "get-version", buildTool = ["dotnet"], type = [ProjectType.APPLICATION, ProjectType.LIBRARY])
 class GetVersionDotnetApplicationLibrary {
     Script script
-    def setVersionToArtifact(buildNumber, branchVersion, context) {
-       def newBuildNumber = ++buildNumber
-       script.sh """
-            set -eo pipefail
-            sed -i "s#\\(<Version>\\).*\\(</Version>\\)#\\1${branchVersion}-${newBuildNumber}\\2#" "${context.codebase.deployableModule}/${context.codebase.deployableModule}.csproj"
-            kubectl patch codebasebranches.v2.edp.epam.com ${context.codebase.config.name}-${context.git.branch} --type=merge -p '{\"spec\": {\"build\": "${newBuildNumber}"}}'
-        """
 
-       return "${branchVersion}.${newBuildNumber}"
+    def setVersionToArtifact(context) {
+        script.sh """
+            set -eo pipefail
+            sed -i "s#\\(<Version>\\).*\\(</Version>\\)#\\1${context.codebase.branchVersion}-${context.codebase.currentBuildNumber}\\2#" "${context.codebase.deployableModule}/${context.codebase.deployableModule}.csproj"
+            kubectl patch codebasebranches.v2.edp.epam.com ${context.codebase.config.name}-${context.git.branch} --type=merge -p '{\"spec\": {\"build\": "${context.codebase.currentBuildNumber}"}}'
+        """
     }
 
     void run(context) {
@@ -40,13 +38,7 @@ class GetVersionDotnetApplicationLibrary {
             ).trim()
 
             if (context.codebase.config.versioningType == "edp") {
-                def branchIndex = context.codebase.config.codebase_branch.branchName.findIndexOf{it == context.git.branch}
-                def build = context.codebase.config.codebase_branch.build_number.get(branchIndex).toInteger()
-                def version = context.codebase.config.codebase_branch.version.get(branchIndex)
-
-                context.codebase.version = setVersionToArtifact(build, version, context)
-                context.codebase.buildVersion = context.codebase.version
-                context.job.setDisplayName("${context.codebase.version}")
+                setVersionToArtifact(context)
             } else {
                 context.codebase.version = script.sh(
                         script: "find ${context.codebase.deployableModule} -name *.csproj | xargs grep -Po '<Version>\\K[^<]*'",
@@ -54,7 +46,7 @@ class GetVersionDotnetApplicationLibrary {
                 ).trim().toLowerCase()
                 context.codebase.buildVersion = "${context.codebase.version}-${script.BUILD_NUMBER}"
                 context.job.setDisplayName("${script.currentBuild.number}-${context.git.branch}-${context.codebase.version}")
-             }
+            }
 
             script.println("[JENKINS][DEBUG] Deployable module: ${context.codebase.deployableModule}")
             context.codebase.deployableModuleDir = "${context.workDir}"
