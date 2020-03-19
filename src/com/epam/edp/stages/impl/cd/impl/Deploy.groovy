@@ -121,9 +121,14 @@ class Deploy {
         return "/" + codebase.name
     }
 
+    def getRefspec(codebase) {
+        return codebase.versioningType == "edp" ?
+            "refs/tags/build/${codebase.version}" :
+            "refs/tags/build/${codebase.branch}-${codebase.version}"
+    }
+
     def cloneProject(context, codebase) {
         script.println("[JENKINS][DEBUG] Start fetching Git Server info for ${codebase.name} from ${codebase.gitServer} CR")
-
         def gitServerName = "gitservers.${context.job.crApiVersion}.edp.epam.com"
 
         script.println("[JENKINS][DEBUG] Git Server CR Version: ${context.job.crApiVersion}")
@@ -145,11 +150,12 @@ class Deploy {
         def gitCodebaseUrl = "ssh://${autouser}@${host}:${sshPort}${repoPath}"
 
         try {
-            script.checkout([$class                           : 'GitSCM', branches: [[name: "refs/tags/${codebase.version}"]],
+            def refspec = getRefspec(codebase)
+            script.checkout([$class                           : 'GitSCM', branches: [[name: "${refspec}"]],
                              doGenerateSubmoduleConfigurations: false, extensions: [],
                              submoduleCfg                     : [],
                              userRemoteConfigs                : [[credentialsId: "${credentialsId}",
-                                                                  refspec      : "refs/tags/${codebase.version}",
+                                                                  refspec      : "${refspec}",
                                                                   url          : "${gitCodebaseUrl}"]]])
         }
         catch (Exception ex) {
