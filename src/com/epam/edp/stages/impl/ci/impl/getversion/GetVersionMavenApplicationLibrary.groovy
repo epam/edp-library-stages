@@ -39,7 +39,7 @@ class GetVersionMavenApplicationLibrary {
                 } else {
                     context.codebase.version = script.sh(
                             script: """
-                            ${context.buildTool.command} -Dartifactory.username=${script.USERNAME} -Dartifactory.password=${script.PASSWORD} \
+                            ${context.buildTool.command} ${context.buildTool.properties} -Dartifactory.username=${script.USERNAME} -Dartifactory.password=${script.PASSWORD} \
                             org.apache.maven.plugins:maven-help-plugin:2.1.1:evaluate \
                             -Dexpression=project.version -B |grep -Ev '(^\\[|Download\\w+:)'
                         """,
