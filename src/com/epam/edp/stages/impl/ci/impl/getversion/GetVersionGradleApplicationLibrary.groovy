@@ -40,6 +40,8 @@ class GetVersionGradleApplicationLibrary {
                     passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]) {
                 if (context.codebase.config.versioningType == "edp") {
                     setVersionToArtifact(context)
+                    context.codebase.vcsTag = "build/${context.codebase.version}"
+                    context.codebase.isTag = "${context.codebase.version}"
                 } else {
                     context.codebase.version = script.sh(
                             script: """
@@ -50,10 +52,14 @@ class GetVersionGradleApplicationLibrary {
                     ).trim().toLowerCase()
                     context.codebase.buildVersion = "${context.codebase.version}-${script.BUILD_NUMBER}"
                     context.job.setDisplayName("${script.currentBuild.number}-${context.git.branch}-${context.codebase.version}")
+                    context.codebase.vcsTag = "${context.git.branch}-${context.codebase.buildVersion}"
+                    context.codebase.isTag = "${context.git.branch}-${context.codebase.buildVersion}"
                 }
             }
             context.codebase.deployableModuleDir = "${context.workDir}/build/libs"
         }
         script.println("[JENKINS][DEBUG] Artifact version - ${context.codebase.version}")
+        script.println("[JENKINS][DEBUG] VCS tag - ${context.codebase.vcsTag}")
+        script.println("[JENKINS][DEBUG] IS tag - ${context.codebase.isTag}")
     }
 }

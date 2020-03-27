@@ -43,13 +43,9 @@ class BuildDockerfileImageApplication {
                 }
                 script.println("[JENKINS][DEBUG] Build config ${context.codebase.name} with result " +
                         "${buildconfigName}:${resultTag} has been completed")
-                if (context.codebase.config.versioningType == "edp") {
                 script.openshift.tag("${script.openshift.project()}/${outputImagestreamName}@${resultTag}",
-                        "${script.openshift.project()}/${outputImagestreamName}:${context.codebase.buildVersion}")
-                } else {
-                script.openshift.tag("${script.openshift.project()}/${outputImagestreamName}@${resultTag}",
-                        "${script.openshift.project()}/${outputImagestreamName}:${context.git.branch}-${context.codebase.buildVersion}")
-                  }
+                        "${script.openshift.project()}/${outputImagestreamName}:${context.codebase.isTag}")
+
             }
         }
     }

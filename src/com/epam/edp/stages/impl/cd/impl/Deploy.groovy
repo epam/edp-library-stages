@@ -124,7 +124,7 @@ class Deploy {
     def getRefspec(codebase) {
         return codebase.versioningType == "edp" ?
             "refs/tags/build/${codebase.version}" :
-            "refs/tags/build/${codebase.branch}-${codebase.version}"
+            "refs/tags/${codebase.version}"
     }
 
     def cloneProject(context, codebase) {

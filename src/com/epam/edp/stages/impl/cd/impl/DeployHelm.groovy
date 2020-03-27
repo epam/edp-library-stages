@@ -119,6 +119,12 @@ class DeployHelm {
         return "/" + codebase.name
     }
 
+    def getRefspec(codebase) {
+        return codebase.versioningType == "edp" ?
+            "refs/tags/build/${codebase.version}" :
+            "refs/tags/${codebase.version}"
+    }
+
     def cloneProject(context, codebase) {
         script.println("[JENKINS][DEBUG] Start fetching Git Server info for ${codebase.name} from ${codebase.gitServer} CR")
 
@@ -143,11 +149,12 @@ class DeployHelm {
         def gitCodebaseUrl = "ssh://${autouser}@${host}:${sshPort}${repoPath}"
 
         try {
-            script.checkout([$class                           : 'GitSCM', branches: [[name: "refs/tags/${codebase.version}"]],
+            def refspec = getRefspec(codebase)
+            script.checkout([$class                           : 'GitSCM', branches: [[name: "${refspec}"]],
                              doGenerateSubmoduleConfigurations: false, extensions: [],
                              submoduleCfg                     : [],
                              userRemoteConfigs                : [[credentialsId: "${credentialsId}",
-                                                                  refspec      : "refs/tags/${codebase.version}",
+                                                                  refspec      : "${refspec}",
                                                                   url          : "${gitCodebaseUrl}"]]])
         }
         catch (Exception ex) {
@@ -187,8 +194,7 @@ class DeployHelm {
                 "${deployTemplatesPath}",
                 "${context.environment.config.dockerRegistryHost}/${imageName}",
                 codebase, context.job.dnsWildcard,
-                "300",
-                context.platform.verifyDeployedCodebase(codebase.name, context.job.deployProject)
+                context.job.deployTimeout
         )
     }
 

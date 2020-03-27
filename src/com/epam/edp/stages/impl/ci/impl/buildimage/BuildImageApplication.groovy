@@ -39,18 +39,10 @@ class BuildImageApplication {
                 }
                 script.println("[JENKINS][DEBUG] Build config ${context.codebase.name} with result " +
                         "${buildconfigName}:${resultTag} has been completed")
+                script.openshift.tag(
+                        "${script.openshift.project()}/${buildconfigName}@${resultTag}",
+                        "${script.openshift.project()}/${buildconfigName}:${context.codebase.isTag}")
 
-                if (context.codebase.config.versioningType == "edp") {
-                    script.openshift.tag(
-                        "${script.openshift.project()}/${buildconfigName}@${resultTag}",
-                        "${script.openshift.project()}/${buildconfigName}:${context.codebase.buildVersion}"
-                    )
-                } else {
-                    script.openshift.tag(
-                        "${script.openshift.project()}/${buildconfigName}@${resultTag}",
-                        "${script.openshift.project()}/${buildconfigName}:${context.git.branch}-${context.codebase.buildVersion}"
-                    )
-                  }
             }
         }
     }
