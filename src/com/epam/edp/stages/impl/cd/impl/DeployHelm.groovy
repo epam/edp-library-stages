@@ -205,8 +205,11 @@ class DeployHelm {
         def codebaseDir = "${script.WORKSPACE}/${RandomStringUtils.random(10, true, true)}/${name}"
         def deployTemplatesPath = "${codebaseDir}/${context.job.deployTemplatesDirectory}"
         script.dir("${codebaseDir}") {
-            if (!cloneProject(context, codebase))
+            if (!cloneProject(context, codebase)) {
+                if (codebase.name in context.job.applicationsToPromote)
+                    context.job.applicationsToPromote.remove(codebase.name)
                 return
+            }
             deployConfigMaps(codebaseDir, name, context)
             try {
                 deployCodebaseTemplate(context, codebase, deployTemplatesPath)
@@ -215,6 +218,8 @@ class DeployHelm {
                 script.println("[JENKINS][WARNING] Deployment of codebase ${name} has been failed. Reason - ${ex}.")
                 script.currentBuild.result = 'UNSTABLE'
                 context.platform.rollbackDeployedCodebase(codebase.name, context.job.deployProject)
+                if (codebase.name in context.job.applicationsToPromote)
+                    context.job.applicationsToPromote.remove(codebase.name)
             }
         }
     }
