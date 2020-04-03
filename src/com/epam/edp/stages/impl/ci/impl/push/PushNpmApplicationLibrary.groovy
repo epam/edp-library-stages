@@ -23,23 +23,29 @@ class PushNpmApplicationLibrary {
 
     void run(context) {
         script.dir("${context.workDir}") {
+            def npmRepositoryUrl = context.buildTool.hostedRepository
+            if (context.codebase.config.versioningType == "edp") {
+                npmRepositoryUrl = context.codebase.version.toLowerCase().contains("snapshot") ?
+                        context.buildTool.snapshotRepository : context.buildTool.releaseRepository
+            }
+
             script.withCredentials([script.usernamePassword(credentialsId: "${context.nexus.credentialsId}", passwordVariable: 'PASSWORD',
                     usernameVariable: 'USERNAME')]) {
                 def token = script.sh(script: """
-        curl -s -H "Accept: application/json" -H "Content-Type:application/json" -X PUT --data \
-        '{"name": "${script.USERNAME}", "password": "${script.PASSWORD}"}' \
-        ${context.buildTool.hostedRepository}-/user/org.couchdb.user:${script.USERNAME} | \
-        grep -oE 'NpmToken\\.[0-9a-zA-Z-]+'
-        """,
+                             curl -s -H "Accept: application/json" -H "Content-Type:application/json" -X PUT --data \
+                             '{"name": "${script.USERNAME}", "password": "${script.PASSWORD}"}' \
+                             ${npmRepositoryUrl}-/user/org.couchdb.user:${script.USERNAME} | \
+                             grep -oE 'NpmToken\\.[0-9a-zA-Z-]+'
+                            """,
                         returnStdout: true)
 
                 script.sh (script: """
-            set +x
-            npm set registry ${context.buildTool.hostedRepository}
-            auth=\$(echo -n '${script.USERNAME}:${script.PASSWORD}' | base64); npm set _auth=\$auth
-            npm set //${context.buildTool.hostedRepository}:_authToken ${token}
-            npm set email=${context.git.autouser}@epam.com
-            """, returnStdout: false)
+                    set +x
+                    npm set registry ${npmRepositoryUrl}
+                    auth=\$(echo -n '${script.USERNAME}:${script.PASSWORD}' | base64); npm set _auth=\$auth
+                    npm set //${npmRepositoryUrl}:_authToken ${token}
+                    npm set email=${context.git.autouser}@epam.com
+                  """, returnStdout: false)
             }
             script.sh ("npm publish")
         }

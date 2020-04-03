@@ -25,10 +25,16 @@ class PushDotnetApplicationLibrary {
 
         script.dir("${context.workDir}") {
             def nugetPackagesPath = "/tmp/${context.git.project}-nupkgs/"
+            def nugetRepositoryUrl = context.buildTool.hostedRepository
+            if (context.codebase.config.versioningType == "edp") {
+                nugetRepositoryUrl = context.codebase.version.toLowerCase().contains("snapshot") ?
+                        context.buildTool.snapshotRepository : context.buildTool.releaseRepository
+            }
 
-            script.sh "dotnet pack ${context.buildTool.sln_filename} --no-build --output ${nugetPackagesPath}"
+            script.sh "dotnet pack ${context.buildTool.sln_filename} --no-build --output ${nugetPackagesPath} " +
+                    "-p:PackageVersion=${context.codebase.version}"
             script.sh "dotnet nuget push ${nugetPackagesPath} -k ${context.buildTool.nugetApiKey} " +
-                    "-s ${context.buildTool.hostedRepository}"
+                    "-s ${nugetRepositoryUrl}"
         }
     }
 }

@@ -25,7 +25,7 @@ class GetVersionNpmApplicationLibrary {
     def setVersionToArtifact(context) {
         script.sh """
             set -eo pipefail
-            sed -i "/version/c\\  \\"version\\": \\"${context.codebase.branchVersion}-${context.codebase.currentBuildNumber}\\"," package.json
+            npm version ${context.codebase.branchVersion}-${context.codebase.currentBuildNumber}
             kubectl patch codebasebranches.v2.edp.epam.com ${context.codebase.config.name}-${context.git.branch.replaceAll(/\//, "-")} --type=merge -p '{\"spec\": {\"build\": "${context.codebase.currentBuildNumber}"}}'
         """
     }
@@ -43,6 +43,7 @@ class GetVersionNpmApplicationLibrary {
                     """, returnStdout: true
                 ).trim().toLowerCase()
                 context.codebase.buildVersion = "${context.codebase.version}-${script.BUILD_NUMBER}"
+                script.sh "npm version ${context.codebase.buildVersion}"
                 context.job.setDisplayName("${script.currentBuild.number}-${context.git.branch}-${context.codebase.version}")
                 context.codebase.vcsTag = "${context.git.branch}-${context.codebase.buildVersion}"
                 context.codebase.isTag = "${context.git.branch}-${context.codebase.buildVersion}"

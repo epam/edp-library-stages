@@ -47,6 +47,7 @@ class GetVersionDotnetApplicationLibrary {
                         returnStdout: true
                 ).trim().toLowerCase()
                 context.codebase.buildVersion = "${context.codebase.version}-${script.BUILD_NUMBER}"
+                context.codebase.version = context.codebase.buildVersion
                 context.job.setDisplayName("${script.currentBuild.number}-${context.git.branch}-${context.codebase.version}")
                 context.codebase.vcsTag = "${context.git.branch}-${context.codebase.buildVersion}"
                 context.codebase.isTag = "${context.git.branch}-${context.codebase.buildVersion}"
