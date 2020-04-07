@@ -92,6 +92,9 @@ class AutomationTests {
                                     results          : [[path: 'target/allure-results']]
                             ])
                             break
+                        case "gatling":
+                            script.gatlingArchive()
+                            break
                         default:
                             script.println("[JENKINS][WARNING] Can't publish test results. Testing framework is undefined.")
                             break
