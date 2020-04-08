@@ -33,9 +33,10 @@ class AutomationTests {
 
     void run(context) {
         def qualityGate = context.job.qualityGates.find{it.stepName == context.stepName}
+        def slave = context.job.getCodebaseFromAdminConsole(qualityGate.autotest.name).jenkinsSlave
         script.println("[JENKINS][DEBUG] Quality gate content - ${qualityGate}")
 
-        script.node(qualityGate.autotest.build_tool.toLowerCase()) {
+        script.node(slave) {
             context.buildTool = new BuildToolFactory().getBuildToolImpl(qualityGate.autotest.build_tool, script, context.nexus, context.job)
             context.buildTool.init()
             context.job.setGitServerDataToJobContext(qualityGate.autotest.gitServer)
