@@ -28,7 +28,8 @@ class PushGradleApplicationLibrary {
                         passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]) {
                     def nexusRepositoryUrl = context.codebase.version.toLowerCase().contains("snapshot") ?
                             "${context.buildTool.hostedRepository}-snapshots" : "${context.buildTool.hostedRepository}-releases"
-                    script.sh "gradle publish -I ${context.buildTool.settings} -PnexusLogin=${script.USERNAME} " +
+                    script.sh "gradle -Dorg.gradle.internal.publish.checksums.insecure=true publish " +
+                            "-I ${context.buildTool.settings} -PnexusLogin=${script.USERNAME} " +
                             "-PnexusPassword=${script.PASSWORD} -PnexusMavenRepositoryUrl=${nexusRepositoryUrl}"
                 }
             }
