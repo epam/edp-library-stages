@@ -39,7 +39,7 @@ class SonarMaven {
               IFS=\$'\\n';for i in \$(git diff --diff-filter=ACMR --name-only origin/master); \
                 do cp --parents \"\$i\" ${codereviewAnalysisRunDir}/; done
               cp -f pom.xml ${codereviewAnalysisRunDir}/
-              cp --parents -r src/test/ ${codereviewAnalysisRunDir}
+              [ -d "src/test/" ] &&  cp --parents -r src/test/ ${codereviewAnalysisRunDir} || echo "Directory src/test/ not found."
               cp --parents -r target/ ${codereviewAnalysisRunDir}
               """
                 } else {
