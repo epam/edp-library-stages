@@ -26,7 +26,7 @@ class GetVersionDotnetApplicationLibrary {
         script.sh """
             set -eo pipefail
             sed -i "s#\\(<Version>\\).*\\(</Version>\\)#\\1${context.codebase.branchVersion}-${context.codebase.currentBuildNumber}\\2#" "${context.codebase.deployableModule}/${context.codebase.deployableModule}.csproj"
-            kubectl patch codebasebranches.v2.edp.epam.com ${context.codebase.config.name}-${context.git.branch.replaceAll(/\//, "-")} --type=merge -p '{\"spec\": {\"build\": "${context.codebase.currentBuildNumber}"}}'
+            kubectl patch codebasebranches.v2.edp.epam.com ${context.codebase.config.name}-${context.git.branch.replaceAll(/\//, "-")} --type=merge -p '{\"status\": {\"build\": "${context.codebase.currentBuildNumber}"}}'
         """
     }
 
