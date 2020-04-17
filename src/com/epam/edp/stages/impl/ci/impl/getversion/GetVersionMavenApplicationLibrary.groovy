@@ -26,9 +26,9 @@ class GetVersionMavenApplicationLibrary {
         script.sh """
             set -eo pipefail
             if ${context.codebase.isReleaseBranch}; then
-               sed -i "0,/<version>.*<\\/version>/s/<version>.*<\\/version>/<version>${context.codebase.branchVersion}-${context.codebase.currentBuildNumber}<\\/version>/" pom.xml
+               find . -name 'pom.xml' | xargs -i sed -i "0,/<version>.*<\\/version>/s/<version>.*<\\/version>/<version>${context.codebase.branchVersion}-${context.codebase.currentBuildNumber}<\\/version>/" {}
             else
-               sed -i "0,/<version>.*<\\\\/version>/s/<version>.*<\\\\/version>/<version>${context.codebase.branchVersion}<\\\\/version>/" pom.xml
+               find . -name 'pom.xml' | xargs -i sed -i "0,/<version>.*<\\\\/version>/s/<version>.*<\\\\/version>/<version>${context.codebase.branchVersion}<\\\\/version>/" {}
             fi
             kubectl patch codebasebranches.v2.edp.epam.com ${context.codebase.config.name}-${context.git.branch.replaceAll(/\//, "-")} --type=merge -p '{\"status\": {\"build\": "${context.codebase.currentBuildNumber}"}}'
         """
