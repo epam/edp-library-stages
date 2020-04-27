@@ -22,7 +22,7 @@ import hudson.FilePath
 import java.text.DateFormat
 import java.text.SimpleDateFormat
 
-@Stage(name = "build-image-kaniko", buildTool = ["maven", "npm", "gradle", "dotnet"], type = [ProjectType.APPLICATION])
+@Stage(name = "build-image-kaniko", buildTool = ["maven", "npm", "gradle", "dotnet","python", "any"], type = [ProjectType.APPLICATION])
 class BuildImageKaniko {
     Script script
 
