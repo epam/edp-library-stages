@@ -209,8 +209,8 @@ class Deploy {
         context.platform.deployCodebase(
                 context.job.deployProject,
                 "${deployTemplatesPath}/${templateName}.yaml",
-                "${context.job.ciProject}/${imageName}",
-                codebase, context.job.dnsWildcard
+                codebase,
+                "${context.job.ciProject}/${imageName}"
         )
         deploymentWorkloadsList.each() { workload ->
             checkDeployment(context, workload.name, 'application', workload.kind)
