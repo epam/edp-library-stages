@@ -17,13 +17,14 @@ package com.epam.edp.stages.impl.ci.impl.builddockerfileimage
 import com.epam.edp.stages.impl.ci.ProjectType
 import com.epam.edp.stages.impl.ci.Stage
 
-@Stage(name = "build-image-from-dockerfile", buildTool = ["maven","gradle", "any"], type = [ProjectType.APPLICATION,ProjectType.AUTOTESTS])
-class BuildDockerfileImageAny {
+@Stage(name = "build-image-from-dockerfile", buildTool = ["python"], type = [ProjectType.APPLICATION,ProjectType.AUTOTESTS])
+class BuildDockerfileImagePython {
     Script script
 
     void run(context) {
         context.codebase.imageBuildArgs = []
         context.codebase.imageBuildArgs.push("--binary=true")
+        context.codebase.imageBuildArgs.push("-e INSTALL_ON_LINUX=1")
         new BuildDockerfileImageApplication(script: script).run(context)
     }
 }
