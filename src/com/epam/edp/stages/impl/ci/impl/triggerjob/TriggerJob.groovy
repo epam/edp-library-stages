@@ -22,6 +22,6 @@ class TriggerJob {
     Script script
 
     void run(context) {
-        script.build job: context.triggerJobName, wait: context.triggerJobWait, parameters: context.triggerJobParameters
+        script.build job: context.job.triggerJobName, wait: context.job.triggerJobWait, propagate: context.job.triggerJobPropogate, parameters: context.job.triggerJobParameters
     }
 }
