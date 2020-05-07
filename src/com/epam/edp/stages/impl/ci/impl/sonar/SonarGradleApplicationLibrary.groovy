@@ -21,28 +21,75 @@ import com.epam.edp.stages.impl.ci.impl.sonarcleanup.SonarCleanupApplicationLibr
 
 @Stage(name = "sonar", buildTool = ["gradle"], type = [ProjectType.APPLICATION, ProjectType.LIBRARY])
 class SonarGradleApplicationLibrary {
+    def getSonarReportJson(context, codereviewAnalysisRunDir) {
+        String sonarAnalysisStatus
+        def sonarReportMap = script.readProperties file: "${codereviewAnalysisRunDir}/build/sonar/report-task.txt"
+        def sonarJsonReportLink = "${context.sonar.route}/api/issues/search?componentKeys=${context.codebase.name}:change-${context.git.changeNumber}-${context.git.patchsetNumber}&branch=${context.git.branch}&resolved=false&facets=severities"
+
+        script.println("[JENKINS][DEBUG] Waiting for report from Sonar")
+        script.timeout(time: 10, unit: 'MINUTES') {
+            while (sonarAnalysisStatus != 'SUCCESS') {
+                if (sonarAnalysisStatus == 'FAILED') {
+                    script.error "[JENKINS][ERROR] Sonar analysis finished with status: \'${sonarAnalysisStatus}\'"
+                }
+                def response = script.httpRequest acceptType: 'APPLICATION_JSON',
+                        url: sonarReportMap.ceTaskUrl,
+                        httpMode: 'GET',
+                        quiet: true
+
+                def content = script.readJSON text: response.content
+                sonarAnalysisStatus = content.task.status
+                script.println("[JENKINS][DEBUG] Current status: " + sonarAnalysisStatus)
+            }
+        }
+
+        script.httpRequest acceptType: 'APPLICATION_JSON',
+                    url: sonarJsonReportLink,
+                    httpMode: 'GET',
+                    outputFile: "${codereviewAnalysisRunDir}/build/sonar/sonar-report.json"
+    }
+
+    def sendReport(sonarURL, codereviewAnalysisRunDir) {
+        script.dir("${codereviewAnalysisRunDir}") {
+            script.sonarToGerrit inspectionConfig: [baseConfig: [projectPath: "", sonarReportPath: "${codereviewAnalysisRunDir}/build/sonar/sonar-report.json"], serverURL: "${sonarURL}"],
+                    notificationConfig: [commentedIssuesNotificationRecipient: 'NONE', negativeScoreNotificationRecipient: 'NONE'],
+                    reviewConfig: [issueFilterConfig: [newIssuesOnly: false, changedLinesOnly: false, severity: 'CRITICAL']],
+                    scoreConfig: [category: 'Sonar-Verified', noIssuesScore: +1, issuesScore: -1, issueFilterConfig: [severity: 'CRITICAL']]
+        }
+    }
+
+    def sendSonarScan(sonarProjectName, codereviewAnalysisRunDir, buildTool, credentialsId) {
+        script.dir("${codereviewAnalysisRunDir}") {
+                script.withCredentials([script.usernamePassword(credentialsId: "${credentialsId}",
+                        passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]) {
+                    script.withSonarQubeEnv('Sonar') {
+                        script.sh "${buildTool.command} -PnexusLogin=${script.USERNAME} " +
+                                "-PnexusPassword=${script.PASSWORD} " +
+                                "sonarqube -Dsonar.projectKey=${sonarProjectName} " +
+                                "-Dsonar.projectName=${sonarProjectName} "
+                    }
+                }
+        }
+    }
     Script script
 
     void run(context) {
-        script.dir("${context.workDir}") {
-            script.withCredentials([script.usernamePassword(credentialsId: "${context.nexus.credentialsId}",
-                    passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]) {
-                script.withSonarQubeEnv('Sonar') {
-                    script.sh "${context.buildTool.command} -PnexusLogin=${script.USERNAME} " +
-                            "-PnexusPassword=${script.PASSWORD} " +
-                            "sonarqube -Dsonar.projectKey=${context.codebase.name} " +
-                            "-Dsonar.projectName=${context.codebase.name} "
-                }
-            }
-            script.timeout(time: 10, unit: 'MINUTES') {
-                def qualityGateResult = script.waitForQualityGate()
-                if (qualityGateResult.status != 'OK')
-                    script.error "[JENKINS][ERROR] Sonar quality gate check has been failed with status " +
-                            "${qualityGateResult.status}"
-            }
-
-            if (context.job.type == "build")
-                new SonarCleanupApplicationLibrary(script: script).run(context)
+        def codereviewAnalysisRunDir = context.workDir
+        if (context.job.type == "codereview") {
+            sendSonarScan("${context.codebase.name}:change-${context.git.changeNumber}-${context.git.patchsetNumber}", codereviewAnalysisRunDir, context.buildTool, context.nexus.credentialsId)
+            getSonarReportJson(context, codereviewAnalysisRunDir)
+            sendReport(context.sonar.route, codereviewAnalysisRunDir)
+        } else {
+            sendSonarScan(context.codebase.name, codereviewAnalysisRunDir, context.buildTool, context.nexus.credentialsId)
         }
+        script.timeout(time: 10, unit: 'MINUTES') {
+            def qualityGateResult = script.waitForQualityGate()
+            if (qualityGateResult.status != 'OK')
+                script.error "[JENKINS][ERROR] Sonar quality gate check has been failed with status " +
+                        "${qualityGateResult.status}"
+        }
+
+        if (context.job.type == "build")
+            new SonarCleanupApplicationLibrary(script: script).run(context)
     }
 }
