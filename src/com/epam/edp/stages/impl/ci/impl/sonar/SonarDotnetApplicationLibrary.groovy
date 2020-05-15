@@ -72,15 +72,22 @@ class SonarDotnetApplicationLibrary {
                  }
         }
     }
+    def runSonarScannerDependsOnPlatform(context, platform, codereviewAnalysisRunDir, scannerHome) {
+        if (platform == "kubernetes") {
+            sendSonarScan(context.codebase.name, codereviewAnalysisRunDir, context.buildTool, scannerHome)
+        } else {
+            sendSonarScan("${context.codebase.name}:change-${context.git.changeNumber}-${context.git.patchsetNumber}", codereviewAnalysisRunDir, context.buildTool, scannerHome)
+            getSonarReportJson(context, codereviewAnalysisRunDir)
+            sendReport(context.sonar.route, codereviewAnalysisRunDir)
+        }
+    }
     Script script
 
     void run(context) {
         def codereviewAnalysisRunDir = context.workDir
         def scannerHome = script.tool 'SonarScannerMSBuild'
         if (context.job.type == "codereview") {
-            sendSonarScan("${context.codebase.name}:change-${context.git.changeNumber}-${context.git.patchsetNumber}", codereviewAnalysisRunDir, context.buildTool, scannerHome)
-            getSonarReportJson(context, codereviewAnalysisRunDir)
-            sendReport(context.sonar.route, codereviewAnalysisRunDir)
+            runSonarScannerDependsOnPlatform(context, System.getenv("PLATFORM_TYPE"), codereviewAnalysisRunDir, scannerHome)
         } else {
             sendSonarScan(context.codebase.name, codereviewAnalysisRunDir, context.buildTool, scannerHome)
         }
