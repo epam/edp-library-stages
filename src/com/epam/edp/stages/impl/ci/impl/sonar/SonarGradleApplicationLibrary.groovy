@@ -71,8 +71,8 @@ class SonarGradleApplicationLibrary {
                 }
         }
     }
-    def runSonarScannerDependsOnPlatform(context, platform, codereviewAnalysisRunDir) {
-        if (platform == "kubernetes") {
+    def runSonarScannerDependsOnPlatformAndStrategy(context, platform, codereviewAnalysisRunDir) {
+        if (platform == "kubernetes" || context.codebase.config.strategy == "import") {
             sendSonarScan(context.codebase.name, codereviewAnalysisRunDir, context.buildTool, context.nexus.credentialsId)
         } else {
             sendSonarScan("${context.codebase.name}:change-${context.git.changeNumber}-${context.git.patchsetNumber}", codereviewAnalysisRunDir, context.buildTool, context.nexus.credentialsId)
@@ -85,7 +85,7 @@ class SonarGradleApplicationLibrary {
     void run(context) {
         def codereviewAnalysisRunDir = context.workDir
         if (context.job.type == "codereview") {
-            runSonarScannerDependsOnPlatform(context, System.getenv("PLATFORM_TYPE"), codereviewAnalysisRunDir)
+            runSonarScannerDependsOnPlatformAndStrategy(context, System.getenv("PLATFORM_TYPE"), codereviewAnalysisRunDir)
         } else {
             sendSonarScan(context.codebase.name, codereviewAnalysisRunDir, context.buildTool, context.nexus.credentialsId)
         }

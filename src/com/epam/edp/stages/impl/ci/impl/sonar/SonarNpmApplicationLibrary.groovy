@@ -66,8 +66,8 @@ class SonarNpmApplicationLibrary {
                 }
         }
     }
-    def runSonarScannerDependsOnPlatform(context, platform, codereviewAnalysisRunDir, scannerHome) {
-        if (platform == "kubernetes") {
+    def runSonarScannerDependsOnPlatformAndStrategy(context, platform, codereviewAnalysisRunDir, scannerHome) {
+        if (platform == "kubernetes" || context.codebase.config.strategy == "import") {
             sendSonarScan(context.codebase.name, codereviewAnalysisRunDir, scannerHome)
         } else {
             sendSonarScan("${context.codebase.name}:change-${context.git.changeNumber}-${context.git.patchsetNumber}", codereviewAnalysisRunDir, scannerHome)
@@ -81,7 +81,7 @@ class SonarNpmApplicationLibrary {
         def scannerHome = script.tool 'SonarQube Scanner'
         def codereviewAnalysisRunDir = context.workDir
         if (context.job.type == "codereview") {
-            runSonarScannerDependsOnPlatform(context, System.getenv("PLATFORM_TYPE"), codereviewAnalysisRunDir, scannerHome)
+            runSonarScannerDependsOnPlatformAndStrategy(context, System.getenv("PLATFORM_TYPE"), codereviewAnalysisRunDir, scannerHome)
         } else {
             sendSonarScan(context.codebase.name, codereviewAnalysisRunDir, scannerHome)
         }
