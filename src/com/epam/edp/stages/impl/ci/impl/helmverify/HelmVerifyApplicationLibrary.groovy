@@ -28,7 +28,8 @@ class HelmVerifyApplicationLibrary {
             V=\$(curl -Ls https://github.com/helm/helm/releases | grep 'href="/helm/helm/releases/tag/v3.' | grep -v no-underline | head -n 1 | cut -d '"' -f 2 | awk '{n=split(\$NF,a,"/");print a[n]}' | awk 'a !~ \$0{print}; {a=\$0}')
             curl -o helm.tar.gz https://get.helm.sh/helm-\${V}-linux-amd64.tar.gz
             tar -xzf helm.tar.gz linux-amd64/helm --strip 1
-            ./helm lint "${context.job.deployTemplatesDirectory}"
+            values_files=`find ${context.job.deployTemplatesDirectory} -maxdepth 1 -name 'values*.yaml'`
+            for file in ${values_files}; do echo Linting with ${file} values; ./helm lint "${context.job.deployTemplatesDirectory}" --values ${file}; done
             """
             }
         }
