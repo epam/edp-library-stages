@@ -29,7 +29,7 @@ class HelmVerifyApplicationLibrary {
             curl -o helm.tar.gz https://get.helm.sh/helm-\${V}-linux-amd64.tar.gz
             tar -xzf helm.tar.gz linux-amd64/helm --strip 1
             values_files=`find ${context.job.deployTemplatesDirectory} -maxdepth 1 -name 'values*.yaml'`
-            for file in ${values_files}; do echo Linting with ${file} values; ./helm lint "${context.job.deployTemplatesDirectory}" --values ${file}; done
+            for file in \${values_files}; do echo Linting with \${file} values; ./helm lint "${context.job.deployTemplatesDirectory}" --values \${file}; done
             """
             }
         }
