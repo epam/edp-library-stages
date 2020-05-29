@@ -136,7 +136,8 @@ class PromoteImagesECR {
                         updateCodebaseimagestreams(codebase.outputIs, "$dockerRegistryHost}/${codebase.outputIs}", codebase.version, context)
                     }
                     catch (Exception ex) {
-                        script.error("[JENKINS][ERROR] Promoting image for ${codebase.name} failed")
+                        script.println("[JENKINS][ERROR] Trace: ${ex.getStackTrace().collect { it.toString() }.join('\n')}")
+                        script.error("[JENKINS][ERROR] Promoting image for ${codebase.name} failed\r\n Exception - ${ex}")
                     }
                     finally {
                         def podToDelete = "promote-${codebase.outputIs}-${script.BUILD_NUMBER.toInteger() - 1}"
