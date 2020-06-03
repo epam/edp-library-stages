@@ -97,16 +97,20 @@ class JiraFixVersion {
     }
 
     void run(context) {
-        def ticketNamePattern = context.codebase.config.ticketNamePattern
-        script.println("[JENKINS][DEBUG] Ticket name pattern has been fetched ${ticketNamePattern}")
-        def changes = getChanges(context.workDir)
-        def commits = changes.getCommits()
-        if (commits == null) {
-            script.println("[JENKINS][INFO] No changes since last successful build. Skip creating JiraFixVersion CR")
-        } else {
-            def template = getJiraFixTemplate(context.platform)
-            def parsedTemplate = parseJiraFixVersionTemplate(template, context, commits, ticketNamePattern)
-            tryToCreateJiraFixVersionCR(context.workDir, context.platform, parsedTemplate)
+        try {
+            def ticketNamePattern = context.codebase.config.ticketNamePattern
+            script.println("[JENKINS][DEBUG] Ticket name pattern has been fetched ${ticketNamePattern}")
+            def changes = getChanges(context.workDir)
+            def commits = changes.getCommits()
+            if (commits == null) {
+                script.println("[JENKINS][INFO] No changes since last successful build. Skip creating JiraFixVersion CR")
+            } else {
+                def template = getJiraFixTemplate(context.platform)
+                def parsedTemplate = parseJiraFixVersionTemplate(template, context, commits, ticketNamePattern)
+                tryToCreateJiraFixVersionCR(context.workDir, context.platform, parsedTemplate)
+            }
+        } catch(Exception ex) {
+            script.println("[JENKINS][WARNING] Couldn't correctly finish 'create-jira-fix0version' stage due to exception: ${ex}")
         }
     }
 
