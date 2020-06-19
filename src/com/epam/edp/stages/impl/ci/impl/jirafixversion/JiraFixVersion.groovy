@@ -35,7 +35,7 @@ class JiraFixVersion {
 
     def getJiraFixTemplate(platform) {
         script.println("[JENKINS][DEBUG] Getting JiraFixVersion CR template")
-        def temp = platform.getJsonPathValue("cm", "jfv-template", ".data.jfv-template")
+        def temp = platform.getJsonPathValue("cm", "jfv-template", ".data.jfv\\.json")
         script.println("[JENKINS][DEBUG] JiraFixVersion template has been fetched ${temp}")
         return new JsonSlurperClassic().parseText(temp)
     }
