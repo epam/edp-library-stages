@@ -24,6 +24,7 @@ class GetVersionGoApplication {
 
     def setUpVersions(workDir, codebase, git, job) {
         if (codebase.config.versioningType == "edp") {
+            updateBuildNumber(codebase.config.name, git.branch.replaceAll(/\//, "-"), codebase.currentBuildNumber)
             codebase.vcsTag = "build/${codebase.version}"
             codebase.isTag = "${codebase.version}"
             return
@@ -34,6 +35,12 @@ class GetVersionGoApplication {
         job.setDisplayName("${script.currentBuild.number}-${git.branch}-${codebase.version}")
         codebase.isTag = "${git.branch}-${codebase.buildVersion}"
         codebase.vcsTag = codebase.isTag
+    }
+
+    def updateBuildNumber(codebaseName, branchName, buildNumber) {
+        script.sh """kubectl patch codebasebranches.v2.edp.epam.com ${codebaseName}-${
+            branchName
+        } --type=merge -p '{\"status\": {\"build\": "${buildNumber}"}}'"""
     }
 
     void run(context) {
