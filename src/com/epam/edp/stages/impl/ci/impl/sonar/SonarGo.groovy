@@ -17,28 +17,101 @@ package com.epam.edp.stages.impl.ci.impl.sonar
 
 import com.epam.edp.stages.impl.ci.ProjectType
 import com.epam.edp.stages.impl.ci.Stage
+import com.epam.edp.stages.impl.ci.impl.sonarcleanup.SonarCleanupApplicationLibrary
 
 @Stage(name = "sonar", buildTool = "go", type = ProjectType.APPLICATION)
 class SonarGo {
 
     Script script
 
-    void run(context) {
-
+    def sendSonarScan(workDir, codebaseName) {
         def scannerHome = script.tool 'SonarQube Scanner'
-        script.dir("${context.workDir}") {
+        script.dir("${workDir}") {
             script.withSonarQubeEnv('Sonar') {
                 script.sh "${scannerHome}/bin/sonar-scanner " +
-                        "-Dsonar.projectKey=${context.codebase.name} " +
-                        "-Dsonar.projectName=${context.codebase.name} " +
+                        "-Dsonar.projectKey=${codebaseName} " +
+                        "-Dsonar.projectName=${codebaseName} " +
                         "-Dsonar.go.coverage.reportPaths=coverage.out "
+                "-Dsonar.working.directory=${workDir} "
             }
-            script.timeout(time: 10, unit: 'MINUTES') {
-                def qualityGateResult = script.waitForQualityGate()
-                if (qualityGateResult.status != 'OK')
-                    script.error "[JENKINS][ERROR] Sonar quality gate check has been failed with status " +
-                            "${qualityGateResult.status}"
+
+        }
+    }
+
+    def waitForQualityGate() {
+        script.timeout(time: 10, unit: 'MINUTES') {
+            def qualityGateResult = script.waitForQualityGate()
+            if (qualityGateResult.status != 'OK')
+                script.error "[JENKINS][ERROR] Sonar quality gate check has been failed with status " +
+                        "${qualityGateResult.status}"
+        }
+    }
+
+    def waitForSonarAnalysis(ceTaskUrl) {
+        script.println("[JENKINS][DEBUG] Waiting for report from Sonar")
+        script.timeout(time: 10, unit: 'MINUTES') {
+            while (true) {
+                def status = getStatus(ceTaskUrl)
+                script.println("[JENKINS][DEBUG] Current status: ${status}")
+
+                if (status == 'FAILED') {
+                    script.error "[JENKINS][ERROR] Sonar analysis finished with status: \'${status}\'"
+                }
+
+                if (status == 'SUCCESS') {
+                    script.println("[JENKINS][ERROR] Sonar analysis finished with status: ${status}")
+                    break
+                }
             }
         }
+    }
+
+    def getStatus(ceTaskUrl) {
+        def response = script.httpRequest acceptType: 'APPLICATION_JSON',
+                url: ceTaskUrl,
+                httpMode: 'GET',
+                quiet: true
+
+        def content = script.readJSON text: response.content
+        return content.task.status
+    }
+
+    def getSonarReportInJson(workDir, url) {
+        script.httpRequest acceptType: 'APPLICATION_JSON',
+                url: url,
+                httpMode: 'GET',
+                outputFile: "${workDir}/.scannerwork/sonar-report.json"
+    }
+
+    def sendStatusToGerrit(workDir, sonarURL) {
+        script.dir("${workDir}") {
+            script.sonarToGerrit inspectionConfig: [baseConfig: [projectPath: "", sonarReportPath: "${workDir}/.scannerwork/sonar-report.json"], serverURL: "${sonarURL}"],
+                    notificationConfig: [commentedIssuesNotificationRecipient: 'NONE', negativeScoreNotificationRecipient: 'NONE'],
+                    reviewConfig: [issueFilterConfig: [newIssuesOnly: false, changedLinesOnly: false, severity: 'CRITICAL']],
+                    scoreConfig: [category: 'Sonar-Verified', noIssuesScore: +1, issuesScore: -1, issueFilterConfig: [severity: 'CRITICAL']]
+        }
+    }
+
+    void run(context) {
+        if (context.job.type == "build") {
+            new SonarCleanupApplicationLibrary(script: script).run(context)
+        }
+        if (context.job.type == "codereview" && context.codebase.config.strategy != "import") {
+            sendSonarScan(context.workDir, "${context.codebase.name}:change-${context.git.changeNumber}-${context.git.patchsetNumber}")
+
+            def report = script.readProperties file: "${context.workDir}/.scannerwork/report-task.txt"
+            def ceTaskUrl = report.ceTaskUrl
+            waitForSonarAnalysis(ceTaskUrl)
+
+            def url = "${context.sonar.route}/api/issues/search?componentKeys=${context.codebase.name}:change-${context.git.changeNumber}-${context.git.patchsetNumber}&branch=${context.git.branch}&resolved=false&facets=severities"
+            getSonarReportInJson(context.workDir, url)
+
+            sendStatusToGerrit(context.workDir, context.sonar.route)
+
+            waitForQualityGate()
+            return
+        }
+        sendSonarScan(context.workDir, context.codebase.name)
+        waitForQualityGate()
     }
 }
