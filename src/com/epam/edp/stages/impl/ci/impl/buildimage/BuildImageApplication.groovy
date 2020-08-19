@@ -14,21 +14,36 @@ limitations under the License.*/
 
 package com.epam.edp.stages.impl.ci.impl.buildimage
 
+import com.epam.edp.stages.impl.ci.impl.codebaseiamgestream.CodebaseImageStreams
+
 class BuildImageApplication {
     Script script
+    def buildConfigApi = "buildconfig"
+
+    void createOrUpdateBuildConfig(codebase, buildConfigName, imageUrl) {
+        if (!script.openshift.selector(buildConfigApi, "${buildConfigName}").exists()) {
+            script.openshift.newBuild(codebase.imageBuildArgs)
+            return
+        }
+        script.sh("oc patch --type=merge ${buildConfigApi} ${buildConfigName} -p \"{\\\"spec\\\":{\\\"output\\\":{\\\"to\\\":{\\\"name\\\":\\\"${imageUrl}\\\"}}}}\" ")
+    }
 
     void run(context) {
-        def buildconfigName = "${context.codebase.name}-${context.git.branch.replaceAll("[^\\p{L}\\p{Nd}]+", "-").toLowerCase()}"
-        context.codebase.imageBuildArgs.push("--name=${buildconfigName}")
-        context.codebase.imageBuildArgs.push("--image-stream=s2i-${context.codebase.config.language.toLowerCase()}")
-        def resultTag
-        def targetTags = [context.codebase.buildVersion]
-        script.println("[JENKINS][DEBUG] Target tags for ${context.codebase.name} codebase: ${targetTags}")
-
         script.openshift.withCluster() {
             script.openshift.withProject() {
-                if (!script.openshift.selector("buildconfig", "${buildconfigName}").exists())
-                    script.openshift.newBuild(context.codebase.imageBuildArgs)
+                def buildconfigName = "${context.codebase.name}-${context.git.branch.replaceAll("[^\\p{L}\\p{Nd}]+", "-").toLowerCase()}"
+                def dockerRegistryHost = "docker-registry.default.svc:5000"
+                def imageUrl = "${dockerRegistryHost}/${script.openshift.project()}/${buildconfigName}:${context.codebase.isTag}"
+
+                context.codebase.imageBuildArgs.push("--name=${buildconfigName}")
+                context.codebase.imageBuildArgs.push("--image-stream=s2i-${context.codebase.config.language.toLowerCase()}")
+                context.codebase.imageBuildArgs.push("--to=${imageUrl}")
+
+                def resultTag
+                def targetTags = [context.codebase.buildVersion]
+                script.println("[JENKINS][DEBUG] Target tags for ${context.codebase.name} codebase: ${targetTags}")
+
+                createOrUpdateBuildConfig(context.codebase, buildconfigName, imageUrl)
 
                 script.dir(context.codebase.deployableModuleDir) {
                     script.sh "tar -cf ${context.codebase.name}.tar *"
@@ -39,10 +54,9 @@ class BuildImageApplication {
                 }
                 script.println("[JENKINS][DEBUG] Build config ${context.codebase.name} with result " +
                         "${buildconfigName}:${resultTag} has been completed")
-                script.openshift.tag(
-                        "${script.openshift.project()}/${buildconfigName}@${resultTag}",
-                        "${script.openshift.project()}/${buildconfigName}:${context.codebase.isTag}")
 
+                new CodebaseImageStreams(context, script)
+                        .UpdateOrCreateCodebaseImageStream(buildconfigName, "${dockerRegistryHost}/${buildconfigName}", context.codebase.isTag)
             }
         }
     }

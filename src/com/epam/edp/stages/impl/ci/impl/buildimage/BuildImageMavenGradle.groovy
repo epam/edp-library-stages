@@ -24,6 +24,7 @@ class BuildImageMavenGradle {
     void run(context) {
         context.codebase.imageBuildArgs = []
         context.codebase.imageBuildArgs.push("--binary=true")
+        context.codebase.imageBuildArgs.push("--to-docker=true")
         new BuildImageApplication(script: script).run(context)
     }
 }

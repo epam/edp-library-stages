@@ -24,6 +24,7 @@ class BuildDockerfileImageAny {
     void run(context) {
         context.codebase.imageBuildArgs = []
         context.codebase.imageBuildArgs.push("--binary=true")
+        context.codebase.imageBuildArgs.push("--to-docker=true")
         new BuildDockerfileImageApplication(script: script).run(context)
     }
 }

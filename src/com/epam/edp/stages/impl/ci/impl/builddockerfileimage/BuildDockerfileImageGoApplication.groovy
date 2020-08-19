@@ -24,6 +24,7 @@ class BuildDockerfileImageGoApplication {
     void run(context) {
         context.codebase.imageBuildArgs = []
         context.codebase.imageBuildArgs.push("--binary=true")
+        context.codebase.imageBuildArgs.push("--to-docker=true")
         context.codebase.deployableModuleDir = "${context.workDir}"
         new BuildDockerfileImageApplication(script: script).run(context)
     }

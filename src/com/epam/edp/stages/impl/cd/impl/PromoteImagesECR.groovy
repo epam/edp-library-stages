@@ -19,8 +19,7 @@ import groovy.json.JsonSlurperClassic
 import hudson.FilePath
 import org.apache.commons.lang.RandomStringUtils
 
-import java.text.DateFormat
-import java.text.SimpleDateFormat
+import com.epam.edp.stages.impl.ci.impl.codebaseiamgestream.CodebaseImageStreams
 
 @Stage(name = "promote-images-ecr")
 class PromoteImagesECR {
@@ -64,38 +63,6 @@ class PromoteImagesECR {
         }
     }
 
-    def setCodebaseImageStreamTemplate(outputFilePath, cbisName, fullImageName, context) {
-        def cbisFile = new File(outputFilePath)
-        def cbisTemplateFilePath = new FilePath(cbisFile)
-        def cbisTemplateData = context.platform.getJsonPathValue("cm", "cbis-template", ".data.cbis\\.json")
-        def parsedCbisTemplateData = new JsonSlurperClassic().parseText(cbisTemplateData)
-        parsedCbisTemplateData.metadata.name = cbisName
-        parsedCbisTemplateData.spec.imageName = fullImageName
-
-        def jsonData = JsonOutput.toJson(parsedCbisTemplateData)
-        cbisTemplateFilePath.write(jsonData, null)
-        return cbisTemplateFilePath
-    }
-
-    def updateCodebaseimagestreams(cbisName, repositoryName, imageTag, context) {
-        def crApiGroup = "${context.job.getParameterValue("GIT_SERVER_CR_VERSION")}.edp.epam.com"
-        if (!context.platform.checkObjectExists("cbis.${crApiGroup}", cbisName)) {
-            script.println("[JENKINS][DEBUG] CodebaseImagestream not found. Creating new CodebaseImagestream")
-            def cbisTemplateFilePath = setCodebaseImageStreamTemplate("${context.workDir}/cbis-template.json", cbisName, repositoryName, context)
-            context.platform.apply(cbisTemplateFilePath.getRemote())
-        }
-        def cbisResource = context.platform.getJsonValue("cbis.${crApiGroup}", cbisName)
-        def parsedCbisResource = new JsonSlurperClassic().parseText(cbisResource)
-        def cbisTags = parsedCbisResource.spec.tags ? parsedCbisResource.spec.tags : []
-
-        if (!cbisTags.find { it.name == imageTag }) {
-            DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss")
-            cbisTags.add(['name': imageTag, 'created': dateFormat.format(new Date())])
-            def newCbisTags = JsonOutput.toJson(cbisTags)
-            script.sh("kubectl patch --type=merge cbis.${crApiGroup} ${cbisName} -p '{\"spec\":{\"tags\":${newCbisTags}}}'")
-        }
-    }
-
     void run(context) {
         def dockerRegistryHost = context.platform.getJsonPathValue("edpcomponent", "docker-registry", ".spec.url")
         if (!dockerRegistryHost)
@@ -133,7 +100,8 @@ class PromoteImagesECR {
 
                         script.println("[JENKINS][DEBUG] Promote ${buildconfigName} for application ${codebase.name} has been completed")
 
-                        updateCodebaseimagestreams(codebase.outputIs, "$dockerRegistryHost}/${codebase.outputIs}", codebase.version, context)
+                        new CodebaseImageStreams(context, script)
+                                .UpdateOrCreateCodebaseImageStream(codebase.outputIs, "$dockerRegistryHost}/${codebase.outputIs}", codebase.version)
                     }
                     catch (Exception ex) {
                         script.println("[JENKINS][ERROR] Trace: ${ex.getStackTrace().collect { it.toString() }.join('\n')}")

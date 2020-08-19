@@ -24,6 +24,7 @@ class BuildDockerfileImageNpmApplication {
     void run(context) {
         context.codebase.imageBuildArgs = []
         context.codebase.imageBuildArgs.push("--binary=true")
+        context.codebase.imageBuildArgs.push("--to-docker=true")
         context.codebase.imageBuildArgs.push("-e NGINX_STATIC_DIR=build")
         new BuildDockerfileImageApplication(script: script).run(context)
     }

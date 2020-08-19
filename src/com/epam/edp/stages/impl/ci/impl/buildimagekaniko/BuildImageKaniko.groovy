@@ -19,8 +19,7 @@ import groovy.json.JsonOutput
 import groovy.json.JsonSlurperClassic
 import hudson.FilePath
 
-import java.text.DateFormat
-import java.text.SimpleDateFormat
+import com.epam.edp.stages.impl.ci.impl.codebaseiamgestream.CodebaseImageStreams
 
 @Stage(name = "build-image-kaniko", buildTool = ["maven", "npm", "gradle", "dotnet","python", "any"], type = [ProjectType.APPLICATION])
 class BuildImageKaniko {
@@ -61,37 +60,6 @@ class BuildImageKaniko {
         }
     }
 
-    def setCodebaseImageStreamTemplate(outputFilePath, cbisName, fullImageName, context) {
-        def cbisTemplateFilePath = new FilePath(Jenkins.getInstance().getComputer(script.env['NODE_NAME']).getChannel(), outputFilePath)
-        def cbisTemplateData = context.platform.getJsonPathValue("cm", "cbis-template", ".data.cbis\\.json")
-        def parsedCbisTemplateData = new JsonSlurperClassic().parseText(cbisTemplateData)
-        parsedCbisTemplateData.metadata.name = cbisName
-        parsedCbisTemplateData.spec.imageName = fullImageName
-
-        def jsonData = JsonOutput.toJson(parsedCbisTemplateData)
-        cbisTemplateFilePath.write(jsonData, null)
-        return cbisTemplateFilePath
-    }
-
-    def updateCodebaseimagestreams(cbisName, repositoryName, imageTag, context) {
-        def crApiGroup = "${context.job.getParameterValue("GIT_SERVER_CR_VERSION")}.edp.epam.com"
-        if (!context.platform.checkObjectExists("cbis.${crApiGroup}", cbisName)) {
-            script.println("[JENKINS][DEBUG] CodebaseImagestream not found. Creating new CodebaseImagestream")
-            def cbisTemplateFilePath = setCodebaseImageStreamTemplate("${context.workDir}/cbis-template.json", cbisName, repositoryName, context)
-            context.platform.apply(cbisTemplateFilePath.getRemote())
-        }
-        def cbisResource = context.platform.getJsonValue("cbis.${crApiGroup}", cbisName)
-        def parsedCbisResource = new JsonSlurperClassic().parseText(cbisResource)
-        def cbisTags = parsedCbisResource.spec.tags ? parsedCbisResource.spec.tags : []
-
-        if (!cbisTags.find { it.name == imageTag }) {
-            DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss")
-            cbisTags.add(['name': imageTag, 'created': dateFormat.format(new Date())])
-            def newCbisTags = JsonOutput.toJson(cbisTags)
-            script.sh("kubectl patch --type=merge cbis.${crApiGroup} ${cbisName} -p '{\"spec\":{\"tags\":${newCbisTags}}}'")
-        }
-    }
-
     void run(context) {
         def dockerfilePath = new FilePath(Jenkins.getInstance().getComputer(script.env['NODE_NAME']).getChannel(),
                 "${context.workDir}/Dockerfile")
@@ -129,8 +97,8 @@ class BuildImageKaniko {
                     script.sleep(10)
                 }
                 script.println("[JENKINS][DEBUG] Build config ${buildconfigName} for application ${context.codebase.name} has been completed")
-                updateCodebaseimagestreams(resultImageName, "${dockerRegistryHost}/${resultImageName}",
-                        "${context.codebase.isTag}", context)
+                new CodebaseImageStreams(context, script)
+                        .UpdateOrCreateCodebaseImageStream(resultImageName, "${dockerRegistryHost}/${resultImageName}", context.codebase.isTag)
             }
             catch (Exception ex) {
                 script.error("[JENKINS][ERROR] Building image for ${context.codebase.name} failed")

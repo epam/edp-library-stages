@@ -24,6 +24,7 @@ class BuildDockerfileImagePython {
     void run(context) {
         context.codebase.imageBuildArgs = []
         context.codebase.imageBuildArgs.push("--binary=true")
+        context.codebase.imageBuildArgs.push("--to-docker=true")
         context.codebase.imageBuildArgs.push("-e INSTALL_ON_LINUX=1")
         new BuildDockerfileImageApplication(script: script).run(context)
     }
