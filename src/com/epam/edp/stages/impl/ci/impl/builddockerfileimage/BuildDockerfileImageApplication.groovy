@@ -36,7 +36,11 @@ class BuildDockerfileImageApplication {
         def resultTag
         script.openshift.withCluster() {
             script.openshift.withProject() {
-                def dockerRegistryHost = "docker-registry.default.svc:5000"
+                def dockerRegistryHost = context.platform.getJsonPathValue("edpcomponent", "docker-registry", ".spec.url")
+                if (!dockerRegistryHost) {
+                    script.error("[JENKINS][ERROR] Couldn't get docker registry server")
+                }
+
                 def buildconfigName = "${context.codebase.name}-dockerfile-${context.git.branch.replaceAll("[^\\p{L}\\p{Nd}]+", "-")}"
                 def outputImagestreamName = "${context.codebase.name}-${context.git.branch.replaceAll("[^\\p{L}\\p{Nd}]+", "-")}"
 
