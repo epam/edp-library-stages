@@ -58,25 +58,25 @@ class SonarDotnetApplicationLibrary {
         }
     }
 
-    def sendSonarScan(sonarProjectName, codereviewAnalysisRunDir, buildTool, scannerHome) {
+    def sendSonarScan(sonarProjectName, codereviewAnalysisRunDir, buildTool, scannerCommand) {
         script.dir("${codereviewAnalysisRunDir}") {
                  script.withSonarQubeEnv('Sonar') {
                      script.sh """
-                     dotnet ${scannerHome}/SonarScanner.MSBuild.dll begin /k:${sonarProjectName} \
+                     ${scannerCommand} begin /k:${sonarProjectName} \
                      /k:${sonarProjectName} \
                      /n:${sonarProjectName} \
                      /d:sonar.cs.opencover.reportsPaths=${codereviewAnalysisRunDir}/*Tests*/*.xml
                      dotnet build ${buildTool.sln_filename}
-                     dotnet ${scannerHome}/SonarScanner.MSBuild.dll end
+                     ${scannerCommand} end
                  """
                  }
         }
     }
-    def runSonarScannerDependsOnPlatformAndStrategy(context, platform, codereviewAnalysisRunDir, scannerHome) {
+    def runSonarScannerDependsOnPlatformAndStrategy(context, platform, codereviewAnalysisRunDir, scannerCommand) {
         if (platform == "kubernetes" || context.codebase.config.strategy == "import") {
-            sendSonarScan(context.codebase.name, codereviewAnalysisRunDir, context.buildTool, scannerHome)
+            sendSonarScan(context.codebase.name, codereviewAnalysisRunDir, context.buildTool, scannerCommand)
         } else {
-            sendSonarScan("${context.codebase.name}:change-${context.git.changeNumber}-${context.git.patchsetNumber}", codereviewAnalysisRunDir, context.buildTool, scannerHome)
+            sendSonarScan("${context.codebase.name}:change-${context.git.changeNumber}-${context.git.patchsetNumber}", codereviewAnalysisRunDir, context.buildTool, scannerCommand)
             getSonarReportJson(context, codereviewAnalysisRunDir)
             sendReport(context.sonar.route, codereviewAnalysisRunDir)
         }
@@ -85,11 +85,12 @@ class SonarDotnetApplicationLibrary {
 
     void run(context) {
         def codereviewAnalysisRunDir = context.workDir
-        def scannerHome = script.tool 'SonarScannerMSBuild'
+        def scannerHomePath = script.tool 'SonarScannerMSBuild'
+        def scannerCommand = context.codebase.config.framework == "netcore" ? "dotnet ${scannerHomePath}/SonarScanner.MSBuild.dll" : "/home/jenkins/.dotnet/tools/dotnet-sonarscanner"
         if (context.job.type == "codereview") {
-            runSonarScannerDependsOnPlatformAndStrategy(context, System.getenv("PLATFORM_TYPE"), codereviewAnalysisRunDir, scannerHome)
+            runSonarScannerDependsOnPlatformAndStrategy(context, System.getenv("PLATFORM_TYPE"), codereviewAnalysisRunDir, scannerCommand)
         } else {
-            sendSonarScan(context.codebase.name, codereviewAnalysisRunDir, context.buildTool, scannerHome)
+            sendSonarScan(context.codebase.name, codereviewAnalysisRunDir, context.buildTool, scannerCommand)
         }
         script.timeout(time: 10, unit: 'MINUTES') {
             def qualityGateResult = script.waitForQualityGate()
