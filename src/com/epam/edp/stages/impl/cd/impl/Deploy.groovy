@@ -289,6 +289,7 @@ class Deploy {
 
     void run(context) {
         context.platform.createProjectIfNotExist(context.job.deployProject, context.job.edpName)
+
         context.platform.copySharedSecrets(context.job.sharedSecretsMask, context.job.deployProject)
 
         if (context.job.buildUser == null || context.job.buildUser == "")
@@ -351,7 +352,7 @@ class Deploy {
                     return
 
                 context.platform.addSccToUser(codebase.name, 'anyuid', context.job.deployProject)
-                context.platform.createRoleBinding("system:serviceaccount:${context.job.deployProject})", "view",context.job.deployProject)
+                context.platform.createRoleBinding("system:serviceaccount:${context.job.deployProject}", "view",context.job.deployProject)
 
                 context.environment.config.dockerRegistryHost = getDockerRegistryInfo(context)
                 parallelCodebases["${codebase.name}"] = {
