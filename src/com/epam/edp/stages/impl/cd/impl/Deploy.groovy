@@ -270,8 +270,6 @@ class Deploy {
             catch (Exception ex) {
                 script.unstable("[JENKINS][WARNING] Deployment of codebase ${name} has been failed. Reason - ${ex}.")
                 script.currentBuild.setResult('UNSTABLE')
-                if (codebase.deploymentScript == "helm-chart")
-                    context.platform.rollbackDeployedCodebaseHelm(codebase.name, context.job.deployProject)
                 if (codebase.name in context.job.applicationsToPromote)
                     context.job.applicationsToPromote.remove(codebase.name)
             }
