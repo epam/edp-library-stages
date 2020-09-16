@@ -27,7 +27,7 @@ class CompileDotnetApplicationLibrary {
                     script: "ls *.sln",
                     returnStdout: true
             ).trim()
-            script.sh "dotnet build ${context.buildTool.sln_filename}"
+            script.sh "dotnet publish ${context.buildTool.sln_filename}"
         }
     }
 }
