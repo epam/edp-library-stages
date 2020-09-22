@@ -101,7 +101,7 @@ class PromoteImagesECR {
                         script.println("[JENKINS][DEBUG] Promote ${buildconfigName} for application ${codebase.name} has been completed")
 
                         new CodebaseImageStreams(context, script)
-                                .UpdateOrCreateCodebaseImageStream(codebase.outputIs, "$dockerRegistryHost}/${codebase.outputIs}", codebase.version)
+                                .UpdateOrCreateCodebaseImageStream(codebase.outputIs, "${dockerRegistryHost}/${codebase.outputIs}", codebase.version)
                     }
                     catch (Exception ex) {
                         script.println("[JENKINS][ERROR] Trace: ${ex.getStackTrace().collect { it.toString() }.join('\n')}")
