@@ -76,13 +76,14 @@ class PromoteImagesECR {
                 def sourceImageName = "${codebase.inputIs}:${codebase.version}"
                 def buildconfigName = "promote-${codebase.outputIs}-${script.BUILD_NUMBER}"
 
-                def dockerfileContents = "FROM ${dockerRegistryHost}/${sourceImageName}"
+                def dockerfileContents = "FROM ${dockerRegistryHost}/${context.job.ciProject}/${sourceImageName}"
                 def dockerfilePath = new FilePath(new File("${context.workDir}/Dockerfile"))
                 dockerfilePath.write(dockerfileContents, null)
 
                 script.dir("${context.workDir}") {
                     try {
-                        def kanikoTemplateFilePath = setKanikoTemplate("${context.workDir}/kaniko-template.json", buildconfigName, codebase.outputIs, dockerRegistryHost, context, codebase)
+                        def kanikoTemplateFilePath = setKanikoTemplate("${context.workDir}/kaniko-template.json", buildconfigName,
+                                "${context.job.ciProject}/${codebase.outputIs}", dockerRegistryHost, context, codebase)
                         context.platform.apply(kanikoTemplateFilePath.getRemote())
                         while (!context.platform.getObjectStatus("pod", buildconfigName)["initContainerStatuses"][0].state.keySet().contains("running")) {
                             script.println("[JENKINS][DEBUG] Waiting for init container in Kaniko is started")
@@ -101,7 +102,7 @@ class PromoteImagesECR {
                         script.println("[JENKINS][DEBUG] Promote ${buildconfigName} for application ${codebase.name} has been completed")
 
                         new CodebaseImageStreams(context, script)
-                                .UpdateOrCreateCodebaseImageStream(codebase.outputIs, "${dockerRegistryHost}/${codebase.outputIs}", codebase.version)
+                                .UpdateOrCreateCodebaseImageStream(codebase.outputIs, "${dockerRegistryHost}/${context.job.ciProject}/${codebase.outputIs}", codebase.version)
                     }
                     catch (Exception ex) {
                         script.println("[JENKINS][ERROR] Trace: ${ex.getStackTrace().collect { it.toString() }.join('\n')}")
