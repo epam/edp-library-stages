@@ -18,7 +18,7 @@ package com.epam.edp.stages.impl.ci.impl.helmverify
 import com.epam.edp.stages.impl.ci.ProjectType
 import com.epam.edp.stages.impl.ci.Stage
 
-@Stage(name = "helm-verify", buildTool = ["gradle", "maven", "dotnet", "npm", "go"], type = [ProjectType.APPLICATION, ProjectType.LIBRARY])
+@Stage(name = "helm-verify", buildTool = ["gradle", "maven", "dotnet", "npm", "go", "python"], type = [ProjectType.APPLICATION, ProjectType.LIBRARY])
 class HelmVerifyApplicationLibrary {
     Script script
 
