@@ -17,7 +17,7 @@ package com.epam.edp.stages.impl.ci.impl.createbranch
 import com.epam.edp.stages.impl.ci.ProjectType
 import com.epam.edp.stages.impl.ci.Stage
 
-@Stage(name = "create-branch", buildTool = ["maven", "npm", "dotnet","gradle", "any"], type = [ProjectType.APPLICATION, ProjectType.AUTOTESTS, ProjectType.LIBRARY])
+@Stage(name = "create-branch", buildTool = ["maven", "npm", "dotnet", "gradle", "any"], type = [ProjectType.APPLICATION, ProjectType.AUTOTESTS, ProjectType.LIBRARY])
 class CreateBranch {
     Script script
 
@@ -27,17 +27,20 @@ class CreateBranch {
                     keyFileVariable: 'key', passphraseVariable: '', usernameVariable: 'git_user')]) {
                 try {
                     script.sh """
-                eval `ssh-agent`
-                ssh-add ${script.key}
-                mkdir -p ~/.ssh
-                ssh-keyscan -p ${context.git.sshPort} ${context.git.host} >> ~/.ssh/known_hosts
-                git config --global user.email ${context.git.autouser}@epam.com
-                git config --global user.name ${context.git.autouser}
-                git branch ${context.job.releaseName} ${context.job.releaseFromCommitId}
-                git push --all
-                """
+                        eval `ssh-agent`
+                        ssh-add ${script.key}
+                        mkdir -p ~/.ssh
+                        ssh-keyscan -p ${context.git.sshPort} ${context.git.host} >> ~/.ssh/known_hosts
+                        git config --global user.email ${context.git.autouser}@epam.com
+                        git config --global user.name ${context.git.autouser}
+                        if [[ -z `git ls-remote --heads origin ${context.job.releaseName}` ]]; then
+                            git branch ${context.job.releaseName} ${context.job.releaseFromCommitId}
+                            git push --all
+                        fi
+                    """
+
                 }
-                catch(Exception ex) {
+                catch (Exception ex) {
                     script.error "[JENKINS][ERROR] Create branch has failed with exception - ${ex}"
                 }
             }
