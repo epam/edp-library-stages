@@ -56,7 +56,7 @@ class GetVersionGradleApplicationLibrary {
                     context.codebase.isTag = "${context.git.branch}-${context.codebase.buildVersion}"
                 }
             }
-            context.codebase.deployableModuleDir = "${context.workDir}/build/libs"
+            context.codebase.deployableModuleDir = "${context.workDir}"
         }
         script.println("[JENKINS][DEBUG] Artifact version - ${context.codebase.version}")
         script.println("[JENKINS][DEBUG] VCS tag - ${context.codebase.vcsTag}")

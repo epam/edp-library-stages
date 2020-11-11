@@ -70,8 +70,8 @@ class GetVersionMavenApplicationLibrary {
                     returnStdout: true
             ).trim()
             script.println("[JENKINS][DEBUG] Deployable module: ${context.codebase.deployableModule}")
-            context.codebase.deployableModuleDir = context.codebase.deployableModule.isEmpty() ? "${context.workDir}/target" :
-                    "${context.workDir}/${context.codebase.deployableModule}/target"
+            context.codebase.deployableModuleDir = context.codebase.deployableModule.isEmpty() ? "${context.workDir}" :
+                    "${context.workDir}/${context.codebase.deployableModule}"
         }
         script.println("[JENKINS][DEBUG] Application version - ${context.codebase.version}")
         script.println("[JENKINS][DEBUG] VCS tag - ${context.codebase.vcsTag}")
