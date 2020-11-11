@@ -83,13 +83,13 @@ class BuildImageKaniko {
                     script.sleep(5)
                 }
 
-                def deployableModuleDirFilepath = new FilePath(Jenkins.getInstance().getComputer(script.env['NODE_NAME']).getChannel(), context.codebase.deployableModuleDir)
+                def deployableModuleDirFilepath = new FilePath(Jenkins.getInstance().getComputer(script.env['NODE_NAME']).getChannel(), "${context.workDir}")
                 script.println("[JENKINS][DEBUG] Files to copy to kaniko - ${deployableModuleDirFilepath.list()}")
                 deployableModuleDirFilepath.list().each() { item ->
                     if (item.getName() != "Dockerfile")
-                        context.platform.copyToPod("${context.codebase.deployableModuleDir}/${item.getName()}", "/tmp/workspace/", buildconfigName, null, "init-kaniko")
+                        context.platform.copyToPod("${context.workDir}/${item.getName()}", "/tmp/workspace/", buildconfigName, null, "init-kaniko")
                 }
-                context.platform.copyToPod("${context.workDir}/Dockerfile", "/tmp/workspace", buildconfigName, null, "init-kaniko")
+                context.platform.copyToPod("Dockerfile", "/tmp/workspace", buildconfigName, null, "init-kaniko")
 
                 while (context.platform.getObjectStatus("pod", buildconfigName).phase != "Succeeded") {
                     if (context.platform.getObjectStatus("pod", buildconfigName).phase == "Failed")
