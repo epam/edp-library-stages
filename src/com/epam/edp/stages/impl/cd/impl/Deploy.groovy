@@ -288,7 +288,7 @@ class Deploy {
     void deployServices(context) {
         script.println("[JENKINS][DEBUG] Start service deploying.")
 
-        def chartmuseumUrl = context.job.getParameterValue("CHARTMUSEUM_URL", "https://chartmuseum-oc-green-edp-cicd.delivery.aws.main.edp.projects.epam.com")
+        def chartmuseumUrl = context.job.getParameterValue("CHARTMUSEUM_URL", "https://chartmuseum.demo.edp-epam.com")
         script.sh("helm repo add epamedp ${chartmuseumUrl}")
 
         context.job.servicesList.each() { s ->
