@@ -88,10 +88,10 @@ class JiraIssueMetadata {
 
     def getPayloadField(component, version, gitTag) {
         def jsonPayload = getJiraIssueMetadataPayload(component)
-        if (jsonPayload == null) {
+        /*if (jsonPayload == null) {
 
         }
-
+*/
         def values = [
                 EDP_COMPONENT: component,
                 EDP_VERSION  : version,
@@ -102,7 +102,7 @@ class JiraIssueMetadata {
                 k, v -> it.value = it.value.replaceAll(k, v)
             }
         }
-        payload['links'] =
+  //      payload['links'] =
         return JsonOutput.toJson(payload)
     }
 
