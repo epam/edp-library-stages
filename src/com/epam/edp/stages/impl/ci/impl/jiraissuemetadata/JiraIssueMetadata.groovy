@@ -61,11 +61,11 @@ class JiraIssueMetadata {
         template.spec.tickets.addAll(tickets)
     }
 
-    def parseJiraIssueMetadataTemplate(template, templateParams, commits, ticketNamePattern, commitMsgPattern) {
+    def parseJiraIssueMetadataTemplate(platform, template, templateParams, commits, ticketNamePattern, commitMsgPattern) {
         script.println("[JENKINS][DEBUG] Parsing JiraIssueMetadata template")
         template.metadata.name = "${templateParams['codebaseName']}-${templateParams['isTag']}".toLowerCase()
         template.spec.codebaseName = templateParams['codebaseName']
-        def jenkinsUrl = context.platform.getJsonPathValue("edpcomponent", "jenkins", ".spec.url")
+        def jenkinsUrl = platform.getJsonPathValue("edpcomponent", "jenkins", ".spec.url")
         def links = ['links': []]
         for (commit in commits) {
             def info = commit.getCommitInfo()
@@ -165,7 +165,7 @@ class JiraIssueMetadata {
                 script.println("[JENKINS][DEBUG] templateParams ${templateParams}")
                 def commitMsgPattern = context.codebase.config.commitMessagePattern
                 script.println("[JENKINS][DEBUG] commitMsgPattern ${commitMsgPattern}")
-                def parsedTemplate = parseJiraIssueMetadataTemplate(template, templateParams, commits, ticketNamePattern, commitMsgPattern)
+                def parsedTemplate = parseJiraIssueMetadataTemplate(context.platform, template, templateParams, commits, ticketNamePattern, commitMsgPattern)
                 tryToCreateJiraIssueMetadataCR(context.workDir, context.platform, parsedTemplate)
             }
         } catch (Exception ex) {
