@@ -65,6 +65,8 @@ class JiraIssueMetadata {
         script.println("[JENKINS][DEBUG] Parsing JiraIssueMetadata template")
         template.metadata.name = "${templateParams['codebaseName']}-${templateParams['isTag']}".toLowerCase()
         template.spec.codebaseName = templateParams['codebaseName']
+        def jenkinsUrl = context.platform.getJsonPathValue("edpcomponent", "jenkins", ".spec.url")
+        def links = ['links': []]
         for (commit in commits) {
             def info = commit.getCommitInfo()
             script.println("[JENKINS][DEBUG] Commit message ${info.getCommitMessage()}")
@@ -77,21 +79,36 @@ class JiraIssueMetadata {
             addCommitId(template, id)
             addTicketNumber(template, tickets)
 
-            def messages = info.getCommitMessage().findAll(commitMsgPattern)
-            script.println("[JENKINS][DEBUG] messages ${messages}")
+            (info.getCommitMessage() =~ /(?m)${commitMsgPattern}/).each { match ->
+                def linkInfo = [
+                        'ticket' : match.find(/EPMDEDP-\d{4}/),
+                        'message': match.find(/(?<=\:).*/),
+                        'link'   : "${jenkinsUrl}/job/${templateParams['codebaseName']}/job/${getParameterValue("BRANCH").toUpperCase()}-Build-${templateParams['codebaseName']}/${script.BUILD_NUMBER}/console"
+                ]
+                script.println("[JENKINS][DEBUG] linkInfo ${linkInfo}")
+                links.links.add(linkInfo)
+            }
         }
         script.println("[JENKINS][DEBUG] parsed template1 ${template}")
 
-        template.spec.payload = getPayloadField(templateParams['codebaseName'], templateParams['isTag'], templateParams['vcsTag'])
+        def payload = getPayloadField(templateParams['codebaseName'], templateParams['isTag'], templateParams['vcsTag'])
+        script.println("[JENKINS][DEBUG] payload ${payload}")
+        if (payload == null) {
+            template.spec.payload = links
+        } else {
+            payload.links = links
+            template.spec.payload = payload
+        }
+        script.println("[JENKINS][DEBUG] template ${template}")
         return JsonOutput.toJson(template)
     }
 
     def getPayloadField(component, version, gitTag) {
         def jsonPayload = getJiraIssueMetadataPayload(component)
-        /*if (jsonPayload == null) {
-
+        if (jsonPayload == null) {
+            return null
         }
-*/
+
         def values = [
                 EDP_COMPONENT: component,
                 EDP_VERSION  : version,
@@ -102,7 +119,6 @@ class JiraIssueMetadata {
                 k, v -> it.value = it.value.replaceAll(k, v)
             }
         }
-  //      payload['links'] =
         return JsonOutput.toJson(payload)
     }
 
