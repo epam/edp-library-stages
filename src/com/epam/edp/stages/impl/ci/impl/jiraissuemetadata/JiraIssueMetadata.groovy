@@ -147,7 +147,7 @@ class JiraIssueMetadata {
                         'isTag'       : context.codebase.isTag
                 ]
                 script.println("[JENKINS][DEBUG] templateParams ${templateParams}")
-                def commitMsgPattern = context.codebase.config.commitMsgPattern
+                def commitMsgPattern = context.codebase.config.commitMessagePattern
                 script.println("[JENKINS][DEBUG] commitMsgPattern ${commitMsgPattern}")
                 def parsedTemplate = parseJiraIssueMetadataTemplate(template, templateParams, commits, ticketNamePattern, commitMsgPattern)
                 tryToCreateJiraIssueMetadataCR(context.workDir, context.platform, parsedTemplate)
