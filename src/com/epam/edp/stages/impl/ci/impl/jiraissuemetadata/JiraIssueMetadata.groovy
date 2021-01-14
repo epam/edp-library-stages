@@ -18,6 +18,7 @@ import com.epam.edp.stages.impl.ci.ProjectType
 import com.epam.edp.stages.impl.ci.Stage
 import com.github.jenkins.lastchanges.pipeline.LastChangesPipelineGlobal
 import groovy.json.JsonOutput
+import groovy.json.JsonSlurper
 import groovy.json.JsonSlurperClassic
 import hudson.FilePath
 
@@ -44,7 +45,7 @@ class JiraIssueMetadata {
         script.println("[JENKINS][DEBUG] Getting JiraIssueMetadataPayload of ${name} Codebase CR")
         def payload = platform.getJsonPathValue("codebases", name, ".spec.jiraIssueMetadataPayload")
         script.println("[JENKINS][DEBUG] JiraIssueMetadataPayload of ${name} Codebase CR has been fetched - ${payload}")
-        return new JsonSlurperClassic().parseText("${payload}")
+        return new groovy.json.JsonSlurper().parseText(payload)
     }
 
     def addCommitId(template, id) {
