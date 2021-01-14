@@ -114,7 +114,7 @@ class JiraIssueMetadata {
                 EDP_COMPONENT: component,
                 EDP_VERSION  : version,
                 EDP_GITTAG   : gitTag]
-        def payload = new JsonSlurperClassic().parseText(jsonPayload)
+        //def payload = new JsonSlurperClassic().parseText(jsonPayload)
         payload.each {
             values.each {
                 k, v -> it.value = it.value.replaceAll(k, v)
