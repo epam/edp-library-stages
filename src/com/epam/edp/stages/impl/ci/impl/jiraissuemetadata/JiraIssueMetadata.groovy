@@ -104,7 +104,7 @@ class JiraIssueMetadata {
     }
 
     def getPayloadField(platform,component, version, gitTag) {
-        def jsonPayload = getJiraIssueMetadataPayload(component)
+        def jsonPayload = getJiraIssueMetadataPayload(platform,component)
         if (jsonPayload == null) {
             return null
         }
