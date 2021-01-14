@@ -44,7 +44,7 @@ class JiraIssueMetadata {
         script.println("[JENKINS][DEBUG] Getting JiraIssueMetadataPayload of ${name} Codebase CR")
         def payload = platform.getJsonPathValue("codebases", name, ".spec.jiraIssueMetadataPayload")
         script.println("[JENKINS][DEBUG] JiraIssueMetadataPayload of ${name} Codebase CR has been fetched - ${payload}")
-        return JSON.parse(payload)
+        return new JsonSlurperClassic().parseText(payload)
     }
 
     def addCommitId(template, id) {
