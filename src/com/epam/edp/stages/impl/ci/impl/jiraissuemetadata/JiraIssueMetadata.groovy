@@ -40,7 +40,7 @@ class JiraIssueMetadata {
         return new JsonSlurperClassic().parseText(temp)
     }
 
-    def getJiraIssueMetadataPayload(name) {
+    def getJiraIssueMetadataPayload(platform,name) {
         script.println("[JENKINS][DEBUG] Getting JiraIssueMetadataPayload of ${name} Codebase CR")
         def payload = platform.getJsonPathValue("codebases", name, ".spec.jiraIssueMetadataPayload")
         script.println("[JENKINS][DEBUG] JiraIssueMetadataPayload of ${name} Codebase CR has been fetched - ${payload}")
@@ -91,7 +91,7 @@ class JiraIssueMetadata {
         }
         script.println("[JENKINS][DEBUG] parsed template1 ${template}")
 
-        def payload = getPayloadField(templateParams['codebaseName'], templateParams['isTag'], templateParams['vcsTag'])
+        def payload = getPayloadField(platform,templateParams['codebaseName'], templateParams['isTag'], templateParams['vcsTag'])
         script.println("[JENKINS][DEBUG] payload ${payload}")
         if (payload == null) {
             template.spec.payload = links
@@ -103,7 +103,7 @@ class JiraIssueMetadata {
         return JsonOutput.toJson(template)
     }
 
-    def getPayloadField(component, version, gitTag) {
+    def getPayloadField(platform,component, version, gitTag) {
         def jsonPayload = getJiraIssueMetadataPayload(component)
         if (jsonPayload == null) {
             return null
