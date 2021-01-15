@@ -117,8 +117,8 @@ class JiraIssueMetadata {
         script.println("[JENKINS][DEBUG] values ${values}")
         def payload = new JsonSlurperClassic().parseText(jsonPayload)
         script.println("[JENKINS][DEBUG] payloadpayload ${payload}")
-        payload.each { x ->
-            println(x)
+        payload.each {
+            println(it)
         }
         payload.each { x ->
             println(x)
