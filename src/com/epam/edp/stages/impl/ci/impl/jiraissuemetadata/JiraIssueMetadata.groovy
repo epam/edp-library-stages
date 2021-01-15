@@ -68,7 +68,7 @@ class JiraIssueMetadata {
         template.metadata.name = "${templateParams['codebaseName']}-${templateParams['isTag']}".toLowerCase()
         template.spec.codebaseName = templateParams['codebaseName']
         def jenkinsUrl = platform.getJsonPathValue("edpcomponent", "jenkins", ".spec.url")
-        def links = ['links': []]
+        def links = []
         for (commit in commits) {
             def info = commit.getCommitInfo()
             script.println("[JENKINS][DEBUG] Commit message ${info.getCommitMessage()}")
@@ -81,6 +81,8 @@ class JiraIssueMetadata {
             addCommitId(template, id)
             addTicketNumber(template, tickets)
 
+            script.println("------")
+            script.println(info.getCommitMessage() =~ /(?m)^\[EPMDEDP-\d{4}\]:.*$/)
             (info.getCommitMessage() =~ /(?m)^\[EPMDEDP-\d{4}\]:.*$/).each { match ->
                 def linkInfo = [
                         'ticket' : match.find(/EPMDEDP-\d{4}/),
@@ -88,7 +90,7 @@ class JiraIssueMetadata {
                         'link'   : "${jenkinsUrl}/job/${templateParams['codebaseName']}/job/${job.getParameterValue("BRANCH").toUpperCase()}-Build-${templateParams['codebaseName']}/${script.BUILD_NUMBER}/console"
                 ]
                 script.println("[JENKINS][DEBUG] Link info: ${linkInfo}")
-                links.links.add(linkInfo)
+                links.add(linkInfo)
             }
         }
 
