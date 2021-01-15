@@ -63,11 +63,11 @@ class JiraIssueMetadata {
         template.spec.tickets.addAll(tickets)
     }
 
-    def parseJiraIssueMetadataTemplate(platform,job, template, templateParams, commits, ticketNamePattern, commitMsgPattern) {
+    def parseJiraIssueMetadataTemplate(context, template, commits, ticketNamePattern, commitMsgPattern) {
         script.println("[JENKINS][DEBUG] Parsing JiraIssueMetadata template")
-        template.metadata.name = "${templateParams['codebaseName']}-${templateParams['isTag']}".toLowerCase()
-        template.spec.codebaseName = templateParams['codebaseName']
-        def jenkinsUrl = platform.getJsonPathValue("edpcomponent", "jenkins", ".spec.url")
+        template.metadata.name = "${context.codebase.config.name}-${context.codebase.isTag}".toLowerCase()
+        template.spec.codebaseName = context.codebase.config.name
+        def jenkinsUrl = context.platform.getJsonPathValue("edpcomponent", "jenkins", ".spec.url")
         script.println("[JENKINS][DEBUG] jenkinsUrl ${jenkinsUrl}")
         script.println("[JENKINS][DEBUG] commits ${commits}")
         def links = []
@@ -80,23 +80,23 @@ class JiraIssueMetadata {
                 script.println("[JENKINS][DEBUG] No found tickets in ${id} commit")
                 continue
             }
-            //addCommitId(template, id)
-            //addTicketNumber(template, tickets)
+            addCommitId(template, id)
+            addTicketNumber(template, tickets)
 
             script.println("------")
-            script.println(info.getCommitMessage() =~ /(?m)^\[EPMDEDP-\d{4}\]:.*$/)
+            script.println(info.getCommitMessage() =~ /(?m)${commitMessagePattern}/)
             (info.getCommitMessage() =~ /(?m)^\[EPMDEDP-\d{4}\]:.*$/).each { match ->
                 def linkInfo = [
-                        'ticket' : match.find(/EPMDEDP-\d{4}/),
+                        'ticket' : match.find(/${ticketNamePattern}/),
                         'message': match.find(/(?<=\:).*/),
-                        'link'   : "${jenkinsUrl}/job/${templateParams['codebaseName']}/job/${job.getParameterValue("BRANCH").toUpperCase()}-Build-${templateParams['codebaseName']}/${script.BUILD_NUMBER}/console"
+                        'link'   : "${jenkinsUrl}/job/${context.codebase.config.name}/job/${context.job.getParameterValue("BRANCH").toUpperCase()}-Build-${context.codebase.config.name}/${script.BUILD_NUMBER}/console"
                 ]
                 script.println("[JENKINS][DEBUG] Link info: ${linkInfo}")
                 links.add(linkInfo)
             }
         }
 
-        def payload = getPayloadField(platform,templateParams['codebaseName'], templateParams['isTag'], templateParams['vcsTag'])
+        def payload = getPayloadField(context.platform,context.codebase.config.name, context.codebase.isTag, context.codebase.vcsTag)
         if (payload == null) {
             template.spec.payload = links
         } else {
@@ -165,14 +165,9 @@ class JiraIssueMetadata {
             } else {
                 def template = getJiraIssueMetadataCrTemplate(context.platform)
                 script.println("[JENKINS][DEBUG] jim template ${template}")
-                def templateParams = [
-                        'codebaseName': context.codebase.config.name,
-                        'vcsTag'      : context.codebase.vcsTag,
-                        'isTag'       : context.codebase.isTag
-                ]
                 def commitMsgPattern = context.codebase.config.commitMessagePattern
-                def parsedTemplate = parseJiraIssueMetadataTemplate(context.platform,context.job, template, templateParams, commits, ticketNamePattern, commitMsgPattern)
-                tryToCreateJiraIssueMetadataCR(context.workDir, context.platform, parsedTemplate)
+                def parsedTemplate = parseJiraIssueMetadataTemplate(context, template, commits, ticketNamePattern, commitMsgPattern)
+                //tryToCreateJiraIssueMetadataCR(context.workDir, context.platform, parsedTemplate)
             }
         } catch (Exception ex) {
             script.println("[JENKINS][WARNING] Couldn't correctly finish 'create-jira-issue-metadata' stage due to exception: ${ex}")
