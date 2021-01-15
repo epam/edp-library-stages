@@ -156,7 +156,7 @@ class JiraIssueMetadata {
     }
 
     void run(context) {
-        def payload = context.platform.getJsonPathValue("codebases", name, ".spec.jiraIssueMetadataPayload")
+        def payload = context.platform.getJsonPathValue("codebases", "at01", ".spec.jiraIssueMetadataPayload")
         if (payload == null) {
             script.println("--------- null")
         } else {
