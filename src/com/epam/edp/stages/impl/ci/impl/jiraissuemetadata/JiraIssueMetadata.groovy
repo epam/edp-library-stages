@@ -87,20 +87,20 @@ class JiraIssueMetadata {
                         'message': match.find(/(?<=\:).*/),
                         'link'   : "${jenkinsUrl}/job/${templateParams['codebaseName']}/job/${job.getParameterValue("BRANCH").toUpperCase()}-Build-${templateParams['codebaseName']}/${script.BUILD_NUMBER}/console"
                 ]
-                script.println("[JENKINS][DEBUG] linkInfo ${linkInfo}")
+                script.println("[JENKINS][DEBUG] Link info: ${linkInfo}")
                 links.links.add(linkInfo)
             }
         }
-        script.println("[JENKINS][DEBUG] parsed template1 ${template}")
 
         def payload = getPayloadField(platform,templateParams['codebaseName'], templateParams['isTag'], templateParams['vcsTag'])
-        script.println("[JENKINS][DEBUG] payload ${payload}")
         if (payload == null) {
             template.spec.payload = links
         } else {
-            payload['links'] = links
+            payload.put('links', links)
             template.spec.payload = payload
         }
+
+
         script.println("[JENKINS][DEBUG] template ${template}")
         return JsonOutput.toJson(template)
     }
@@ -110,14 +110,11 @@ class JiraIssueMetadata {
         if (payload == null) {
             return null
         }
-        script.println("[JENKINS][DEBUG] payload ${payload}")
+
         def values = [
                 EDP_COMPONENT: component,
                 EDP_VERSION  : version,
                 EDP_GITTAG   : gitTag]
-        script.println("[JENKINS][DEBUG] values ${values}")
-        //def payload = new JsonSlurperClassic().parseText(jsonPayload)
-        script.println("[JENKINS][DEBUG] payloadpayload ${payload}")
         payload.each{x->
             values.each { k, v ->
                 payload."${x.key}" = payload."${x.key}".replaceAll(k, v)
@@ -167,9 +164,7 @@ class JiraIssueMetadata {
                         'vcsTag'      : context.codebase.vcsTag,
                         'isTag'       : context.codebase.isTag
                 ]
-                script.println("[JENKINS][DEBUG] templateParams ${templateParams}")
                 def commitMsgPattern = context.codebase.config.commitMessagePattern
-                script.println("[JENKINS][DEBUG] commitMsgPattern ${commitMsgPattern}")
                 def parsedTemplate = parseJiraIssueMetadataTemplate(context.platform,context.job, template, templateParams, commits, ticketNamePattern, commitMsgPattern)
                 tryToCreateJiraIssueMetadataCR(context.workDir, context.platform, parsedTemplate)
             }
