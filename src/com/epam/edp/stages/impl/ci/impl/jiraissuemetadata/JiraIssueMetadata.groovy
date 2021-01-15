@@ -90,7 +90,7 @@ class JiraIssueMetadata {
                 def linkInfo = [
                         'ticket' : match.find(/${ticketNamePattern}/),
                         'linkText': linkText,
-                        'url': url:
+                        'url': url,
                 ]
                 script.println("[JENKINS][DEBUG] Link info: ${linkInfo}")
                 links.add(linkInfo)
