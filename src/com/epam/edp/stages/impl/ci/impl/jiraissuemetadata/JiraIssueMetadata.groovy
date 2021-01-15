@@ -120,22 +120,9 @@ class JiraIssueMetadata {
         script.println("[JENKINS][DEBUG] payloadpayload ${payload}")
         payload.each{x->
             values.each { k, v ->
-                payload."${x.key}" = x.value.replaceAll(k, v)
+                payload."${x.key}" = payload."${x.key}".replaceAll(k, v)
             }
         }
-        script.println("----------------------------------")
-        script.println(payload)
-
-
-
-        /*payload.each { x ->
-            script.println(x)
-            values.each { k, v ->
-                //script.println("test ${x.value.replaceAll(k, v)}")
-                x.value = 'qweqwe'
-                //x.value = x.value.replaceAll(k, v)
-            }
-        }*/
         script.println("[JENKINS][DEBUG] payload ${payload}")
         return JsonOutput.toJson(jsonPayload)
     }
