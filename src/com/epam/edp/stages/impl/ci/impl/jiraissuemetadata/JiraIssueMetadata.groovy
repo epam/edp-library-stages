@@ -159,6 +159,7 @@ class JiraIssueMetadata {
             script.println("[JENKINS][DEBUG] Ticket name pattern has been fetched ${ticketNamePattern}")
             def changes = getChanges(context.workDir)
             def commits = changes.getCommits()
+            script.println("commits1 ${commits}")
             if (commits == null) {
                 script.println("[JENKINS][INFO] No changes since last successful build. Skip creating JiraIssueMetadata CR")
             } else {
