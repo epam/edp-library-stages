@@ -116,6 +116,7 @@ class JiraIssueMetadata {
                 EDP_GITTAG   : gitTag]
         script.println("[JENKINS][DEBUG] values ${values}")
         def payload = new JsonSlurperClassic().parseText(jsonPayload)
+        script.println("[JENKINS][DEBUG] payloadpayload ${payload}")
         payload.each {  x ->
             println(x)
             values.each { k, v ->
