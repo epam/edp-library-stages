@@ -20,6 +20,7 @@ import com.github.jenkins.lastchanges.pipeline.LastChangesPipelineGlobal
 import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
 import groovy.json.JsonSlurperClassic
+import groovy.json.JsonSlurper
 import hudson.FilePath
 
 @Stage(name = "create-jira-issue-metadata", buildTool = ["maven", "npm", "dotnet", "gradle", "any"], type = [ProjectType.APPLICATION, ProjectType.AUTOTESTS, ProjectType.LIBRARY])
@@ -115,16 +116,25 @@ class JiraIssueMetadata {
                 EDP_VERSION  : version,
                 EDP_GITTAG   : gitTag]
         script.println("[JENKINS][DEBUG] values ${values}")
-        def payload = new JsonSlurperClassic().parseText(jsonPayload)
+        def payload = new JsonSlurper().parseText(jsonPayload)
         script.println("[JENKINS][DEBUG] payloadpayload ${payload}")
-        payload.each { x ->
+        payload.each{
+            it.value = 'qwe'
+
+        }
+        script.println("----------------------------------")
+        script.println(payload)
+
+
+
+        /*payload.each { x ->
             script.println(x)
             values.each { k, v ->
                 //script.println("test ${x.value.replaceAll(k, v)}")
                 x.value = 'qweqwe'
                 //x.value = x.value.replaceAll(k, v)
             }
-        }
+        }*/
         script.println("[JENKINS][DEBUG] payload ${payload}")
         return JsonOutput.toJson(jsonPayload)
     }
