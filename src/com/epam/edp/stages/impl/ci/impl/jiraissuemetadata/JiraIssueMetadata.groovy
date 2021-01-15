@@ -68,6 +68,8 @@ class JiraIssueMetadata {
         template.metadata.name = "${templateParams['codebaseName']}-${templateParams['isTag']}".toLowerCase()
         template.spec.codebaseName = templateParams['codebaseName']
         def jenkinsUrl = platform.getJsonPathValue("edpcomponent", "jenkins", ".spec.url")
+        script.println("[JENKINS][DEBUG] jenkinsUrl ${jenkinsUrl}")
+        script.println("[JENKINS][DEBUG] commits ${commits}")
         def links = []
         for (commit in commits) {
             def info = commit.getCommitInfo()
