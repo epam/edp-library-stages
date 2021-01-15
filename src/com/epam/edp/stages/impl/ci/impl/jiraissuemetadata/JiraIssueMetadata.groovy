@@ -109,15 +109,17 @@ class JiraIssueMetadata {
         if (jsonPayload == null) {
             return null
         }
-
+        script.println("[JENKINS][DEBUG] jsonPayload ${jsonPayload}")
         def values = [
                 EDP_COMPONENT: component,
                 EDP_VERSION  : version,
                 EDP_GITTAG   : gitTag]
+        script.println("[JENKINS][DEBUG] values ${values}")
         //def payload = new JsonSlurperClassic().parseText(jsonPayload)
-        jsonPayload.each {
-            values.each {
-                k, v -> it.value = it.value.replaceAll(k, v)
+        jsonPayload.each {  x ->
+            println(x)
+            values.each { k, v ->
+                x.value = x.value.replaceAll(k, v)
             }
         }
         return JsonOutput.toJson(jsonPayload)
