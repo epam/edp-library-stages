@@ -81,7 +81,7 @@ class JiraIssueMetadata {
             addCommitId(template, id)
             addTicketNumber(template, tickets)
 
-            (info.getCommitMessage() =~ /(?m)${commitMsgPattern}/).each { match ->
+            (info.getCommitMessage() =~ /(?m)^\[EPMDEDP-\d{4}\]:.*$/).each { match ->
                 def linkInfo = [
                         'ticket' : match.find(/EPMDEDP-\d{4}/),
                         'message': match.find(/(?<=\:).*/),
@@ -121,7 +121,8 @@ class JiraIssueMetadata {
             }
         }
         script.println("[JENKINS][DEBUG] payload ${payload}")
-        return JsonOutput.toJson(payload)
+        return payload
+        //return JsonOutput.toJson(payload)
     }
 
     def createJiraIssueMetadataCR(platform, path) {
