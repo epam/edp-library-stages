@@ -45,6 +45,9 @@ class JiraIssueMetadata {
     def getJiraIssueMetadataPayload(platform,name) {
         script.println("[JENKINS][DEBUG] Getting JiraIssueMetadataPayload of ${name} Codebase CR")
         def payload = platform.getJsonPathValue("codebases", name, ".spec.jiraIssueMetadataPayload")
+        if (payload == null) {
+            return null
+        }
         script.println("[JENKINS][DEBUG] JiraIssueMetadataPayload of ${name} Codebase CR has been fetched - ${payload}")
         return new JsonSlurperClassic().parseText(payload)
     }
@@ -127,7 +130,6 @@ class JiraIssueMetadata {
         }
         script.println("[JENKINS][DEBUG] payload ${payload}")
         return payload
-        //return JsonOutput.toJson(payload)
     }
 
     def createJiraIssueMetadataCR(platform, path) {
@@ -154,6 +156,14 @@ class JiraIssueMetadata {
     }
 
     void run(context) {
+        def payload = context.platform.getJsonPathValue("codebases", name, ".spec.jiraIssueMetadataPayload")
+        if (payload == null) {
+            script.println("--------- null")
+        } else {
+            script.println("--------- not null")
+        }
+
+
         try {
             def ticketNamePattern = context.codebase.config.ticketNamePattern
             script.println("[JENKINS][DEBUG] context.codebase.config ${context.codebase.config}")
