@@ -117,7 +117,10 @@ class JiraIssueMetadata {
         script.println("[JENKINS][DEBUG] values ${values}")
         def payload = new JsonSlurperClassic().parseText(jsonPayload)
         script.println("[JENKINS][DEBUG] payloadpayload ${payload}")
-        payload.each {  x ->
+        payload.each { x ->
+            println(x)
+        }
+        payload.each { x ->
             println(x)
             values.each { k, v ->
                 x.value = x.value.replaceAll(k, v)
