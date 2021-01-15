@@ -98,7 +98,7 @@ class JiraIssueMetadata {
         if (payload == null) {
             template.spec.payload = links
         } else {
-            payload.links = links
+            payload['links'] = links
             template.spec.payload = payload
         }
         script.println("[JENKINS][DEBUG] template ${template}")
