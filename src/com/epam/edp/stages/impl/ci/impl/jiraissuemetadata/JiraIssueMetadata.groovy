@@ -46,7 +46,7 @@ class JiraIssueMetadata {
         script.println("[JENKINS][DEBUG] Getting JiraIssueMetadataPayload of ${name} Codebase CR")
         def payload = platform.getJsonPathValue("codebases", name, ".spec.jiraIssueMetadataPayload")
         script.println("[JENKINS][DEBUG] JiraIssueMetadataPayload of ${name} Codebase CR has been fetched - ${payload}")
-        return payload
+        return def payload = new JsonSlurperClassic().parseText(payload)
     }
 
     def addCommitId(template, id) {
@@ -106,17 +106,17 @@ class JiraIssueMetadata {
     }
 
     def getPayloadField(platform,component, version, gitTag) {
-        def jsonPayload = getJiraIssueMetadataPayload(platform,component)
-        if (jsonPayload == null) {
+        def payload = getJiraIssueMetadataPayload(platform,component)
+        if (payload == null) {
             return null
         }
-        script.println("[JENKINS][DEBUG] jsonPayload ${jsonPayload}")
+        script.println("[JENKINS][DEBUG] payload ${payload}")
         def values = [
                 EDP_COMPONENT: component,
                 EDP_VERSION  : version,
                 EDP_GITTAG   : gitTag]
         script.println("[JENKINS][DEBUG] values ${values}")
-        def payload = new JsonSlurperClassic().parseText(jsonPayload)
+        //def payload = new JsonSlurperClassic().parseText(jsonPayload)
         script.println("[JENKINS][DEBUG] payloadpayload ${payload}")
         payload.each{x->
             values.each { k, v ->
