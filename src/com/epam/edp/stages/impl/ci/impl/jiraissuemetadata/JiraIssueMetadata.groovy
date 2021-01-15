@@ -45,7 +45,7 @@ class JiraIssueMetadata {
     def getJiraIssueMetadataPayload(platform,name) {
         script.println("[JENKINS][DEBUG] Getting JiraIssueMetadataPayload of ${name} Codebase CR")
         def payload = platform.getJsonPathValue("codebases", name, ".spec.jiraIssueMetadataPayload")
-        if (payload == null) {
+        if (!payload) {
             return null
         }
         script.println("[JENKINS][DEBUG] JiraIssueMetadataPayload of ${name} Codebase CR has been fetched - ${payload}")
@@ -86,7 +86,6 @@ class JiraIssueMetadata {
             addCommitId(template, id)
             addTicketNumber(template, tickets)
 
-            script.println("------")
             (info.getCommitMessage() =~ /(?m)${commitMsgPattern}/).each { match ->
                 def url = "${jenkinsUrl}/job/${context.codebase.config.name}/job/${context.job.getParameterValue("BRANCH").toUpperCase()}-Build-${context.codebase.config.name}/${script.BUILD_NUMBER}/console"
                 def linkText = "${match.find(/(?<=\:).*/)} [${context.codebase.config.name}][${context.codebase.vcsTag}]"
@@ -95,7 +94,6 @@ class JiraIssueMetadata {
                         'linkText': linkText,
                         'url': url,
                 ]
-                script.println("[JENKINS][DEBUG] Link info: ${linkInfo}")
                 links.add(linkInfo)
             }
         }
@@ -107,9 +105,7 @@ class JiraIssueMetadata {
             payload.put('links', links)
             template.spec.payload = payload
         }
-
-
-        script.println("[JENKINS][DEBUG] template ${template}")
+        script.println("[JENKINS][DEBUG] Template to apply: ${template}")
         return JsonOutput.toJson(template)
     }
 
@@ -156,15 +152,7 @@ class JiraIssueMetadata {
     }
 
     void run(context) {
-        def payload = context.platform.getJsonPathValue("codebases", "at01", ".spec.jiraIssueMetadataPayload")
-        if (!payload) {
-            script.println("--------- null")
-        } else {
-            script.println("--------- not null")
-        }
-
-
-        /*try {
+        try {
             def ticketNamePattern = context.codebase.config.ticketNamePattern
             script.println("[JENKINS][DEBUG] context.codebase.config ${context.codebase.config}")
             script.println("[JENKINS][DEBUG] Ticket name pattern has been fetched ${ticketNamePattern}")
@@ -182,7 +170,7 @@ class JiraIssueMetadata {
             }
         } catch (Exception ex) {
             script.println("[JENKINS][WARNING] Couldn't correctly finish 'create-jira-issue-metadata' stage due to exception: ${ex}")
-        }*/
+        }
     }
 
 }
