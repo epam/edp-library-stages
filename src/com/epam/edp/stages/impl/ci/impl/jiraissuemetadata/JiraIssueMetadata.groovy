@@ -120,8 +120,10 @@ class JiraIssueMetadata {
         payload.each { x ->
             script.println(x)
             values.each { k, v ->
-                script.println(k)
-                script.println(v)
+                script.println("key ${k}")
+                script.println("val ${v}")
+                script.println("x.value ${x.value}")
+                script.println("x.value.replaceAll(k, v) ${x.value.replaceAll(k, v)}")
                 x.value = x.value.replaceAll(k, v)
             }
         }
