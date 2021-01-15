@@ -124,7 +124,7 @@ class JiraIssueMetadata {
                 script.println("val ${v}")
                 script.println("x.value ${x.value}")
                 script.println("x.value.replaceAll(k, v) ${x.value.replaceAll(k, v)}")
-                x.value = x.value.replaceAll(k, v)
+                //x.value = x.value.replaceAll(k, v)
             }
         }
         script.println("[JENKINS][DEBUG] payload ${payload}")
