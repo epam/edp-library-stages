@@ -78,8 +78,8 @@ class JiraIssueMetadata {
                 script.println("[JENKINS][DEBUG] No found tickets in ${id} commit")
                 continue
             }
-            addCommitId(template, id)
-            addTicketNumber(template, tickets)
+            //addCommitId(template, id)
+            //addTicketNumber(template, tickets)
 
             script.println("------")
             script.println(info.getCommitMessage() =~ /(?m)^\[EPMDEDP-\d{4}\]:.*$/)
