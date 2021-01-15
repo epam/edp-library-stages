@@ -122,6 +122,7 @@ class JiraIssueMetadata {
                 x.value = x.value.replaceAll(k, v)
             }
         }
+        script.println("[JENKINS][DEBUG] payload ${payload}")
         return JsonOutput.toJson(jsonPayload)
     }
 
