@@ -100,7 +100,7 @@ class JiraIssueMetadata {
 
         def payload = getPayloadField(context.platform,context.codebase.config.name, context.codebase.isTag, context.codebase.vcsTag)
         if (payload == null) {
-            template.spec.payload = links
+            template.spec.payload.put('links', links)
         } else {
             payload.put('links', links)
             template.spec.payload = payload
