@@ -85,10 +85,12 @@ class JiraIssueMetadata {
 
             script.println("------")
             (info.getCommitMessage() =~ /(?m)${commitMsgPattern}/).each { match ->
+                def url = "${jenkinsUrl}/job/${context.codebase.config.name}/job/${context.job.getParameterValue("BRANCH").toUpperCase()}-Build-${context.codebase.config.name}/${script.BUILD_NUMBER}/console"
+                def linkText = "${match.find(/(?<=\:).*/)} [${context.codebase.config.name}][${context.codebase.vcsTag}]"
                 def linkInfo = [
                         'ticket' : match.find(/${ticketNamePattern}/),
-                        'message': match.find(/(?<=\:).*/),
-                        'link'   : "${jenkinsUrl}/job/${context.codebase.config.name}/job/${context.job.getParameterValue("BRANCH").toUpperCase()}-Build-${context.codebase.config.name}/${script.BUILD_NUMBER}/console"
+                        'linkText': linkText,
+                        'url': url:
                 ]
                 script.println("[JENKINS][DEBUG] Link info: ${linkInfo}")
                 links.add(linkInfo)
