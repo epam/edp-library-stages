@@ -115,8 +115,8 @@ class JiraIssueMetadata {
                 EDP_VERSION  : version,
                 EDP_GITTAG   : gitTag]
         script.println("[JENKINS][DEBUG] values ${values}")
-        //def payload = new JsonSlurperClassic().parseText(jsonPayload)
-        jsonPayload.each {  x ->
+        def payload = new JsonSlurperClassic().parseText(jsonPayload)
+        payload.each {  x ->
             println(x)
             values.each { k, v ->
                 x.value = x.value.replaceAll(k, v)
