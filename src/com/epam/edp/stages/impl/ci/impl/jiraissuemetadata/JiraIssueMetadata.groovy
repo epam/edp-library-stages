@@ -157,14 +157,14 @@ class JiraIssueMetadata {
 
     void run(context) {
         def payload = context.platform.getJsonPathValue("codebases", "at01", ".spec.jiraIssueMetadataPayload")
-        if (payload == null) {
+        if (!payload) {
             script.println("--------- null")
         } else {
             script.println("--------- not null")
         }
 
 
-        try {
+        /*try {
             def ticketNamePattern = context.codebase.config.ticketNamePattern
             script.println("[JENKINS][DEBUG] context.codebase.config ${context.codebase.config}")
             script.println("[JENKINS][DEBUG] Ticket name pattern has been fetched ${ticketNamePattern}")
@@ -182,7 +182,7 @@ class JiraIssueMetadata {
             }
         } catch (Exception ex) {
             script.println("[JENKINS][WARNING] Couldn't correctly finish 'create-jira-issue-metadata' stage due to exception: ${ex}")
-        }
+        }*/
     }
 
 }
