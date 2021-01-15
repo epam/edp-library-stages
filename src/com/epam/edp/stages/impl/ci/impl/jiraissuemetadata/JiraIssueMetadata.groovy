@@ -84,8 +84,7 @@ class JiraIssueMetadata {
             addTicketNumber(template, tickets)
 
             script.println("------")
-            script.println(info.getCommitMessage() =~ /(?m)${commitMessagePattern}/)
-            (info.getCommitMessage() =~ /(?m)^\[EPMDEDP-\d{4}\]:.*$/).each { match ->
+            (info.getCommitMessage() =~ /(?m)${commitMsgPattern}/).each { match ->
                 def linkInfo = [
                         'ticket' : match.find(/${ticketNamePattern}/),
                         'message': match.find(/(?<=\:).*/),
