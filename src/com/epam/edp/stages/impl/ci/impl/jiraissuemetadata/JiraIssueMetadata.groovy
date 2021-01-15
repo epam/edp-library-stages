@@ -124,7 +124,7 @@ class JiraIssueMetadata {
             }
         }
         script.println("[JENKINS][DEBUG] payload ${payload}")
-        return JsonOutput.toJson(jsonPayload)
+        return JsonOutput.toJson(payload)
     }
 
     def createJiraIssueMetadataCR(platform, path) {
