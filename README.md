@@ -4,7 +4,7 @@ The **EDP Library Stages** repository describes the specific stages and their re
 Every stage is presented as an individual Groovy file in a corresponding repository. Such single responsibility 
 realization allows rewriting of one essential stage without changing the whole pipeline. 
 
-The [EDP Library Pipelines](https://github.com/epmd-edp/edp-library-pipelines/blob/master/README.md#edp-library-pipelines) repository describes the general structure of the code review, build, and deploy pipelines.
+The [EDP Library Pipelines](https://github.com/epam/edp-library-pipelines/blob/master/README.md#edp-library-pipelines) repository describes the general structure of the code review, build, and deploy pipelines.
 Every pipeline has a set of stages that are consumed from a pipeline`s parameters of a user and can be redefined 
 as well. 
 
@@ -14,7 +14,7 @@ realization, and redefinition of the user stages. In such a case, the priority g
 
 ### Related Articles
 
-- [Customize CI Pipeline](https://github.com/epmd-edp/admin-console/blob/master/documentation/cicd_customization/customize_ci_pipeline.md#customize-ci-pipeline)
-- [Customize CD Pipeline](https://github.com/epmd-edp/admin-console/blob/master/documentation/cicd_customization/customize-deploy-pipeline.md#customize-cd-pipeline)
+- [Customize CI Pipeline](https://github.com/epam/edp-admin-console/blob/master/documentation/cicd_customization/customize_ci_pipeline.md#customize-ci-pipeline)
+- [Customize CD Pipeline](https://github.com/epam/edp-admin-console/blob/master/documentation/cicd_customization/customize-deploy-pipeline.md#customize-cd-pipeline)
 
->_**NOTE**: To get more accurate information on the CI/CD customization, please refer to the [admin-console](https://github.com/epmd-edp/admin-console/tree/master#edp-admin-console) repository._
+>_**NOTE**: To get more accurate information on the CI/CD customization, please refer to the [admin-console](https://github.com/epam/edp-admin-console/tree/master#edp-admin-console) repository._
