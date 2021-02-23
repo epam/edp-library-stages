@@ -24,7 +24,7 @@ import groovy.json.JsonSlurper
 import hudson.FilePath
 import groovy.json.JsonBuilder
 
-@Stage(name = "create-jira-issue-metadata", buildTool = ["maven", "npm", "dotnet", "gradle", "any"], type = [ProjectType.APPLICATION, ProjectType.AUTOTESTS, ProjectType.LIBRARY])
+@Stage(name = "create-jira-issue-metadata", buildTool = ["maven", "npm", "dotnet", "gradle", "go", "python", "terraform", "any"], type = [ProjectType.APPLICATION, ProjectType.AUTOTESTS, ProjectType.LIBRARY])
 class JiraIssueMetadata {
     Script script
 
