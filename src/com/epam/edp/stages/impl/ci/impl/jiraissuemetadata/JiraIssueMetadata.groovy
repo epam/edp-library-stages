@@ -97,7 +97,8 @@ class JiraIssueMetadata {
             }
         }
 
-        def payload = getPayloadField(context.platform, context.codebase.config.name, context.codebase.isTag, context.codebase.vcsTag)
+        def codebaseBranch = getCodebaseBranch(context.codebase.config.codebase_branch, context.git.branch)
+        def payload = getPayloadField(context.platform, context.codebase.config.name, codebaseBranch.version, context.codebase.vcsTag)
         if (payload == null) {
             template.spec.payload = new JsonBuilder(['issuesLinks': links]).toPrettyString()
         } else {
@@ -166,5 +167,11 @@ class JiraIssueMetadata {
             script.println("[JENKINS][WARNING] Couldn't correctly finish 'create-jira-issue-metadata' stage due to exception: ${ex}")
         }
     }
-
+    
+    @NonCPS
+    def private getCodebaseBranch(codebaseBranch, gitBranchName) {
+        return codebaseBranch.stream().filter({
+           it.branchName == gitBranchName
+        }).findFirst().get()
+    }
 }
