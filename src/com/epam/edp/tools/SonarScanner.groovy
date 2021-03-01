@@ -1,4 +1,4 @@
-/* Copyright 2020 EPAM Systems.
+/* Copyright 2021 EPAM Systems.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -12,29 +12,32 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
 
-package com.epam.edp.stages.impl.ci.impl.sonar
+package com.epam.edp.tools
 
 
-import com.epam.edp.stages.impl.ci.ProjectType
-import com.epam.edp.stages.impl.ci.Stage
-import com.epam.edp.stages.impl.ci.impl.sonarcleanup.SonarCleanupApplicationLibrary
-
-@Stage(name = "sonar", buildTool = "python", type = [ProjectType.APPLICATION, ProjectType.LIBRARY])
-class SonarPythonApplicationLibrary {
+class SonarScanner {
     Script script
 
-    def sendSonarScan(workDir, codebaseName) {
-        def scannerHome = script.tool 'SonarQube Scanner'
+    SonarScanner(script) {
+        this.script = script
+    }
+
+    def sendSonarScanWithCredentials(workDir, credentialsId, scriptText) {
+        script.dir("${workDir}") {
+            script.withCredentials([script.usernamePassword(credentialsId: "${credentialsId}",
+                passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]) {
+                    script.withSonarQubeEnv('Sonar') {
+                        script.sh scriptText.replace("LOGIN_REPLACE", "${script.USERNAME}")
+                                            .replace("PASSWORD_REPLACE", "${script.PASSWORD}");
+                    }
+            }
+        }
+    }
+
+    def sendSonarScanWithoutCredentials(workDir, scriptText) {
         script.dir("${workDir}") {
             script.withSonarQubeEnv('Sonar') {
-                script.sh "pylint --exit-zero *.py -r n --msg-template=\"{path}:{line}: [{msg_id}({symbol}), {obj}] {msg}\" > pylint-reports.txt"
-                script.sh "pytest --cov=. --cov-report xml:coverage.xml"
-                script.sh "${scannerHome}/bin/sonar-scanner " +
-                          "-Dsonar.projectKey=${codebaseName} " +
-                          "-Dsonar.projectName=${codebaseName} " +
-                          "-Dsonar.language=py " +
-                          "-Dsonar.python.pylint.reportPath=${workDir}/pylint-reports.txt " +
-                          "-Dsonar.sourceEncoding=UTF-8 "
+                script.sh scriptText
             }
         }
     }
@@ -77,42 +80,41 @@ class SonarPythonApplicationLibrary {
         return content.task.status
     }
 
-    def getSonarReportInJson(workDir, url) {
+    def getSonarReportInJson(workDir, url, path) {
+        def sonarAuthHeader;
+        script.dir("${workDir}") {
+            script.withSonarQubeEnv('Sonar') {
+                sonarAuthHeader="${script.env.SONAR_AUTH_TOKEN}:".bytes.encodeBase64().toString()
+            }
+        }
         script.httpRequest acceptType: 'APPLICATION_JSON',
                 url: url,
                 httpMode: 'GET',
-                outputFile: "${workDir}/target/sonar/sonar-report.json"
+                customHeaders: [[name: 'Authorization', value: "Basic ${sonarAuthHeader}"]],
+                outputFile: "${workDir}/${path}/sonar-report.json"
     }
 
-    def sendStatusToGerrit(workDir, sonarURL) {
+    def sendStatusToGerrit(workDir, sonarURL, path) {
         script.dir("${workDir}") {
-            script.sonarToGerrit inspectionConfig: [baseConfig: [projectPath: "${workDir}", sonarReportPath: "target/sonar/sonar-report.json"], serverURL: "${sonarURL}"],
+            script.sonarToGerrit inspectionConfig: [baseConfig: [projectPath: "${workDir}", sonarReportPath: "${path}/sonar-report.json"], serverURL: "${sonarURL}"],
                     notificationConfig: [commentedIssuesNotificationRecipient: 'NONE', negativeScoreNotificationRecipient: 'NONE'],
                     reviewConfig: [issueFilterConfig: [newIssuesOnly: false, changedLinesOnly: false, severity: 'CRITICAL']],
                     scoreConfig: [category: 'Sonar-Verified', noIssuesScore: +1, issuesScore: -1, issueFilterConfig: [severity: 'CRITICAL']]
         }
     }
 
-    void run(context) {
-        if (context.job.type == "build") {
-            new SonarCleanupApplicationLibrary(script: script).run(context)
+    def cleanSonarProjectRange(patchsetNumber, sonarRoute, sonarProjectKey, sonarAuthHeader) {
+        for (int i = 1; i <= (patchsetNumber as Integer) ; i++) {
+            def response = script.httpRequest url: "${sonarRoute}/api/components/show?key=${sonarProjectKey}-${i}",
+                    httpMode: 'GET',
+                    customHeaders: [[name: 'Authorization', value: "Basic ${sonarAuthHeader}"]],
+                    validResponseCodes: '100:399,404'
+            if (response.status == 200) {
+                script.httpRequest url: "${sonarRoute}/api/projects/delete?key=${sonarProjectKey}-${i}",
+                        httpMode: 'POST',
+                        customHeaders: [[name: 'Authorization', value: "Basic ${sonarAuthHeader}"]]
+                script.println("[JENKINS][DEBUG] Project ${sonarProjectKey}-${i} deleted")
+            }
         }
-        if (context.job.type == "codereview" && context.codebase.config.strategy != "import") {
-            sendSonarScan(context.workDir, "${context.codebase.name}:change-${context.git.changeNumber}-${context.git.patchsetNumber}")
-
-            def report = script.readProperties file: "${context.workDir}/.scannerwork/report-task.txt"
-            def ceTaskUrl = report.ceTaskUrl
-            waitForSonarAnalysis(ceTaskUrl)
-
-            def url = "${context.sonar.route}/api/issues/search?componentKeys=${context.codebase.name}:change-${context.git.changeNumber}-${context.git.patchsetNumber}&branch=${context.git.branch}&resolved=false&facets=severities"
-            getSonarReportInJson(context.workDir, url)
-
-            sendStatusToGerrit(context.workDir, context.sonar.route)
-
-            waitForQualityGate()
-            return
-        }
-        sendSonarScan(context.workDir, context.codebase.name)
-        waitForQualityGate()
     }
 }

@@ -20,31 +20,30 @@ import com.epam.edp.stages.impl.ci.Stage
 import com.epam.edp.stages.impl.ci.impl.sonarcleanup.SonarCleanup
 import com.epam.edp.tools.SonarScanner
 
-@Stage(name = "sonar", buildTool = "go", type = ProjectType.APPLICATION)
-class SonarGo {
+@Stage(name = "sonar", buildTool = "gradle", type = [ProjectType.APPLICATION, ProjectType.LIBRARY])
+class SonarGradle {
     Script script
 
     void run(context) {
         SonarScanner sonarScanner = new SonarScanner(script);
         def buildTool = context.buildTool;
         def workDir = context.workDir;
-        def path = ".scannerwork";
-        def scannerHome = script.tool 'SonarQube Scanner';
+        def path = "build/sonar";
+        def credentialsId = context.nexus.credentialsId;
         def codebaseName;
         if (context.job.type == "codereview" && context.codebase.config.strategy != "import") {
             codebaseName = "${context.codebase.name}:change-${context.git.changeNumber}-${context.git.patchsetNumber}";
         } else {
             codebaseName = context.codebase.name;
         }
-        def scriptText = """ ${scannerHome}/bin/sonar-scanner \
-                             -Dsonar.projectKey=${codebaseName} \
-                             -Dsonar.projectName=${codebaseName} \
-                             -Dsonar.go.coverage.reportPaths=coverage.out """;
+        def scriptText = """ ${buildTool.command} -PnexusLogin=LOGIN_REPLACE -PnexusPassword=PASSWORD_REPLACE \
+                             sonarqube -Dsonar.projectKey=${codebaseName} \
+                             -Dsonar.projectName=${codebaseName} """;
         if (context.job.type == "build") {
             new SonarCleanup(script: script).run(context)
         }
         if (context.job.type == "codereview" && context.codebase.config.strategy != "import") {
-            sonarScanner.sendSonarScanWithoutCredentials(workDir, scriptText)
+            sonarScanner.sendSonarScanWithCredentials(workDir, credentialsId, scriptText)
 
             def report = script.readProperties file: "${workDir}/${path}/report-task.txt"
             def ceTaskUrl = report.ceTaskUrl
@@ -58,7 +57,7 @@ class SonarGo {
             sonarScanner.waitForQualityGate()
             return
         }
-        sonarScanner.sendSonarScanWithoutCredentials(workDir, scriptText)
+        sonarScanner.sendSonarScanWithCredentials(workDir, credentialsId, scriptText)
         sonarScanner.waitForQualityGate()
     }
 }

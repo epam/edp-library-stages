@@ -20,26 +20,28 @@ import com.epam.edp.stages.impl.ci.Stage
 import com.epam.edp.stages.impl.ci.impl.sonarcleanup.SonarCleanup
 import com.epam.edp.tools.SonarScanner
 
-@Stage(name = "sonar", buildTool = "go", type = ProjectType.APPLICATION)
-class SonarGo {
+@Stage(name = "sonar", buildTool = "dotnet", type = [ProjectType.APPLICATION, ProjectType.LIBRARY])
+class SonarDotnet {
     Script script
 
     void run(context) {
         SonarScanner sonarScanner = new SonarScanner(script);
         def buildTool = context.buildTool;
         def workDir = context.workDir;
-        def path = ".scannerwork";
-        def scannerHome = script.tool 'SonarQube Scanner';
+        def path = ".sonarqube/out/.sonar";
+        def scannerCommand = "/home/jenkins/.dotnet/tools/dotnet-sonarscanner";
         def codebaseName;
         if (context.job.type == "codereview" && context.codebase.config.strategy != "import") {
             codebaseName = "${context.codebase.name}:change-${context.git.changeNumber}-${context.git.patchsetNumber}";
         } else {
             codebaseName = context.codebase.name;
         }
-        def scriptText = """ ${scannerHome}/bin/sonar-scanner \
-                             -Dsonar.projectKey=${codebaseName} \
-                             -Dsonar.projectName=${codebaseName} \
-                             -Dsonar.go.coverage.reportPaths=coverage.out """;
+        def scriptText = """ ${scannerCommand} begin /k:${codebaseName} \
+                             /k:${codebaseName} \
+                             /n:${codebaseName} \
+                             /d:sonar.cs.opencover.reportsPaths=${workDir}/*Tests*/*.xml
+                             dotnet build ${buildTool.sln_filename}
+                             ${scannerCommand} end """;
         if (context.job.type == "build") {
             new SonarCleanup(script: script).run(context)
         }

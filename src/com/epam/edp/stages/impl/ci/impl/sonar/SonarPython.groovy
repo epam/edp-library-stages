@@ -20,8 +20,8 @@ import com.epam.edp.stages.impl.ci.Stage
 import com.epam.edp.stages.impl.ci.impl.sonarcleanup.SonarCleanup
 import com.epam.edp.tools.SonarScanner
 
-@Stage(name = "sonar", buildTool = "go", type = ProjectType.APPLICATION)
-class SonarGo {
+@Stage(name = "sonar", buildTool = "python", type = [ProjectType.APPLICATION, ProjectType.LIBRARY])
+class SonarPython {
     Script script
 
     void run(context) {
@@ -39,7 +39,8 @@ class SonarGo {
         def scriptText = """ ${scannerHome}/bin/sonar-scanner \
                              -Dsonar.projectKey=${codebaseName} \
                              -Dsonar.projectName=${codebaseName} \
-                             -Dsonar.go.coverage.reportPaths=coverage.out """;
+                             -Dsonar.language=py \
+                             -Dsonar.sourceEncoding=UTF-8 """;
         if (context.job.type == "build") {
             new SonarCleanup(script: script).run(context)
         }
