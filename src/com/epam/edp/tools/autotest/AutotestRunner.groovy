@@ -1,0 +1,120 @@
+/* Copyright 2021 EPAM Systems.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+
+See the License for the specific language governing permissions and
+limitations under the License.*/
+
+package com.epam.edp.tools.autotest
+
+import com.epam.edp.platform.Platform
+import groovy.json.JsonSlurperClassic
+import hudson.FilePath
+import org.apache.commons.lang.RandomStringUtils
+import java.lang.IllegalStateException
+
+class AutotestRunner {
+
+    Script script
+
+    Platform platform
+
+    def autotest
+    def nexusCredentialId
+    def buildTool
+
+    AutotestRunner(script, platform, autotest, nexusCredentialId, buildTool) {
+        this.script = script
+        this.platform = platform
+        this.autotest = autotest
+        this.nexusCredentialId = nexusCredentialId
+        this.buildTool = buildTool
+    }
+
+    def execute() {
+        def workspace = generateFileSystemPath()
+        script.dir(workspace) {
+            checkout()
+            runAutotests(workspace)
+        }
+    }
+
+    private def generateFileSystemPath() {
+        def workspace = "${script.WORKSPACE}/${RandomStringUtils.random(10, true, true)}/${autotest.name}"
+        script.println("[JENKINS][DEBUG] Autotests workspace - ${workspace}")
+        return workspace
+    }
+
+    private def checkout() {
+        script.checkout([$class                           : 'GitSCM', branches: [[name: autotest.branch]],
+                         doGenerateSubmoduleConfigurations: false, extensions: [],
+                         submoduleCfg                     : [],
+                         userRemoteConfigs                : [[credentialsId: autotest.gitServer.credentialsId,
+                                                              url          : autotest.generateSSHLink()]]])
+    }
+
+    private def runAutotests(workspace) {
+        def runJsonPath = "${workspace}/run.json"
+        if (!script.fileExists(runJsonPath)) {
+            throw new FileNotFoundException("There is no run.json file in the project ${autotest.name}. " +
+                    "Can't define command to run autotests")
+        }
+
+        def jsonCommand = getRunJsonCommand(runJsonPath)
+        def command = jsonCommand["${autotest.stageName}"]
+        if (!command) {
+            throw new NoSuchElementException("Haven't found '${autotest.stageName}' command in file run.json. " +
+                    "It's mandatory to be specified, please check")
+        }
+
+        script.println("[JENKINS][DEBUG] BuildToolProperties workspace - ${buildTool.properties}")
+        script.println("[JENKINS][DEBUG] BuildToolSettings - ${buildTool.settings}")
+
+        script.withCredentials(getNexusCredential()) {
+            def nexusProperties = getNexusProperties(buildTool, script.USERNAME,script.PASSWORD)
+            script.sh "${command} ${buildTool.properties} ${nexusProperties} ${buildTool.settings}"
+        }
+    }
+
+    private def getNexusProperties(buildTool, username, password) {
+        script.println("[JENKINS][DEBUG] start getNexusProperties")
+        if (buildTool.getClass() == com.epam.edp.buildtool.Gradle) {
+            script.println("[JENKINS][DEBUG] getNexusProperties Gradle")
+            return "-PnexusLogin=${username} -PnexusPassword=${password}"
+        } else if (buildTool.getClass() == com.epam.edp.buildtool.Maven) {
+            script.println("[JENKINS][DEBUG] getNexusProperties Maven")
+            return "-Dartifactory.username=${username} -Dartifactory.password=${password}"
+        }
+        script.println("[JENKINS][DEBUG] getNexusProperties ERROR")
+        throw new IllegalStateException("Autotests doesn't support current build tool.")
+    }
+
+    private def getRunJsonCommand(commandFilePath) {
+        def command = new JsonSlurperClassic().parseText(getCommand(commandFilePath))
+        script.println("[JENKINS][DEBUG] Run.json commandsCommand ${command}")
+        return command
+    }
+
+    private def getCommand(commandFilePath) {
+        return script.env['NODE_NAME'].equals("master")
+                ? new FilePath(new File(commandFilePath)).readToString()
+                : new FilePath(Jenkins.getInstance().getComputer(script.env['NODE_NAME']).getChannel(), commandFilePath).readToString()
+    }
+
+    private def getNexusCredential() {
+        return [
+                script.usernamePassword(
+                        credentialsId: nexusCredentialId,
+                        passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME'
+                )
+        ]
+    }
+
+}

@@ -20,7 +20,7 @@ import com.epam.edp.stages.impl.ci.Stage
 import com.epam.edp.stages.impl.ci.impl.sonarcleanup.SonarCleanup
 import com.epam.edp.tools.SonarScanner
 
-@Stage(name = "sonar", buildTool = "gradle", type = [ProjectType.APPLICATION, ProjectType.LIBRARY])
+@Stage(name = "sonar", buildTool = "gradle", type = [ProjectType.APPLICATION, ProjectType.AUTOTESTS, ProjectType.LIBRARY])
 class SonarGradle {
     Script script
 
@@ -36,7 +36,7 @@ class SonarGradle {
         } else {
             codebaseName = context.codebase.name;
         }
-        def scriptText = """ ${buildTool.command} -PnexusLogin=LOGIN_REPLACE -PnexusPassword=PASSWORD_REPLACE \
+        def scriptText = """ ${buildTool.command} ${context.buildTool.properties} -PnexusLogin=LOGIN_REPLACE -PnexusPassword=PASSWORD_REPLACE \
                              sonarqube -Dsonar.projectKey=${codebaseName} \
                              -Dsonar.projectName=${codebaseName} """;
         if (context.job.type == "build") {

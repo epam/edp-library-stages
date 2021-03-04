@@ -46,7 +46,7 @@ class GetVersionGradleApplicationLibrary {
                     context.codebase.version = script.sh(
                             script: """
                             set +x
-                            ${context.buildTool.command} -PnexusLogin=${script.USERNAME} -PnexusPassword=${script.PASSWORD} properties -q | grep "version:" | awk '{print \$2}'
+                            ${context.buildTool.command} -PnexusLogin=${script.USERNAME} -PnexusPassword=${script.PASSWORD} ${context.buildTool.properties} properties -q | grep "version:" | awk '{print \$2}'
                         """,
                             returnStdout: true
                     ).trim().toLowerCase()

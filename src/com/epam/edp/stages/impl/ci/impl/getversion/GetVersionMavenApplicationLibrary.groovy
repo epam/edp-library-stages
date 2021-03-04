@@ -50,7 +50,7 @@ class GetVersionMavenApplicationLibrary {
                             script: """
                             ${context.buildTool.command} ${context.buildTool.properties} -Dartifactory.username=${script.USERNAME} -Dartifactory.password=${script.PASSWORD} \
                             org.apache.maven.plugins:maven-help-plugin:2.1.1:evaluate \
-                            -Dexpression=project.version -B |grep -Ev '(^\\[|Download\\w+:)'
+                            -Dexpression=project.version |grep -Ev '(^\\[|Download\\w+:)'
                         """,
                             returnStdout: true
                     ).trim().toLowerCase()

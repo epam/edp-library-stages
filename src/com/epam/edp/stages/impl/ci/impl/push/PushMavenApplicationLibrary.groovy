@@ -28,7 +28,7 @@ class PushMavenApplicationLibrary {
             script.withCredentials([script.usernamePassword(credentialsId: "${context.nexus.credentialsId}",
                     passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]) {
                 script.sh "${context.buildTool.command} ${context.buildTool.properties} -Dartifactory.username=${script.USERNAME} -Dartifactory.password=${script.PASSWORD}" +
-                        " deploy -B -DskipTests=true -DaltDeploymentRepository=nexus::default::${nexusRepositoryUrl}"
+                        " deploy -DskipTests=true -DaltDeploymentRepository=nexus::default::${nexusRepositoryUrl}"
             }
         }
     }

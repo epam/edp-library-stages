@@ -26,7 +26,7 @@ class CompileGradleApplicationLibrary {
             script.withCredentials([script.usernamePassword(credentialsId: "${context.nexus.credentialsId}",
                     passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]) {
                 script.sh "${context.buildTool.command} -PnexusLogin=${script.USERNAME} " +
-                        "-PnexusPassword=${script.PASSWORD} clean compileJava -x test"
+                        "-PnexusPassword=${script.PASSWORD} ${context.buildTool.properties} clean compileJava -x test"
             }
         }
     }

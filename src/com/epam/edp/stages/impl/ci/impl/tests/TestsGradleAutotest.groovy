@@ -12,24 +12,17 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
 
-package com.epam.edp.stages.impl.ci.impl.compile
-
+package com.epam.edp.stages.impl.ci.impl.tests
 
 import com.epam.edp.stages.impl.ci.ProjectType
 import com.epam.edp.stages.impl.ci.Stage
+import groovy.json.*
 
-@Stage(name = "compile", buildTool = "maven", type = [ProjectType.APPLICATION, ProjectType.LIBRARY])
-class CompileMavenApplicationLibrary {
+@Stage(name = "tests", buildTool = "gradle", type = ProjectType.AUTOTESTS)
+class TestsGradleAutotest {
     Script script
 
     void run(context) {
-        script.dir("${context.workDir}") {
-            script.withCredentials([script.usernamePassword(credentialsId: "${context.nexus.credentialsId}",
-                    passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]) {
-                script.sh "${context.buildTool.command} ${context.buildTool.properties} -Dartifactory.username=${script.USERNAME} -Dartifactory.password=${script.PASSWORD}" +
-                        " compile"
-            }
-        }
+        script.println("[JENKINS][WARNING] Stub stage for Gradle tests.")
     }
 }
-

@@ -27,7 +27,7 @@ class BuildMavenApplicationLibrary {
             script.withCredentials([script.usernamePassword(credentialsId: "${context.nexus.credentialsId}",
                     passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]) {
                 script.sh "${context.buildTool.command} ${context.buildTool.properties} -Dartifactory.username=${script.USERNAME} -Dartifactory.password=${script.PASSWORD}" +
-                        " clean package -B -DskipTests=true"
+                        " clean package -DskipTests=true"
             }
         }
     }
