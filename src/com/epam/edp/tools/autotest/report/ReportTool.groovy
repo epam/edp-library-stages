@@ -18,21 +18,27 @@ class Allure {
 
     Script script
 
-    def allureReportPath = 'target/allure-results'
+    def workspace
+    def ns
 
-    Allure(script) {
+    Allure(script, workspace, ns) {
         this.script = script
+        this.workspace = workspace
+        this.ns = ns
     }
 
     def generateReport() {
-        script.println("[JENKINS][DEBUG] generating Allure reports")
-        script.allure([
-                includeProperties: false,
-                jdk              : '',
-                properties       : [],
-                reportBuildPolicy: 'ALWAYS',
-                results          : [[path: allureReportPath]]
-        ])
+        script.dir(workspace) {
+            def allureReports = "allure-results/${ns}"
+            script.println("[JENKINS][DEBUG] generating Allure reports - ${allureReports}")
+            script.allure([
+                    includeProperties: false,
+                    jdk              : '',
+                    properties       : [],
+                    reportBuildPolicy: 'ALWAYS',
+                    results          : [[path: allureReports]]
+            ])
+        }
     }
 
 }
@@ -41,22 +47,29 @@ class Gatling {
 
     Script script
 
-    Gatling(script) {
+    def workspace
+    def ns
+
+    Gatling(script, workspace, ns) {
         this.script = script
+        this.workspace = workspace
+        this.ns = ns
     }
 
     def generateReport() {
-        script.println("[JENKINS][DEBUG] generating Gatling reports")
-        script.gatlingArchive()
+        script.dir(workspace) {
+            script.println("[JENKINS][DEBUG] generating Gatling reports")
+            script.gatlingArchive()
+        }
     }
 
 }
 
-def getReportFramework(script, name) {
+def getReportFramework(script, name, workspace, ns) {
     if ("allure" == name) {
-        return new Allure(script)
+        return new Allure(script, workspace, ns)
     } else ("gatling" == name) {
-        return new Gatling(script)
+        return new Gatling(script, workspace, ns)
     }
     script.println("[JENKINS][WARNING] Can't publish test results. Testing framework is undefined.")
 }

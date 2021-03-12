@@ -24,32 +24,26 @@ class AutotestRunner {
 
     Script script
 
-    Platform platform
-
     def autotest
     def nexusCredentialId
     def buildTool
+    def workspace
+    def ns
 
-    AutotestRunner(script, platform, autotest, nexusCredentialId, buildTool) {
+    AutotestRunner(script, autotest, nexusCredentialId, buildTool, workspace, ns) {
         this.script = script
-        this.platform = platform
         this.autotest = autotest
         this.nexusCredentialId = nexusCredentialId
         this.buildTool = buildTool
+        this.workspace = workspace
+        this.ns = ns
     }
 
     def execute() {
-        def workspace = generateFileSystemPath()
         script.dir(workspace) {
             checkout()
             runAutotests(workspace)
         }
-    }
-
-    private def generateFileSystemPath() {
-        def workspace = "${script.WORKSPACE}/${RandomStringUtils.random(10, true, true)}/${autotest.name}"
-        script.println("[JENKINS][DEBUG] Autotests workspace - ${workspace}")
-        return workspace
     }
 
     private def checkout() {
@@ -74,9 +68,7 @@ class AutotestRunner {
                     "It's mandatory to be specified, please check")
         }
 
-        script.println("[JENKINS][DEBUG] BuildToolProperties workspace - ${buildTool.properties}")
-        script.println("[JENKINS][DEBUG] BuildToolSettings - ${buildTool.settings}")
-
+        command += " -Dnamespace=${ns}"
         script.withCredentials(getNexusCredential()) {
             def nexusProperties = getNexusProperties(buildTool, script.USERNAME,script.PASSWORD)
             script.sh "${command} ${buildTool.properties} ${nexusProperties} ${buildTool.settings}"

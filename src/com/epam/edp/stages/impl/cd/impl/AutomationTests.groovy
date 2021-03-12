@@ -20,6 +20,7 @@ import com.epam.edp.tools.autotest.Autotest
 import com.epam.edp.tools.autotest.AutotestRunner
 import com.epam.edp.tools.autotest.GitServer
 import com.epam.edp.tools.autotest.report.ReportTool
+import org.apache.commons.lang.RandomStringUtils
 
 @Stage(name = "autotests")
 class AutomationTests {
@@ -40,16 +41,23 @@ class AutomationTests {
                     qualityGate.codebaseBranch.branchName, context.job.stageName)
             script.println("[JENKINS][DEBUG] Autotest data is set up: ${autotest.toString()}")
 
-            def runner = new AutotestRunner(script, context.platform, autotest, context.nexus.credentialsId, buildTool)
-
+            def workspace = generateFileSystemPath(script, autotest.name)
+            def testableNamespace = context.job.getParameterValue("TESTABLE_NAMESPACE", context.job.deployProject)
+            def runner = new AutotestRunner(script, autotest, context.nexus.credentialsId, buildTool, workspace, testableNamespace)
             try {
                 runner.execute()
             } catch (Exception ex) {
                 script.error "[JENKINS][ERROR] Autotests from ${qualityGate.autotest.name} have been failed. Reason - ${ex}"
             } finally {
-                new ReportTool().getReportFramework(script, qualityGate.autotest.testReportFramework).generateReport()
+                new ReportTool().getReportFramework(script, qualityGate.autotest.testReportFramework, workspace, testableNamespace).generateReport()
             }
         }
+    }
+
+    private static def generateFileSystemPath(script, autotestName) {
+        def workspace = "${script.WORKSPACE}/${RandomStringUtils.random(10, true, true)}/${autotestName}"
+        script.println("[JENKINS][DEBUG] Autotests workspace - ${workspace}")
+        return workspace
     }
 
     private static def getCurrentQualityGate(script, qualityGates, stepName) {
