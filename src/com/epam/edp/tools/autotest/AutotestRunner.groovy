@@ -76,15 +76,11 @@ class AutotestRunner {
     }
 
     private def getNexusProperties(buildTool, username, password) {
-        script.println("[JENKINS][DEBUG] start getNexusProperties")
         if (buildTool.getClass() == com.epam.edp.buildtool.Gradle) {
-            script.println("[JENKINS][DEBUG] getNexusProperties Gradle")
             return "-PnexusLogin=${username} -PnexusPassword=${password}"
         } else if (buildTool.getClass() == com.epam.edp.buildtool.Maven) {
-            script.println("[JENKINS][DEBUG] getNexusProperties Maven")
             return "-Dartifactory.username=${username} -Dartifactory.password=${password}"
         }
-        script.println("[JENKINS][DEBUG] getNexusProperties ERROR")
         throw new IllegalStateException("Autotests doesn't support current build tool.")
     }
 
