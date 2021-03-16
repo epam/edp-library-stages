@@ -27,8 +27,8 @@ class AutomationTests {
 
     Script script
 
-    void run(context) {
-        def qualityGate = getCurrentQualityGate(script, context.job.qualityGates, context.stepName)
+    void run(context, runStageName = null) {
+        def qualityGate = getCurrentQualityGate(script, context.job.qualityGates, runStageName)
         def slave = getSlave(script, context.platform, context.job, qualityGate.autotest.name)
 
         script.node(slave) {
