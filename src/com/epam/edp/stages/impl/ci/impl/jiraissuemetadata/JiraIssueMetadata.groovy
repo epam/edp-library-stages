@@ -164,7 +164,7 @@ class JiraIssueMetadata {
                 tryToCreateJiraIssueMetadataCR(context.workDir, context.platform, parsedTemplate)
             }
         } catch (Exception ex) {
-            script.println("[JENKINS][WARNING] Couldn't correctly finish 'create-jira-issue-metadata' stage due to exception: ${ex}")
+            script.error "[JENKINS][ERROR] Couldn't correctly finish 'create-jira-issue-metadata' stage due to exception: ${ex}"
         }
     }
     
