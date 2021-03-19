@@ -76,7 +76,7 @@ class BuildImageKaniko {
                     script.error("[JENKINS][ERROR] Couldn't get docker registry server")
 
                 def kanikoTemplateFilePath = setKanikoTemplate("${context.workDir}/kaniko-template.json", buildconfigName,
-                        "${context.job.ciProject}/${resultImageName}", dockerRegistryHost, context)
+                        "${context.job.ciProject}/${context.codebase.name}", dockerRegistryHost, context)
                 context.platform.apply(kanikoTemplateFilePath.getRemote())
                 while (!context.platform.getObjectStatus("pod", buildconfigName)["initContainerStatuses"][0].state.keySet().contains("running")) {
                     script.println("[JENKINS][DEBUG] Waiting for init container in Kaniko is started")

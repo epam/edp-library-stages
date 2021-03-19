@@ -174,9 +174,8 @@ class Deploy {
         codebase.cdPipelineName = context.job.pipelineName
         codebase.cdPipelineStageName = context.job.stageName
 
-        def imageName = codebase.inputIs ? codebase.inputIs : codebase.normalizedName
         def fullImageName = context.platform.createFullImageName(context.environment.config.dockerRegistryHost,
-                context.job.ciProject, imageName)
+                context.job.ciProject, codebase.name)
         def parametersMap = [
                 ['name': 'namespace', 'value': "${context.job.deployProject}"],
                 ['name': 'cdPipelineName', 'value': "${codebase.cdPipelineName}"],
@@ -215,13 +214,12 @@ class Deploy {
                 return
         }
 
-        def imageName = codebase.inputIs ? codebase.inputIs : codebase.normalizedName
         def deploymentWorkloadsList = getDeploymentWorkloadsList("${deployTemplatesPath}/${templateName}.yaml", false)
         context.platform.deployCodebase(
                 context.job.deployProject,
                 "${deployTemplatesPath}/${templateName}.yaml",
                 codebase,
-                "${context.job.ciProject}/${imageName}"
+                "${context.job.ciProject}/${codebase.name}"
         )
         deploymentWorkloadsList.each() { workload ->
             checkDeployment(context, workload.name, 'application', workload.kind)
