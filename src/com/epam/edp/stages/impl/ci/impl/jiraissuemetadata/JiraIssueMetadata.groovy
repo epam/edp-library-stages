@@ -97,8 +97,15 @@ class JiraIssueMetadata {
             }
         }
 
-        def codebaseBranch = getCodebaseBranch(context.codebase.config.codebase_branch, context.git.branch)
-        def payload = getPayloadField(context.platform, context.codebase.config.name, codebaseBranch.version, context.codebase.vcsTag)
+        return buildSpecPayloadTemplate(context, template, links)
+    }
+
+    def buildSpecPayloadTemplate(context, template, links) {
+        if (links.size() == 0) {
+            script.println("Skip creating JiraIssueMetadata CR because of commit message wasn't written by correct pattern.")
+            return null
+        }
+        def payload = getPayloadField(context.platform, context.codebase.config.name, getVersion(context), context.codebase.vcsTag)
         if (payload == null) {
             template.spec.payload = new JsonBuilder(['issuesLinks': links]).toPrettyString()
         } else {
@@ -106,6 +113,12 @@ class JiraIssueMetadata {
             template.spec.payload = new JsonBuilder(payload).toPrettyString()
         }
         return JsonOutput.toJson(template)
+    }
+
+    def getVersion(context) {
+        return context.codebase.config.versioningType == "default" ?
+                context.codebase.version :
+                getCodebaseBranch(context.codebase.config.codebase_branch, context.git.branch).version
     }
 
     def getPayloadField(platform, component, version, gitTag) {
@@ -141,10 +154,6 @@ class JiraIssueMetadata {
     }
 
     def tryToCreateJiraIssueMetadataCR(workDir, platform, template) {
-        if (new JsonSlurperClassic().parseText(template).spec.tickets == "replace") {
-            script.println("[JENKINS][DEBUG] No changes. Skip creating JiraIssueMetadata CR")
-            return
-        }
         def filePath = saveTemplateToFile("${workDir}/jim-template.json", template)
         createJiraIssueMetadataCR(platform, filePath)
     }
@@ -155,23 +164,26 @@ class JiraIssueMetadata {
             script.println("[JENKINS][DEBUG] Ticket name pattern has been fetched ${ticketNamePattern}")
             def changes = getChanges(context.workDir)
             def commits = changes.getCommits()
-            if (commits == null) {
+            if (commits == null || commits.size() == 0) {
                 script.println("[JENKINS][INFO] No changes since last successful build. Skip creating JiraIssueMetadata CR")
             } else {
                 def template = getJiraIssueMetadataCrTemplate(context.platform)
                 script.println("[JENKINS][DEBUG] jim template ${template}")
                 def parsedTemplate = parseJiraIssueMetadataTemplate(context, template, commits, ticketNamePattern, context.codebase.config.commitMessagePattern)
+                if (parsedTemplate == null) {
+                    return
+                }
                 tryToCreateJiraIssueMetadataCR(context.workDir, context.platform, parsedTemplate)
             }
         } catch (Exception ex) {
             script.error "[JENKINS][ERROR] Couldn't correctly finish 'create-jira-issue-metadata' stage due to exception: ${ex}"
         }
     }
-    
+
     @NonCPS
     def private getCodebaseBranch(codebaseBranch, gitBranchName) {
         return codebaseBranch.stream().filter({
-           it.branchName == gitBranchName
+            it.branchName == gitBranchName
         }).findFirst().get()
     }
 }
