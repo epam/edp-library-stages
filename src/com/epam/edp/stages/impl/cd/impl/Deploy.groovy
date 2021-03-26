@@ -177,19 +177,14 @@ class Deploy {
         def fullImageName = context.platform.createFullImageName(context.environment.config.dockerRegistryHost,
                 context.job.ciProject, codebase.name)
         def parametersMap = [
-                ['name': 'namespace', 'value': "${context.job.deployProject}"],
-                ['name': 'cdPipelineName', 'value': "${codebase.cdPipelineName}"],
-                ['name': 'cdPipelineStageName', 'value': "${codebase.cdPipelineStageName}"],
-                ['name': 'image.name', 'value': fullImageName],
-                ['name': 'image.version', 'value': "${codebase.version}"],
-                ['name': 'database.required', 'value': "${codebase.db_kind != "" ? true : false}"],
-                ['name': 'database.version', 'value': "${codebase.db_version}"],
-                ['name': 'database.capacity', 'value': "${codebase.db_capacity}"],
-                ['name': 'database.database.storageClass', 'value': "${codebase.db_storage}"],
+                ['name': 'image.repository', 'value': fullImageName],
+                ['name': 'image.tag', 'value': "${codebase.version}"],
                 ['name': 'ingress.path', 'value': "${codebase.route_path}"],
-                ['name': 'ingress.site', 'value': "${codebase.route_site}"],
-                ['name': 'dnsWildcard', 'value': "${context.job.dnsWildcard}"],
+                ['name': 'ingress.host', 'value': "${codebase.route_site}-${context.job.deployProject}.${context.job.dnsWildcard}"],
         ]
+
+        if (codebase.route_path != "" && codebase.route_site != "")
+            parametersMap.add(['name': 'ingress.enabled', 'value': "true"])
 
         context.platform.deployCodebaseHelm(
                 context.job.deployProject,
