@@ -30,8 +30,6 @@ class EcrToDocker {
         def ecrRepo = context.platform.getJsonPathValue(edpComponent, dockerRegistry, ".metadata.namespace")
         def cbImage = context.codebase.config.name
         def cbTag = context.codebase.buildVersion
-        def codebaseBranch = getCodebaseBranch(context.codebase.config.codebase_branch, context.git.branch)
-        def cbBranch = codebaseBranch.branchName
 
         script.node("edp-helm") {
            script.dir("${context.workDir}") {
@@ -50,17 +48,11 @@ class EcrToDocker {
                                 exit 1
                             else
                                 echo "${cbImage}:${cbTag} was not found in Docker Hub, start copying"
-                                crane cp ${ecr}/${ecrRepo}/${cbImage}-${cbBranch}:${cbTag} index.docker.io/${script.DH_REPO}/${cbImage}:${cbTag}
+                                crane cp ${ecr}/${ecrRepo}/${cbImage}:${cbTag} index.docker.io/${script.DH_REPO}/${cbImage}:${cbTag}
                             fi
                             """
                 }
            }
         }
-    }
-    @NonCPS
-    def private getCodebaseBranch(codebaseBranch, gitBranchName) {
-        return codebaseBranch.stream().filter({
-           it.branchName == gitBranchName
-        }).findFirst().get()
     }
 }
