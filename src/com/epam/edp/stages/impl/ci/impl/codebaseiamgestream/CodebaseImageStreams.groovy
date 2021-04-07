@@ -43,16 +43,22 @@ class CodebaseImageStreams {
             def cbisTemplateFilePath = saveCbisTemplateFile(template)
             this.context.platform.apply(cbisTemplateFilePath.getRemote())
         }
+        editCbisTags(crApi, cbisName, imageTag)
+    }
 
+    def editCbisTags(crApi, cbisName, imageTag) {
         def cbisCr = this.context.platform.getJsonValue(crApi, cbisName)
+        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss")
+        def newcbisTag = JsonOutput.toJson('name': imageTag, 'created': dateFormat.format(new Date()))
         def preparedcbisCr = new JsonSlurperClassic().parseText(cbisCr)
-        def cbisTags = preparedcbisCr.spec.tags ? preparedcbisCr.spec.tags : []
-        if (!cbisTags.find { it.name == imageTag }) {
-            DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss")
-            cbisTags.add(['name': imageTag, 'created': dateFormat.format(new Date())])
-            def newCbisTags = JsonOutput.toJson(cbisTags)
-            script.sh("kubectl patch --type=merge ${crApi} ${cbisName} -p '{\"spec\":{\"tags\":${newCbisTags}}}'")
+
+        if (preparedcbisCr.spec.tags == null) {
+            script.println("[JENKINS][DEBUG] There're no tags in imageStream ${cbisName} ... the first one will be added.")
+            script.sh("kubectl patch ${crApi} ${cbisName} --type=merge -p '{\"spec\":{\"tags\":[${newcbisTag}]}}'")
+            return
         }
+        script.println("[JENKINS][DEBUG] ImageStream ${cbisName} contains tags ... a new one will be added.")
+        script.sh("kubectl patch ${crApi} ${cbisName} --type json -p='[{\"op\": \"add\", \"path\": \"/spec/tags/-\", \"value\": ${newcbisTag} }]'")
     }
 
     def getCbisTemplate() {
