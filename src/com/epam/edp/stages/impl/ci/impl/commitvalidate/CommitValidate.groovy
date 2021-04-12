@@ -42,7 +42,7 @@ class CommitValidate {
         script.println("[JENKINS][DEBUG] Commit message to validate has been fetched:\n ${msg}")
 
         if (!isCommitMessageValid(msg, pattern)) {
-            script.error "[JENKINS][ERROR] Commit message is invalid"
+            script.error "[JENKINS][ERROR] Commit message is invalid. The required pattern is ${pattern}"
         }
     }
 }
