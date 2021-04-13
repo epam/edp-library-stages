@@ -26,13 +26,15 @@ class GetVersionTerraformLibrary {
         if (codebase.config.versioningType == "edp") {
             updateBuildNumber(codebase.config.name, git.branch.replaceAll(/\//, "-"), codebase.currentBuildNumber)
             codebase.vcsTag = "build/${codebase.version}"
+            codebase.isTag = "${codebase.version}"
             return
         }
 
         codebase.version = script.readFile "${workDir}/VERSION"
         codebase.buildVersion = "${codebase.version}-${script.BUILD_NUMBER}"
         job.setDisplayName("${script.currentBuild.number}-${git.branch}-${codebase.version}")
-        codebase.vcsTag = "${git.branch}-${codebase.buildVersion}"
+        codebase.isTag = "${git.branch}-${codebase.buildVersion}"
+        codebase.vcsTag = codebase.isTag
     }
 
     def updateBuildNumber(codebaseName, branchName, buildNumber) {
@@ -46,5 +48,6 @@ class GetVersionTerraformLibrary {
         context.codebase.deployableModuleDir = "${context.workDir}"
         script.println("[JENKINS][DEBUG] Application version - ${context.codebase.version}")
         script.println("[JENKINS][DEBUG] VCS tag - ${context.codebase.vcsTag}")
+        script.println("[JENKINS][DEBUG] IS tag - ${context.codebase.isTag}")
     }
 }
