@@ -16,6 +16,7 @@ package com.epam.edp.stages.impl.cd.impl
 
 import com.epam.edp.stages.impl.cd.Stage
 import org.apache.commons.lang.RandomStringUtils
+import groovy.json.JsonSlurperClassic
 
 @Stage(name = "deploy")
 class Deploy {
@@ -194,6 +195,30 @@ class Deploy {
                 context.job.deployTimeout,
                 parametersMap
         )
+
+        setAnnotationToStageCR(context, codebase.name, codebase.version, context.job.ciProject)
+    }
+
+    def setAnnotationToStageCR(context, codebase, tag, namespace) {
+        def annotationPrefix = "app.edp.epam.com/"
+        def stageName = "${context.job.pipelineName}-${context.job.stageName}"
+        script.sh("kubectl annotate --overwrite stages.v2.edp.epam.com ${stageName} -n ${namespace} ${annotationPrefix}${codebase}=${tag}")
+        script.println("[JENKINS][DEBUG] Annotation has been added to the ${stageName} stage")
+    }
+
+    def setAnnotationToJenkins(context){
+        def annotationPrefix = "app.edp.epam.com/"
+        def stageData = script.sh(
+            script: "kubectl get stages.v2.edp.epam.com ${context.job.pipelineName}-${context.job.stageName} -n ${context.job.ciProject} --output=json",
+            returnStdout: true).trim()
+        def stageJsonData = new JsonSlurperClassic().parseText(stageData)
+        def deployedVersions = stageJsonData.metadata.annotations
+        def summary = script.manager.createSummary("notepad.png")
+        summary.appendText("Deployed versions:", false)
+        deployedVersions.each { version ->
+            summary.appendText("<li>${version}</li>", false)
+        }
+        script.println("[JENKINS][DEBUG] Annotation has been added to this job description")
     }
 
     def deployCodebaseTemplate(context, codebase, deployTemplatesPath) {
@@ -390,5 +415,6 @@ class Deploy {
             }
             script.parallel parallelCodebases
         }
+        setAnnotationToJenkins(context)
     }
 }
