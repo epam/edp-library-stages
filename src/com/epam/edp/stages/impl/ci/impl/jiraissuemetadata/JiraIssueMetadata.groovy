@@ -17,12 +17,10 @@ package com.epam.edp.stages.impl.ci.impl.jiraissuemetadata
 import com.epam.edp.stages.impl.ci.ProjectType
 import com.epam.edp.stages.impl.ci.Stage
 import com.github.jenkins.lastchanges.pipeline.LastChangesPipelineGlobal
-import groovy.json.JsonOutput
-import groovy.json.JsonSlurper
-import groovy.json.JsonSlurperClassic
-import groovy.json.JsonSlurper
-import hudson.FilePath
 import groovy.json.JsonBuilder
+import groovy.json.JsonOutput
+import groovy.json.JsonSlurperClassic
+import hudson.FilePath
 
 @Stage(name = "create-jira-issue-metadata", buildTool = ["maven", "npm", "dotnet", "gradle", "go", "python", "terraform", "any"], type = [ProjectType.APPLICATION, ProjectType.AUTOTESTS, ProjectType.LIBRARY])
 class JiraIssueMetadata {
@@ -85,15 +83,17 @@ class JiraIssueMetadata {
             addCommitId(template, id)
             addTicketNumber(template, tickets)
 
-            (info.getCommitMessage() =~ /(?m)${commitMsgPattern}/).each { match ->
-                def url = "${jenkinsUrl}/job/${context.codebase.config.name}/job/${context.job.getParameterValue("BRANCH").toUpperCase()}-Build-${context.codebase.config.name}/${script.BUILD_NUMBER}/console"
-                def title = "${match.find(/(?<=\:).*/)} [${context.codebase.config.name}][${context.codebase.vcsTag}]"
-                def linkInfo = [
-                        'ticket': match.find(/${ticketNamePattern}/),
-                        'title' : title,
-                        'url'   : url,
-                ]
-                links.add(linkInfo)
+            def url = "${jenkinsUrl}/job/${context.codebase.config.name}/job/${context.job.getParameterValue("BRANCH").toUpperCase()}-Build-${context.codebase.config.name}/${script.BUILD_NUMBER}/console"
+            info.getCommitMessage().trim().split("\n").each { it ->
+                def matcher = (it =~ /${commitMsgPattern}/)
+                if (matcher.matches()) {
+                    def linkInfo = [
+                            'ticket': matcher.group().find(/${ticketNamePattern}/),
+                            'title' : "${matcher.group()} [${context.codebase.config.name}][${context.codebase.vcsTag}]",
+                            'url'   : url,
+                    ]
+                    links.add(linkInfo)
+                }
             }
         }
 
