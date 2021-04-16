@@ -27,12 +27,12 @@ class CommitValidate {
             return script.sh(
                     script: "git log -1 --pretty=%B",
                     returnStdout: true
-            ).trim()
+            )
         }
     }
 
     def isCommitMessageValid(msg, pattern) {
-        return msg ==~ /(?s)${pattern}/
+        return msg.find(/(?m)${pattern}/) != null
     }
 
     def run(context) {
