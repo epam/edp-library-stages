@@ -49,7 +49,7 @@ class AutomationTests {
             } catch (Exception ex) {
                 script.error "[JENKINS][ERROR] Autotests from ${qualityGate.autotest.name} have been failed. Reason - ${ex}"
             } finally {
-                new ReportTool().getReportFramework(script, qualityGate.autotest.testReportFramework, workspace, testableNamespace).generateReport()
+                new ReportTool().getReportFramework(script, qualityGate.autotest.testReportFramework, workspace).generateReport()
             }
         }
     }
