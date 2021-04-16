@@ -57,8 +57,13 @@ class CodebaseImageStreams {
             script.sh("kubectl patch ${crApi} ${cbisName} --type=merge -p '{\"spec\":{\"tags\":[${newcbisTag}]}}'")
             return
         }
-        script.println("[JENKINS][DEBUG] ImageStream ${cbisName} contains tags ... a new one will be added.")
-        script.sh("kubectl patch ${crApi} ${cbisName} --type json -p='[{\"op\": \"add\", \"path\": \"/spec/tags/-\", \"value\": ${newcbisTag} }]'")
+        def cbisTagsList = script.sh(
+            script: "kubectl get ${crApi} ${cbisName} -n ${context.job.ciProject} --output=jsonpath={.spec.tags[*].name}",
+            returnStdout: true).trim()
+        if (!cbisTagsList.contains(imageTag)){
+            script.println("[JENKINS][DEBUG] ImageStream ${cbisName} doesn't contain ${imageTag} tag ... it will be added.")
+            script.sh("kubectl patch ${crApi} ${cbisName} --type json -p='[{\"op\": \"add\", \"path\": \"/spec/tags/-\", \"value\": ${newcbisTag} }]'")
+        }
     }
 
     def getCbisTemplate() {
