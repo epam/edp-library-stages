@@ -19,24 +19,22 @@ class Allure {
     Script script
 
     def workspace
-    def ns
 
-    Allure(script, workspace, ns) {
+    Allure(script, workspace) {
         this.script = script
         this.workspace = workspace
-        this.ns = ns
     }
 
     def generateReport() {
         script.dir(workspace) {
-            def allureReports = "allure-results/${ns}"
+            def allureReports = "target/allure-results"
             script.println("[JENKINS][DEBUG] generating Allure reports - ${allureReports}")
             script.allure([
                     includeProperties: false,
                     jdk              : '',
                     properties       : [],
                     reportBuildPolicy: 'ALWAYS',
-                    results          : [[path: allureReports]]
+                    results          : [[path: "target/allure-results"]]
             ])
         }
     }
@@ -48,12 +46,11 @@ class Gatling {
     Script script
 
     def workspace
-    def ns
 
-    Gatling(script, workspace, ns) {
+    Gatling(script, workspace) {
+        this.script = script
         this.script = script
         this.workspace = workspace
-        this.ns = ns
     }
 
     def generateReport() {
@@ -65,11 +62,11 @@ class Gatling {
 
 }
 
-def getReportFramework(script, name, workspace, ns) {
+def getReportFramework(script, name, workspace) {
     if ("allure" == name) {
-        return new Allure(script, workspace, ns)
+        return new Allure(script, workspace)
     } else ("gatling" == name) {
-        return new Gatling(script, workspace, ns)
+        return new Gatling(script, workspace)
     }
     script.println("[JENKINS][WARNING] Can't publish test results. Testing framework is undefined.")
 }
