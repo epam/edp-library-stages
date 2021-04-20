@@ -128,9 +128,10 @@ class JiraIssueMetadata {
         }
 
         def values = [
-                EDP_COMPONENT: component,
-                EDP_VERSION  : version,
-                EDP_GITTAG   : gitTag]
+                EDP_COMPONENT   : component,
+                EDP_VERSION     : version,
+                EDP_SEM_VERSION : version.minus(~/(-RC|-SNAPSHOT)/),
+                EDP_GITTAG      : gitTag]
         payload.each { x ->
             values.each { k, v ->
                 payload."${x.key}" = payload."${x.key}".replaceAll(k, v)
