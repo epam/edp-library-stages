@@ -21,6 +21,7 @@ import groovy.json.JsonBuilder
 import groovy.json.JsonOutput
 import groovy.json.JsonSlurperClassic
 import hudson.FilePath
+import org.apache.commons.lang.RandomStringUtils
 
 @Stage(name = "create-jira-issue-metadata", buildTool = ["maven", "npm", "dotnet", "gradle", "go", "python", "terraform", "any"], type = [ProjectType.APPLICATION, ProjectType.AUTOTESTS, ProjectType.LIBRARY])
 class JiraIssueMetadata {
@@ -67,7 +68,8 @@ class JiraIssueMetadata {
 
     def parseJiraIssueMetadataTemplate(context, template, commits, ticketNamePattern, commitMsgPattern) {
         script.println("[JENKINS][DEBUG] Parsing JiraIssueMetadata template")
-        template.metadata.name = "${context.codebase.config.name}-${context.codebase.isTag}".toLowerCase()
+        def randomSeed = RandomStringUtils.randomAlphabetic(8)
+        template.metadata.name = "${context.codebase.config.name}-${randomSeed}".toLowerCase()
         template.spec.codebaseName = context.codebase.config.name
         def jenkinsUrl = context.platform.getJsonPathValue("edpcomponent", "jenkins", ".spec.url")
         def links = []
