@@ -22,6 +22,7 @@ import groovy.json.JsonOutput
 import groovy.json.JsonSlurperClassic
 import hudson.FilePath
 import org.apache.commons.lang.RandomStringUtils
+import java.nio.charset.StandardCharsets
 
 @Stage(name = "create-jira-issue-metadata", buildTool = ["maven", "npm", "dotnet", "gradle", "go", "python", "terraform", "any"], type = [ProjectType.APPLICATION, ProjectType.AUTOTESTS, ProjectType.LIBRARY])
 class JiraIssueMetadata {
@@ -42,14 +43,18 @@ class JiraIssueMetadata {
         return new JsonSlurperClassic().parseText(temp)
     }
 
-    def getJiraIssueMetadataPayload(platform, name) {
+    def getJiraIssueMetadataPayload(namespace, name) {
         script.println("[JENKINS][DEBUG] Getting JiraIssueMetadataPayload of ${name} Codebase CR")
-        def payload = platform.getJsonPathValue("codebases", name, ".spec.jiraIssueMetadataPayload")
-        if (payload == '<nil>') {
+        def payloadBase64 = script.sh(
+            script: "kubectl get codebases.v2.edp.epam.com ${name} -n ${namespace} --output=jsonpath={.spec.jiraIssueMetadataPayload}| base64",
+            returnStdout: true).trim()
+        if (payloadBase64 == "") {
             return null
         }
-        script.println("[JENKINS][DEBUG] JiraIssueMetadataPayload of ${name} Codebase CR has been fetched - ${payload}")
-        return new JsonSlurperClassic().parseText(payload)
+        def payloadByteArray = Base64.decoder.decode(payloadBase64)
+        String payloadData = new String(payloadByteArray, StandardCharsets.UTF_8)
+        script.println("[JENKINS][DEBUG] JiraIssueMetadataPayload of ${name} Codebase CR has been fetched - ${payloadData}")
+        return new JsonSlurperClassic().parseText(payloadData)
     }
 
     def addCommitId(template, id) {
@@ -107,7 +112,7 @@ class JiraIssueMetadata {
             script.println("Skip creating JiraIssueMetadata CR because of commit message wasn't written by correct pattern.")
             return null
         }
-        def payload = getPayloadField(context.platform, context.codebase.config.name, getVersion(context), context.codebase.vcsTag)
+        def payload = getPayloadField(context.job.ciProject, context.codebase.config.name, getVersion(context), context.codebase.vcsTag)
         if (payload == null) {
             template.spec.payload = new JsonBuilder(['issuesLinks': links]).toPrettyString()
         } else {
@@ -123,8 +128,8 @@ class JiraIssueMetadata {
                 getCodebaseBranch(context.codebase.config.codebase_branch, context.git.branch).version
     }
 
-    def getPayloadField(platform, component, version, gitTag) {
-        def payload = getJiraIssueMetadataPayload(platform, component)
+    def getPayloadField(namespace, component, version, gitTag) {
+        def payload = getJiraIssueMetadataPayload(namespace, component)
         if (payload == null) {
             return null
         }
