@@ -51,7 +51,7 @@ class JiraIssueMetadata {
         if (payloadBase64 == "") {
             return null
         }
-        def payloadByteArray = Base64.decoder.decode(payloadBase64)
+        def payloadByteArray = Base64.getMimeDecoder().decode(payloadBase64)
         String payloadData = new String(payloadByteArray, StandardCharsets.UTF_8)
         script.println("[JENKINS][DEBUG] JiraIssueMetadataPayload of ${name} Codebase CR has been fetched - ${payloadData}")
         return new JsonSlurperClassic().parseText(payloadData)
