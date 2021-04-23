@@ -1,4 +1,4 @@
-/* Copyright 2019 EPAM Systems.
+/* Copyright 2021 EPAM Systems.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -17,18 +17,30 @@ package com.epam.edp.stages.impl.cd.impl
 import com.epam.edp.stages.impl.cd.Stage
 import com.epam.edp.stages.impl.ci.impl.codebaseiamgestream.CodebaseImageStreams
 import org.apache.commons.lang.RandomStringUtils
+import groovy.json.JsonSlurperClassic
 
 @Stage(name = "promote-images")
 class PromoteImages {
     Script script
 
+    def getCodebaseTagFromAnnotation(codebaseName, stageName, namespace) {
+        def annotationPrefix = "app.edp.epam.com/"
+        def stageData = script.sh(
+            script: "kubectl get stages.v2.edp.epam.com ${stageName} -n ${namespace} --output=json",
+            returnStdout: true).trim()
+        def stageJsonData = new JsonSlurperClassic().parseText(stageData)
+        def codebaseTag = stageJsonData.metadata.annotations."${annotationPrefix}${codebaseName}"
+        return codebaseTag
+    }
+
     void run(context) {
         script.openshift.withCluster() {
             script.openshift.withProject() {
                 context.job.codebasesList.each() { codebase ->
-                    if ((codebase.name in context.job.applicationsToPromote) && (codebase.version != "No deploy") && (codebase.version != "noImageExists")) {
-                        script.openshift.tag("${codebase.inputIs}:${codebase.version}",
-                                "${codebase.outputIs}:${codebase.version}")
+                    def codebaseTag = getCodebaseTagFromAnnotation(codebase.name, "${context.job.pipelineName}-${context.job.stageName}", context.job.ciProject)
+                    if ((codebase.name in context.job.applicationsToPromote) && (codebaseTag != null)) {
+                        script.openshift.tag("${codebase.inputIs}:${codebaseTag}",
+                                "${codebase.outputIs}:${codebaseTag}")
 
                         context.workDir = new File("/tmp/${RandomStringUtils.random(10, true, true)}")
                         context.workDir.deleteDir()
@@ -39,9 +51,9 @@ class PromoteImages {
                         }
 
                         new CodebaseImageStreams(context, script)
-                                .UpdateOrCreateCodebaseImageStream(codebase.outputIs, "${dockerRegistryHost}/${codebase.outputIs}", codebase.version)
+                                .UpdateOrCreateCodebaseImageStream(codebase.outputIs, "${dockerRegistryHost}/${codebase.outputIs}", codebaseTag)
 
-                        script.println("[JENKINS][INFO] Image ${codebase.inputIs}:${codebase.version} has been promoted to ${codebase.outputIs}")
+                        script.println("[JENKINS][INFO] Image ${codebase.inputIs}:${codebaseTag} has been promoted to ${codebase.outputIs}")
                     }
                 }
             }

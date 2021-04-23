@@ -1,4 +1,4 @@
-/* Copyright 2019 EPAM Systems.
+/* Copyright 2021 EPAM Systems.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -206,8 +206,7 @@ class Deploy {
         script.println("[JENKINS][DEBUG] Annotation has been added to the ${stageName} stage")
     }
 
-    def setAnnotationToJenkins(context){
-        def annotationPrefix = "app.edp.epam.com/"
+    def setAnnotationToJenkins(context) {
         def stageData = script.sh(
             script: "kubectl get stages.v2.edp.epam.com ${context.job.pipelineName}-${context.job.stageName} -n ${context.job.ciProject} --output=json",
             returnStdout: true).trim()
