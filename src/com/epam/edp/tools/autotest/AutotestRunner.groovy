@@ -14,11 +14,8 @@ limitations under the License.*/
 
 package com.epam.edp.tools.autotest
 
-import com.epam.edp.platform.Platform
 import groovy.json.JsonSlurperClassic
 import hudson.FilePath
-import org.apache.commons.lang.RandomStringUtils
-import java.lang.IllegalStateException
 
 class AutotestRunner {
 
@@ -70,7 +67,7 @@ class AutotestRunner {
 
         command += " -Dnamespace=${ns}"
         script.withCredentials(getNexusCredential()) {
-            def nexusProperties = getNexusProperties(buildTool, script.USERNAME,script.PASSWORD)
+            def nexusProperties = getNexusProperties(buildTool, script.USERNAME, script.PASSWORD)
             script.sh "${command} ${buildTool.properties} ${nexusProperties} ${buildTool.settings}"
         }
     }
