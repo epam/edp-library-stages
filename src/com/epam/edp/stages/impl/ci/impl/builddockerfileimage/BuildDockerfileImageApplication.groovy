@@ -45,7 +45,7 @@ class BuildDockerfileImageApplication {
                 def outputImagestreamName = "${context.codebase.name}-${context.git.branch.replaceAll("[^\\p{L}\\p{Nd}]+", "-")}"
 
                 context.codebase.imageBuildArgs.push("--name=${buildconfigName}")
-                def imageUrl = "${dockerRegistryHost}/${script.openshift.project()}/${outputImagestreamName}:${context.codebase.isTag}"
+                def imageUrl = "${dockerRegistryHost}/${script.openshift.project()}/${context.codebase.name}:${context.codebase.isTag}"
                 context.codebase.imageBuildArgs.push("--to=${imageUrl}")
 
                 createOrUpdateBuildConfig(context.codebase, buildconfigName, imageUrl)
