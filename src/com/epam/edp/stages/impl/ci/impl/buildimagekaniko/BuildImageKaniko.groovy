@@ -43,7 +43,7 @@ class BuildImageKaniko {
             setEnvVariable(awsCliInitContainer.env, "REPO_NAME", resultImageName, true)
             setEnvVariable(awsCliInitContainer.env, "AWS_DEFAULT_REGION", getAwsRegion())
         }
-        parsedKanikoTemplateData.spec.containers[0].args[0] = "--destination=${dockerRegistryHost}/${resultImageName}:${context.codebase.isTag}"
+        parsedKanikoTemplateData.spec.containers[0].args[0] = "--destination=${dockerRegistryHost}/${resultImageName}:${context.codebase.isTag.replaceAll("/", "-")}"
         def jsonData = JsonOutput.toJson(parsedKanikoTemplateData)
         kanikoTemplateFilePath.write(jsonData, null)
         return kanikoTemplateFilePath
