@@ -1,4 +1,4 @@
-/* Copyright 2020 EPAM Systems.
+/* Copyright 2021 EPAM Systems.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import hudson.FilePath
 import org.apache.commons.lang.RandomStringUtils
 import java.nio.charset.StandardCharsets
 
-@Stage(name = "create-jira-issue-metadata", buildTool = ["maven", "npm", "dotnet", "gradle", "go", "python", "terraform", "any"], type = [ProjectType.APPLICATION, ProjectType.AUTOTESTS, ProjectType.LIBRARY])
+@Stage(name = "create-jira-issue-metadata", buildTool = ["maven", "npm", "dotnet", "gradle", "go", "python", "terraform", "codenarc", "any"], type = [ProjectType.APPLICATION, ProjectType.AUTOTESTS, ProjectType.LIBRARY])
 class JiraIssueMetadata {
     Script script
 
