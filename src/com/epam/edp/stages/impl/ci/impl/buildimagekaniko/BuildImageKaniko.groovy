@@ -1,4 +1,4 @@
-/* Copyright 2019 EPAM Systems.
+/* Copyright 2021 EPAM Systems.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -60,6 +60,13 @@ class BuildImageKaniko {
         }
     }
 
+    def getCodebaseUid(codebaseName, namespace) {
+        def codebaseUid = script.sh(
+            script: "kubectl get codebases.v2.edp.epam.com ${codebaseName} -n ${namespace} --output=jsonpath={.metadata.uid}",
+            returnStdout: true).trim().take(13)
+        return codebaseUid
+    }
+
     void run(context) {
         def dockerfilePath = new FilePath(Jenkins.getInstance().getComputer(script.env['NODE_NAME']).getChannel(),
                 "${context.workDir}/Dockerfile")
@@ -68,7 +75,8 @@ class BuildImageKaniko {
         }
 
         def resultImageName = "${context.codebase.name}-${context.git.branch.replaceAll("[^\\p{L}\\p{Nd}]+", "-")}"
-        def buildconfigName = "build-${resultImageName}-${script.BUILD_NUMBER}"
+        def codebaseUid = getCodebaseUid(context.codebase.name, context.job.ciProject)
+        def buildconfigName = "build-${resultImageName}-${script.BUILD_NUMBER}-${codebaseUid}"
         script.dir("${context.workDir}") {
             try {
                 def dockerRegistryHost = context.platform.getJsonPathValue("edpcomponent", "docker-registry", ".spec.url")
@@ -105,7 +113,7 @@ class BuildImageKaniko {
                 script.error("[JENKINS][ERROR] Building image for ${context.codebase.name} failed")
             }
             finally {
-                def podToDelete = "build-${context.codebase.name}-${context.git.branch.replaceAll("[^\\p{L}\\p{Nd}]+", "-")}-${script.BUILD_NUMBER.toInteger() - 1}"
+                def podToDelete = "build-${context.codebase.name}-${context.git.branch.replaceAll("[^\\p{L}\\p{Nd}]+", "-")}-${script.BUILD_NUMBER.toInteger() - 1}-${codebaseUid}"
                 context.platform.deleteObject("pod", podToDelete, true)
             }
         }
