@@ -60,11 +60,14 @@ class BuildImageKaniko {
         }
     }
 
-    def getCodebaseUid(codebaseName, namespace) {
-        def codebaseUid = script.sh(
-            script: "kubectl get codebases.v2.edp.epam.com ${codebaseName} -n ${namespace} --output=jsonpath={.metadata.uid}",
-            returnStdout: true).trim().take(13)
-        return codebaseUid
+    def checkBuildPodExist(podName, namespace) {
+        def buildPod = script.sh(
+            script: "kubectl get pod ${podName} -n ${namespace} --ignore-not-found=true",
+            returnStdout: true).trim()
+        if (buildPod == '') {
+            return false
+        }
+        return true
     }
 
     void run(context) {
@@ -75,8 +78,11 @@ class BuildImageKaniko {
         }
 
         def resultImageName = "${context.codebase.name}-${context.git.branch.replaceAll("[^\\p{L}\\p{Nd}]+", "-")}"
-        def codebaseUid = getCodebaseUid(context.codebase.name, context.job.ciProject)
-        def buildconfigName = "build-${resultImageName}-${script.BUILD_NUMBER}-${codebaseUid}"
+        def buildconfigName = "build-${resultImageName}-${script.BUILD_NUMBER}"
+        if (checkBuildPodExist(buildconfigName, context.job.ciProject)) {
+            script.println("[JENKINS][DEBUG] Pod with name ${buildconfigName} already exist. It will be removed.")
+            context.platform.deleteObject("pod", buildconfigName, true)
+        }
         script.dir("${context.workDir}") {
             try {
                 def dockerRegistryHost = context.platform.getJsonPathValue("edpcomponent", "docker-registry", ".spec.url")
@@ -113,7 +119,7 @@ class BuildImageKaniko {
                 script.error("[JENKINS][ERROR] Building image for ${context.codebase.name} failed")
             }
             finally {
-                def podToDelete = "build-${context.codebase.name}-${context.git.branch.replaceAll("[^\\p{L}\\p{Nd}]+", "-")}-${script.BUILD_NUMBER.toInteger() - 1}-${codebaseUid}"
+                def podToDelete = "build-${context.codebase.name}-${context.git.branch.replaceAll("[^\\p{L}\\p{Nd}]+", "-")}-${script.BUILD_NUMBER.toInteger() - 1}"
                 context.platform.deleteObject("pod", podToDelete, true)
             }
         }
