@@ -19,8 +19,6 @@ import groovy.json.JsonOutput
 import groovy.json.JsonSlurperClassic
 import hudson.FilePath
 
-import com.epam.edp.stages.impl.ci.impl.codebaseiamgestream.CodebaseImageStreams
-
 @Stage(name = "build-image-kaniko", buildTool = ["maven", "npm", "gradle", "dotnet","python", "any"], type = [ProjectType.APPLICATION])
 class BuildImageKaniko {
     Script script
@@ -112,8 +110,6 @@ class BuildImageKaniko {
                     script.sleep(10)
                 }
                 script.println("[JENKINS][DEBUG] Build config ${buildconfigName} for application ${context.codebase.name} has been completed")
-                new CodebaseImageStreams(context, script)
-                        .UpdateOrCreateCodebaseImageStream(resultImageName, "${dockerRegistryHost}/${resultImageName}", context.codebase.isTag)
             }
             catch (Exception ex) {
                 script.error("[JENKINS][ERROR] Building image for ${context.codebase.name} failed")

@@ -18,6 +18,9 @@ package com.epam.edp.stages.impl.ci.impl.gittag
 import com.epam.edp.stages.impl.ci.ProjectType
 import com.epam.edp.stages.impl.ci.Stage
 
+import com.epam.edp.stages.impl.ci.impl.codebaseiamgestream.CodebaseImageStreams
+
+
 @Stage(name = "git-tag", buildTool = ["gradle", "maven", "dotnet", "npm", "any"], type = [ProjectType.APPLICATION, ProjectType.LIBRARY])
 class GitTagApplicationLibrary {
     Script script
@@ -37,6 +40,10 @@ class GitTagApplicationLibrary {
                      ${context.git.autouser} user'
                 git push --tags"""
             }
+            def resultImageName = "${context.codebase.name}-${context.git.branch.replaceAll("[^\\p{L}\\p{Nd}]+", "-")}"
+            def dockerRegistryHost = context.platform.getJsonPathValue("edpcomponent", "docker-registry", ".spec.url")
+            new CodebaseImageStreams(context, script)
+                .UpdateOrCreateCodebaseImageStream(resultImageName, "${dockerRegistryHost}/${resultImageName}", context.codebase.isTag)
         }
     }
 }
