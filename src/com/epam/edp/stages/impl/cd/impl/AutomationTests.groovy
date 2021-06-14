@@ -1,4 +1,4 @@
-/* Copyright 2019 EPAM Systems.
+/* Copyright 2021 EPAM Systems.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -28,6 +28,10 @@ class AutomationTests {
     Script script
 
     void run(context, runStageName = null) {
+        def deployResult = script.currentBuild.currentResult
+        if (deployResult == 'UNSTABLE') {
+            script.error "[JENKINS][ERROR] Autotests will not be launched, because something went wrong during the deploy stage."
+        }
         def qualityGate = getCurrentQualityGate(script, context.job.qualityGates, runStageName)
         def slave = getSlave(script, context.platform, context.job, qualityGate.autotest.name)
 
