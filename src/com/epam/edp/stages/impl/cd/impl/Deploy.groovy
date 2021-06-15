@@ -180,12 +180,7 @@ class Deploy {
         def parametersMap = [
                 ['name': 'image.repository', 'value': fullImageName],
                 ['name': 'image.tag', 'value': "${codebase.version.replaceAll("/", "-")}"],
-                ['name': 'ingress.path', 'value': "${codebase.route_path}"],
-                ['name': 'ingress.host', 'value': "${codebase.route_site}-${context.job.deployProject}.${context.job.dnsWildcard}"],
         ]
-
-        if (codebase.route_path != "" && codebase.route_site != "")
-            parametersMap.add(['name': 'ingress.enabled', 'value': "true"])
 
         context.platform.deployCodebaseHelm(
                 context.job.deployProject,
