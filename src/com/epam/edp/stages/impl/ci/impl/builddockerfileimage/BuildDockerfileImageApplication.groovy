@@ -42,7 +42,6 @@ class BuildDockerfileImageApplication {
                 }
 
                 def buildconfigName = "${context.codebase.name}-dockerfile-${context.git.branch.replaceAll("[^\\p{L}\\p{Nd}]+", "-")}"
-                def outputImagestreamName = "${context.codebase.name}-${context.git.branch.replaceAll("[^\\p{L}\\p{Nd}]+", "-")}"
 
                 context.codebase.imageBuildArgs.push("--name=${buildconfigName}")
                 def imageUrl = "${dockerRegistryHost}/${script.openshift.project()}/${context.codebase.name}:${context.codebase.isTag}"
@@ -64,10 +63,6 @@ class BuildDockerfileImageApplication {
                 }
                 script.println("[JENKINS][DEBUG] Build config ${context.codebase.name} with result " +
                         "${buildconfigName}:${resultTag} has been completed")
-
-                new CodebaseImageStreams(context, script)
-                        .UpdateOrCreateCodebaseImageStream(outputImagestreamName, "${dockerRegistryHost}/${outputImagestreamName}", context.codebase.isTag)
-
             }
         }
     }
