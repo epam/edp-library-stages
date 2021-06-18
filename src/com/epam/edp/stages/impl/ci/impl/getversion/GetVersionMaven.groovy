@@ -18,20 +18,23 @@ package com.epam.edp.stages.impl.ci.impl.getversion
 import com.epam.edp.stages.impl.ci.ProjectType
 import com.epam.edp.stages.impl.ci.Stage
 
-@Stage(name = "get-version", buildTool = ["gradle"], type = [ProjectType.APPLICATION, ProjectType.LIBRARY])
-class GetVersionGradleApplicationLibrary {
+@Stage(name = "get-version", buildTool = ["maven"], type = [ProjectType.APPLICATION, ProjectType.AUTOTESTS, ProjectType.LIBRARY])
+class GetVersionMaven {
     Script script
 
     def setVersionToArtifact(context) {
+        def version = getVersion(context.codebase)
         script.sh """
-             set -eo pipefail
-             if ${context.codebase.isReleaseBranch}; then
-                sed -i "s/version = ".*"/version = \\'${context.codebase.branchVersion}-${context.codebase.currentBuildNumber}\\'/" build.gradle
-             else
-                sed -i "s/version = ".*"/version = \\\\'${context.codebase.branchVersion}\\\\'/" build.gradle
-             fi
-             kubectl patch codebasebranches.v2.edp.epam.com ${context.codebase.config.name}-${context.git.branch.replaceAll(/\//, "-")} --type=merge -p '{\"status\": {\"build\": "${context.codebase.currentBuildNumber}"}}'
+            set -eo pipefail
+            find . -name 'pom.xml' | xargs -i sed -i '/<groupId>com.epam.edp<\\/groupId>/ { :start; N; s/\\(<version>\\).*\\(<\\/version>\\)/\\1'"${version}"'\\2/ }' {}
+            kubectl patch codebasebranches.v2.edp.epam.com ${context.codebase.config.name}-${context.git.branch.replaceAll(/\//, "-")} --type=merge -p '{\"status\": {\"build\": "${context.codebase.currentBuildNumber}"}}'
         """
+    }
+
+    def getVersion(codebase) {
+        return codebase.isReleaseBranch
+                ? "${codebase.branchVersion}-${codebase.currentBuildNumber}"
+                : "${codebase.branchVersion}"
     }
 
     void run(context) {
@@ -45,8 +48,9 @@ class GetVersionGradleApplicationLibrary {
                 } else {
                     context.codebase.version = script.sh(
                             script: """
-                            set +x
-                            ${context.buildTool.command} -PnexusLogin=${script.USERNAME} -PnexusPassword=${script.PASSWORD} ${context.buildTool.properties} properties -q | grep "version:" | awk '{print \$2}'
+                            ${context.buildTool.command} ${context.buildTool.properties} -Dartifactory.username=${script.USERNAME} -Dartifactory.password=${script.PASSWORD} \
+                            org.apache.maven.plugins:maven-help-plugin:2.1.1:evaluate \
+                            -Dexpression=project.version |grep -Ev '(^\\[|Download\\w+:)'
                         """,
                             returnStdout: true
                     ).trim().toLowerCase()
@@ -56,10 +60,17 @@ class GetVersionGradleApplicationLibrary {
                     context.codebase.isTag = "${context.git.branch}-${context.codebase.buildVersion}"
                 }
             }
-            context.codebase.deployableModuleDir = "${context.workDir}"
+            context.codebase.deployableModule = script.sh(
+                    script: "cat pom.xml | grep -Poh '<deployable.module>\\K[^<]*' || echo \"\"",
+                    returnStdout: true
+            ).trim()
+            script.println("[JENKINS][DEBUG] Deployable module: ${context.codebase.deployableModule}")
+            context.codebase.deployableModuleDir = context.codebase.deployableModule.isEmpty() ? "${context.workDir}" :
+                    "${context.workDir}/${context.codebase.deployableModule}"
         }
-        script.println("[JENKINS][DEBUG] Artifact version - ${context.codebase.version}")
+        script.println("[JENKINS][DEBUG] Application version - ${context.codebase.version}")
         script.println("[JENKINS][DEBUG] VCS tag - ${context.codebase.vcsTag}")
         script.println("[JENKINS][DEBUG] IS tag - ${context.codebase.isTag}")
+
     }
 }

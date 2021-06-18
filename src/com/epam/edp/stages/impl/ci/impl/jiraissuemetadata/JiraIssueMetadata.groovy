@@ -90,7 +90,12 @@ class JiraIssueMetadata {
             addCommitId(template, id)
             addTicketNumber(template, tickets)
 
-            def url = "${jenkinsUrl}/job/${context.codebase.config.name}/job/${context.job.getParameterValue("BRANCH").toUpperCase()}-Build-${context.codebase.config.name}/${script.BUILD_NUMBER}/console"
+            def url = ""
+            if (context.job.type == "codereview") {
+                url = "${jenkinsUrl}/job/${context.codebase.config.name}/job/${context.job.getParameterValue("BRANCH").toUpperCase()}-Code-review-${context.codebase.config.name}/${script.BUILD_NUMBER}/console"
+            } else {
+                url = "${jenkinsUrl}/job/${context.codebase.config.name}/job/${context.job.getParameterValue("BRANCH").toUpperCase()}-Build-${context.codebase.config.name}/${script.BUILD_NUMBER}/console"
+            }
             info.getCommitMessage().trim().split("\n").each { it ->
                 def matcher = (it =~ /${commitMsgPattern}/)
                 if (matcher.matches()) {
