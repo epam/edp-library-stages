@@ -23,18 +23,10 @@ class GetVersionMaven {
     Script script
 
     def setVersionToArtifact(context) {
-        def version = getVersion(context.codebase)
         script.sh """
             set -eo pipefail
-            find . -name 'pom.xml' | xargs -i sed -i '/<groupId>com.epam.edp<\\/groupId>/ { :start; N; s/\\(<version>\\).*\\(<\\/version>\\)/\\1'"${version}"'\\2/ }' {}
             kubectl patch codebasebranches.v2.edp.epam.com ${context.codebase.config.name}-${context.git.branch.replaceAll(/\//, "-")} --type=merge -p '{\"status\": {\"build\": "${context.codebase.currentBuildNumber}"}}'
         """
-    }
-
-    def getVersion(codebase) {
-        return codebase.isReleaseBranch
-                ? "${codebase.branchVersion}-${codebase.currentBuildNumber}"
-                : "${codebase.branchVersion}"
     }
 
     void run(context) {
