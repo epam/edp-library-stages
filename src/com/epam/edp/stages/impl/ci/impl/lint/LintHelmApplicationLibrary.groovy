@@ -25,11 +25,11 @@ class LintHelmApplicationLibrary {
     void run(context) {
         def test_dir = "${RandomStringUtils.random(10, true, true)}"
         script.dir("${context.workDir}") {
-            script.stash name: 'project-data', includes: "**", useDefaultExcludes: false
+            script.stash name: 'deploy-templates-data', includes: "deploy-templates/**", useDefaultExcludes: false
         }
         script.node("edp-helm") {
             script.dir("${test_dir}") {
-                script.unstash 'project-data'
+                script.unstash 'deploy-templates-data'
                         script.sh (script: """
                                set -ex
                                ct lint --charts deploy-templates/
