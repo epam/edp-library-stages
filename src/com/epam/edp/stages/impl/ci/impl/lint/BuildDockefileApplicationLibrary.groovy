@@ -60,6 +60,16 @@ class BuildDockefileApplicationLibrary {
         }
     }
 
+    def checkBuildPodExist(podName, namespace) {
+        def buildPod = script.sh(
+            script: "kubectl get pod ${podName} -n ${namespace} --ignore-not-found=true",
+            returnStdout: true).trim()
+        if (buildPod == '') {
+            return false
+        }
+        return true
+    }
+
     void run(context) {
         def dockerfilePath = new FilePath(Jenkins.getInstance().getComputer(script.env['NODE_NAME']).getChannel(),
                 "${context.workDir}/Dockerfile")
@@ -69,6 +79,10 @@ class BuildDockefileApplicationLibrary {
 
         def resultImageName = "${context.codebase.name}-${context.git.branch.replaceAll("[^\\p{L}\\p{Nd}]+", "-")}"
         def buildconfigName = "build-${resultImageName}-${script.BUILD_NUMBER}"
+        if (checkBuildPodExist(buildconfigName, context.job.ciProject)) {
+            script.println("[JENKINS][DEBUG] Pod with name ${buildconfigName} already exist. It will be removed.")
+            context.platform.deleteObject("pod", buildconfigName, true)
+        }
         script.dir("${context.workDir}") {
             try {
                 def dockerRegistryHost = context.platform.getJsonPathValue("edpcomponent", "docker-registry", ".spec.url")
@@ -76,18 +90,18 @@ class BuildDockefileApplicationLibrary {
                     script.error("[JENKINS][ERROR] Couldn't get docker registry server")
 
                 def kanikoTemplateFilePath = setKanikoTemplate("${context.workDir}/kaniko-template.json", buildconfigName,
-                        "${context.job.ciProject}/${resultImageName}", dockerRegistryHost, context)
+                        "${context.job.ciProject}/${context.codebase.name}", dockerRegistryHost, context)
                 context.platform.apply(kanikoTemplateFilePath.getRemote())
                 while (!context.platform.getObjectStatus("pod", buildconfigName)["initContainerStatuses"][0].state.keySet().contains("running")) {
                     script.println("[JENKINS][DEBUG] Waiting for init container in Kaniko is started")
                     script.sleep(5)
                 }
 
-                def deployableModuleDirFilepath = new FilePath(Jenkins.getInstance().getComputer(script.env['NODE_NAME']).getChannel(), context.workDir.toString())
+                def deployableModuleDirFilepath = new FilePath(Jenkins.getInstance().getComputer(script.env['NODE_NAME']).getChannel(), "${context.codebase.deployableModuleDir}")
                 script.println("[JENKINS][DEBUG] Files to copy to kaniko - ${deployableModuleDirFilepath.list()}")
                 deployableModuleDirFilepath.list().each() { item ->
                     if (item.getName() != "Dockerfile")
-                        context.platform.copyToPod("${context.workDir.toString()}/${item.getName()}", "/tmp/workspace/", buildconfigName, null, "init-kaniko")
+                        context.platform.copyToPod("${context.codebase.deployableModuleDir}/${item.getName()}", "/tmp/workspace/", buildconfigName, null, "init-kaniko")
                 }
                 context.platform.copyToPod("Dockerfile", "/tmp/workspace", buildconfigName, null, "init-kaniko")
 
@@ -98,8 +112,6 @@ class BuildDockefileApplicationLibrary {
                     script.sleep(10)
                 }
                 script.println("[JENKINS][DEBUG] Build config ${buildconfigName} for application ${context.codebase.name} has been completed")
-                new CodebaseImageStreams(context, script)
-                        .UpdateOrCreateCodebaseImageStream(resultImageName, "${dockerRegistryHost}/${resultImageName}", context.codebase.isTag)
             }
             catch (Exception ex) {
                 script.error("[JENKINS][ERROR] Building image for ${context.codebase.name} failed")
