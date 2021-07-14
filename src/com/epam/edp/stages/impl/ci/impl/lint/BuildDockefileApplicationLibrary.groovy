@@ -78,7 +78,7 @@ class BuildDockefileApplicationLibrary {
         }
 
         def resultImageName = "${context.codebase.name}-${context.git.branch.replaceAll("[^\\p{L}\\p{Nd}]+", "-")}"
-        def buildconfigName = "build-${resultImageName}-${script.BUILD_NUMBER}"
+        def buildconfigName = "lint-${resultImageName}-${script.BUILD_NUMBER}"
         if (checkBuildPodExist(buildconfigName, context.job.ciProject)) {
             script.println("[JENKINS][DEBUG] Pod with name ${buildconfigName} already exist. It will be removed.")
             context.platform.deleteObject("pod", buildconfigName, true)
@@ -117,7 +117,7 @@ class BuildDockefileApplicationLibrary {
                 script.error("[JENKINS][ERROR] Building image for ${context.codebase.name} failed")
             }
             finally {
-                def podToDelete = "build-${context.codebase.name}-${context.git.branch.replaceAll("[^\\p{L}\\p{Nd}]+", "-")}-${script.BUILD_NUMBER.toInteger() - 1}"
+                def podToDelete = "lint-${context.codebase.name}-${context.git.branch.replaceAll("[^\\p{L}\\p{Nd}]+", "-")}-${script.BUILD_NUMBER.toInteger() - 1}"
                 context.platform.deleteObject("pod", podToDelete, true)
             }
         }
