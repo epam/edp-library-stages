@@ -19,22 +19,41 @@ import com.epam.edp.stages.impl.ci.ProjectType
 import com.epam.edp.stages.impl.ci.Stage
 import com.epam.edp.stages.impl.ci.impl.sonarcleanup.SonarCleanup
 import com.epam.edp.tools.SonarScanner
+import org.apache.commons.lang.RandomStringUtils
 
 @Stage(name = "sonar", buildTool = "gradle", type = [ProjectType.APPLICATION, ProjectType.AUTOTESTS, ProjectType.LIBRARY])
 class SonarGradle {
     Script script
 
     void run(context) {
+        def codereviewAnalysisRunDir = context.workDir
+        if (context.job.type == "codereview") {
+            codereviewAnalysisRunDir = new File("${context.workDir}/../${RandomStringUtils.random(10, true, true)}")
+
+            script.dir("${codereviewAnalysisRunDir}") {
+                script.sh """
+                  export LANG=en_US.utf-8
+                  cd ${context.workDir}
+                  git config --local core.quotepath false
+                  IFS=\$'\\n';for i in \$(git diff --diff-filter=ACMR --name-only origin/${context.git.branch}); \
+                    do cp --parents \"\$i\" ${codereviewAnalysisRunDir}/; echo "file for scanner:" \"\$i\"/; done
+                  cp -f build.gradle ${codereviewAnalysisRunDir};
+                  for build in `find . -type d -name \'build\'`; do cp --parents -r \${build} ${codereviewAnalysisRunDir}; done
+                  """
+            }
+        }
         SonarScanner sonarScanner = new SonarScanner(script);
         def buildTool = context.buildTool;
-        def workDir = context.workDir;
         def path = "build/sonar";
         def credentialsId = context.nexus.credentialsId;
         def codebaseName;
+        def workDir;
         if (context.job.type == "codereview" && context.codebase.config.strategy != "import") {
             codebaseName = "${context.codebase.name}:change-${context.git.changeNumber}-${context.git.patchsetNumber}";
+            workDir = codereviewAnalysisRunDir;
         } else {
             codebaseName = context.codebase.name;
+            workDir = context.workDir;
         }
         def scriptText = """ ${buildTool.command} ${context.buildTool.properties} -PnexusLogin=LOGIN_REPLACE -PnexusPassword=PASSWORD_REPLACE \
                              sonarqube -Dsonar.projectKey=${codebaseName} \

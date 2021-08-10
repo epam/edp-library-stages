@@ -19,22 +19,43 @@ import com.epam.edp.stages.impl.ci.ProjectType
 import com.epam.edp.stages.impl.ci.Stage
 import com.epam.edp.stages.impl.ci.impl.sonarcleanup.SonarCleanup
 import com.epam.edp.tools.SonarScanner
+import org.apache.commons.lang.RandomStringUtils
 
 @Stage(name = "sonar", buildTool = "dotnet", type = [ProjectType.APPLICATION, ProjectType.LIBRARY])
 class SonarDotnet {
     Script script
 
     void run(context) {
+        def codereviewAnalysisRunDir = context.workDir
+        if (context.job.type == "codereview") {
+            codereviewAnalysisRunDir = new File("${context.workDir}/../${RandomStringUtils.random(10, true, true)}")
+
+            script.dir("${codereviewAnalysisRunDir}") {
+                script.sh """
+                  export LANG=en_US.utf-8
+                  cd ${context.workDir}
+                  git config --local core.quotepath false
+                  IFS=\$'\\n';for i in \$(git diff --diff-filter=ACMR --name-only origin/${context.git.branch}); \
+                    do cp --parents \"\$i\" ${codereviewAnalysisRunDir}/; echo "file for scanner:" \"\$i\"/; done
+                  for csproj in `find . -type f -name "*.csproj"`; do cp --parents -r \${csproj} ${codereviewAnalysisRunDir}; done;
+                  for startup in `find . -type f -name "Startup.cs"`; do cp --parents -r \${startup} ${codereviewAnalysisRunDir}; done;
+                  for sln in `find . -type f -name "*.sln"`; do cp --parents -r \${sln} ${codereviewAnalysisRunDir}; done;
+                  for main_class in `find . -type f -name "Program.cs"`; do cp --parents -r \${main_class} ${codereviewAnalysisRunDir}; done;
+                  """
+            }
+        }
         SonarScanner sonarScanner = new SonarScanner(script);
         def buildTool = context.buildTool;
-        def workDir = context.workDir;
         def path = ".sonarqube/out/.sonar";
         def scannerCommand = "/home/jenkins/.dotnet/tools/dotnet-sonarscanner";
         def codebaseName;
+        def workDir;
         if (context.job.type == "codereview" && context.codebase.config.strategy != "import") {
             codebaseName = "${context.codebase.name}:change-${context.git.changeNumber}-${context.git.patchsetNumber}";
+            workDir = codereviewAnalysisRunDir;
         } else {
             codebaseName = context.codebase.name;
+            workDir = context.workDir;
         }
         def scriptText = """ ${scannerCommand} begin /k:${codebaseName} \
                              /k:${codebaseName} \
