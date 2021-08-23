@@ -26,7 +26,10 @@ class CompileMavenApplicationLibrary {
         script.dir("${context.workDir}") {
             script.withCredentials([script.usernamePassword(credentialsId: "${context.nexus.credentialsId}",
                     passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]) {
-                script.sh "mvn versions:set versions:commit -DnewVersion=${version}"
+                if (context.codebase.config.versioningType == "edp") {
+                    script.sh "${context.buildTool.command} ${context.buildTool.properties} -Dartifactory.username=${script.USERNAME} -Dartifactory.password=${script.PASSWORD} -DnewVersion=${version}" +
+                    " versions:set versions:commit"
+                }
                 script.sh "${context.buildTool.command} ${context.buildTool.properties} -Dartifactory.username=${script.USERNAME} -Dartifactory.password=${script.PASSWORD}" +
                         " compile"
             }

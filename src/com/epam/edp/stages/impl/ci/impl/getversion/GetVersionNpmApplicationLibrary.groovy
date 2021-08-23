@@ -22,7 +22,7 @@ import com.epam.edp.stages.impl.ci.Stage
 class GetVersionNpmApplicationLibrary {
     Script script
 
-    def setVersionToArtifact(context) {
+    def updateBuildNumber(context) {
         script.sh """
             set -eo pipefail
             npm --no-git-tag-version version ${context.codebase.branchVersion}-${context.codebase.currentBuildNumber}
@@ -33,7 +33,7 @@ class GetVersionNpmApplicationLibrary {
     void run(context) {
         script.dir("${context.workDir}") {
             if (context.codebase.config.versioningType == "edp") {
-                setVersionToArtifact(context)
+                updateBuildNumber(context)
                 context.codebase.vcsTag = "build/${context.codebase.version}"
                 context.codebase.isTag = "${context.codebase.version}"
             } else {

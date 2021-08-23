@@ -22,7 +22,7 @@ import com.epam.edp.stages.impl.ci.Stage
 class GetVersionDotnetApplicationLibrary {
     Script script
 
-    def setVersionToArtifact(context) {
+    def updateBuildNumber(context) {
         script.sh """
             set -eo pipefail
             sed -i "s#\\(<Version>\\).*\\(</Version>\\)#\\1${context.codebase.branchVersion}-${context.codebase.currentBuildNumber}\\2#" "${context.codebase.deployableModule}/${context.codebase.deployableModule}.csproj"
@@ -38,7 +38,7 @@ class GetVersionDotnetApplicationLibrary {
             ).trim()
 
             if (context.codebase.config.versioningType == "edp") {
-                setVersionToArtifact(context)
+                updateBuildNumber(context)
                 context.codebase.vcsTag = "build/${context.codebase.version}"
                 context.codebase.isTag = "${context.codebase.version}"
             } else {

@@ -22,12 +22,12 @@ import com.epam.edp.stages.impl.ci.Stage
 class GetVersionPythonApplicationLibrary {
     Script script
 
-    def setVersionToArtifact(context) {
+    def updateBuildNumber(context) {
         script.dir("${context.workDir}") {
             script.sh "sed -i 's/\\(__version__\\s*=\\s*\\).*/\\1\"${context.codebase.buildVersion}\"/' version/__init__.py"
         }
     }
-    def setUpVersions(context){
+    def updateVersions(context){
         if (context.codebase.config.versioningType == "edp") {
             script.dir("${context.workDir}") {
                 script.sh """ kubectl patch codebasebranches.v2.edp.epam.com ${context.codebase.config.name}-${context.git.branch.replaceAll(/\//, "-")} --type=merge -p '{\"status\": {\"build\": "${context.codebase.currentBuildNumber}"}}'
@@ -52,10 +52,10 @@ class GetVersionPythonApplicationLibrary {
     }
 
     void run(context) {
-        setUpVersions(context)
+        updateVersions(context)
         context.codebase.deployableModuleDir = "${context.workDir}"
         if (!context.codebase.version.toLowerCase().contains("snapshot"))
-            setVersionToArtifact(context)
+            updateBuildNumber(context)
         script.println("[JENKINS][DEBUG] Application version - ${context.codebase.version}")
         script.println("[JENKINS][DEBUG] VCS tag - ${context.codebase.vcsTag}")
         script.println("[JENKINS][DEBUG] IS tag - ${context.codebase.isTag}")

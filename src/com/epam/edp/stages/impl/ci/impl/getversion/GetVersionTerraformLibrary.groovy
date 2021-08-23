@@ -22,7 +22,7 @@ import com.epam.edp.stages.impl.ci.Stage
 class GetVersionTerraformLibrary {
     Script script
 
-    def setUpVersions(workDir, codebase, git, job) {
+    def updateVersions(workDir, codebase, git, job) {
         if (codebase.config.versioningType == "edp") {
             updateBuildNumber(codebase.config.name, git.branch.replaceAll(/\//, "-"), codebase.currentBuildNumber)
             codebase.vcsTag = "build/${codebase.version}"
@@ -44,7 +44,7 @@ class GetVersionTerraformLibrary {
     }
 
     void run(context) {
-        setUpVersions(context.workDir, context.codebase, context.git, context.job)
+        updateVersions(context.workDir, context.codebase, context.git, context.job)
         context.codebase.deployableModuleDir = "${context.workDir}"
         script.println("[JENKINS][DEBUG] Application version - ${context.codebase.version}")
         script.println("[JENKINS][DEBUG] VCS tag - ${context.codebase.vcsTag}")

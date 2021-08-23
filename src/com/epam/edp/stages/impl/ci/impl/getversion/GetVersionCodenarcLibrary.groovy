@@ -22,7 +22,7 @@ import com.epam.edp.stages.impl.ci.Stage
 class GetVersionCodenarcLibrary {
     Script script
 
-    def setVersionToArtifact(context) {
+    def updateBuildNumber(context) {
         script.sh """
              set -eo pipefail
              if ${context.codebase.isReleaseBranch}; then
@@ -39,7 +39,7 @@ class GetVersionCodenarcLibrary {
             script.withCredentials([script.usernamePassword(credentialsId: "${context.nexus.credentialsId}",
                     passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]) {
                 if (context.codebase.config.versioningType == "edp") {
-                    setVersionToArtifact(context)
+                    updateBuildNumber(context)
                     context.codebase.vcsTag = "build/${context.codebase.version}"
                     context.codebase.isTag = "${context.codebase.version}"
                 } else {

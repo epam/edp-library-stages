@@ -22,7 +22,7 @@ import com.epam.edp.stages.impl.ci.Stage
 class GetVersionMaven {
     Script script
 
-    def setVersionToArtifact(context) {
+    def updateBuildNumber(context) {
         script.sh """
             set -eo pipefail
             kubectl patch codebasebranches.v2.edp.epam.com ${context.codebase.config.name}-${context.git.branch.replaceAll(/\//, "-")} --type=merge -p '{\"status\": {\"build\": "${context.codebase.currentBuildNumber}"}}'
@@ -34,7 +34,7 @@ class GetVersionMaven {
             script.withCredentials([script.usernamePassword(credentialsId: "${context.nexus.credentialsId}",
                     passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]) {
                 if (context.codebase.config.versioningType == "edp") {
-                    setVersionToArtifact(context)
+                    updateBuildNumber(context)
                     context.codebase.vcsTag = "build/${context.codebase.version}"
                     context.codebase.isTag = "${context.codebase.version}"
                 } else {
