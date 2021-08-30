@@ -57,7 +57,7 @@ class SonarCodenarc {
         }
         def scriptText = """ ${buildTool.command} ${context.buildTool.properties} -PnexusLogin=LOGIN_REPLACE -PnexusPassword=PASSWORD_REPLACE \
                              sonarqube -Dsonar.projectKey=${codebaseName} \
-                             -Dsonar.projectName=${codebaseName} """;
+                             -Dsonar.projectName=${codebaseName}  -x compileGroovy """;
         if (context.job.type == "build") {
             new SonarCleanup(script: script).run(context)
         }
