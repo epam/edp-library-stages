@@ -34,30 +34,23 @@ class PromoteImages {
     }
 
     void run(context) {
-        script.openshift.withCluster() {
-            script.openshift.withProject() {
-                context.job.codebasesList.each() { codebase ->
-                    def codebaseTag = getCodebaseTagFromAnnotation(codebase.name, "${context.job.pipelineName}-${context.job.stageName}", context.job.ciProject)
-                    if ((codebase.name in context.job.applicationsToPromote) && (codebaseTag != null)) {
-                        script.openshift.tag("${codebase.inputIs}:${codebaseTag}",
-                                "${codebase.outputIs}:${codebaseTag}")
+        def dockerRegistryHost = context.platform.getJsonPathValue("edpcomponent", "docker-registry", ".spec.url")
+        if (!dockerRegistryHost)
+            script.error("[JENKINS][ERROR] Couldn't get docker registry server")
 
-                        context.workDir = new File("/tmp/${RandomStringUtils.random(10, true, true)}")
-                        context.workDir.deleteDir()
+        context.job.codebasesList.each() { codebase ->
+            def codebaseTag = getCodebaseTagFromAnnotation(codebase.name, "${context.job.pipelineName}-${context.job.stageName}", context.job.ciProject)
+            if ((codebase.name in context.job.applicationsToPromote) && (codebaseTag != null)) {
+                context.workDir = new File("/tmp/${RandomStringUtils.random(10, true, true)}")
+                context.workDir.deleteDir()
 
-                        def dockerRegistryHost = context.platform.getJsonPathValue("edpcomponent", "docker-registry", ".spec.url")
-                        if (!dockerRegistryHost) {
-                            script.error("[JENKINS][ERROR] Couldn't get docker registry server")
-                        }
-
-                        new CodebaseImageStreams(context, script)
-                                .UpdateOrCreateCodebaseImageStream(codebase.outputIs, "${dockerRegistryHost}/${codebase.outputIs}", codebaseTag)
-
-                        script.println("[JENKINS][INFO] Image ${codebase.inputIs}:${codebaseTag} has been promoted to ${codebase.outputIs}")
-                    }
+                script.dir("${context.workDir}") {
+                    new CodebaseImageStreams(context, script)
+                            .UpdateOrCreateCodebaseImageStream(codebase.outputIs, "${dockerRegistryHost}/${context.job.ciProject}/${codebase.outputIs}", codebaseTag)
                 }
+
+                script.println("[JENKINS][INFO] Image ${codebase.inputIs}:${codebaseTag} has been promoted to ${codebase.outputIs}")
             }
         }
     }
 }
-
