@@ -24,9 +24,12 @@ class LintDockerApplicationLibrary {
 
     void run(context) {
         def test_dir = "${RandomStringUtils.random(10, true, true)}"
+        def filesToStash =  "Dockerfile,.hadolint.yml,.hadolint.yaml"
+
         script.dir("${context.workDir}") {
-            script.stash name: 'dockerfile-data', includes: "Dockerfile", useDefaultExcludes: false
+            script.stash name: 'dockerfile-data', includes: "${filesToStash}", useDefaultExcludes: false
         }
+
         script.node("edp-helm") {
             script.dir("${test_dir}") {
                 script.unstash 'dockerfile-data'
