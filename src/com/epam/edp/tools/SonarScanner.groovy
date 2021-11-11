@@ -71,13 +71,17 @@ class SonarScanner {
     }
 
     def getStatus(ceTaskUrl) {
-        def response = script.httpRequest acceptType: 'APPLICATION_JSON',
-                url: ceTaskUrl,
-                httpMode: 'GET',
-                quiet: true
+        script.withSonarQubeEnv('Sonar') {
+            def sonarAuthHeader="${script.env.SONAR_AUTH_TOKEN}:".bytes.encodeBase64().toString()
+            def response = script.httpRequest acceptType: 'APPLICATION_JSON',
+                    url: ceTaskUrl,
+                    httpMode: 'GET',
+                    customHeaders: [[name: 'Authorization', value: "Basic ${sonarAuthHeader}"]],
+                    quiet: true
 
-        def content = script.readJSON text: response.content
-        return content.task.status
+            def content = script.readJSON text: response.content
+            return content.task.status
+        }
     }
 
     def getSonarReportInJson(workDir, url, path) {
@@ -105,12 +109,12 @@ class SonarScanner {
 
     def cleanSonarProjectRange(patchsetNumber, sonarRoute, sonarProjectKey, sonarAuthHeader) {
         for (int i = 1; i <= (patchsetNumber as Integer) ; i++) {
-            def response = script.httpRequest url: "${sonarRoute}/api/components/show?key=${sonarProjectKey}-${i}",
+            def response = script.httpRequest url: "${sonarRoute}/api/components/show?component=${sonarProjectKey}-${i}",
                     httpMode: 'GET',
                     customHeaders: [[name: 'Authorization', value: "Basic ${sonarAuthHeader}"]],
                     validResponseCodes: '100:399,404'
             if (response.status == 200) {
-                script.httpRequest url: "${sonarRoute}/api/projects/delete?key=${sonarProjectKey}-${i}",
+                script.httpRequest url: "${sonarRoute}/api/projects/delete?project=${sonarProjectKey}-${i}",
                         httpMode: 'POST',
                         customHeaders: [[name: 'Authorization', value: "Basic ${sonarAuthHeader}"]]
                 script.println("[JENKINS][DEBUG] Project ${sonarProjectKey}-${i} deleted")
