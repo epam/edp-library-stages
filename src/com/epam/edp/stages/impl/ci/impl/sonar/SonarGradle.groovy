@@ -69,9 +69,6 @@ class SonarGradle {
             sonarScanner.waitForSonarAnalysis(ceTaskUrl)
 
             def url = "${context.sonar.route}/api/issues/search?componentKeys=${context.codebase.name}:change-${context.git.changeNumber}-${context.git.patchsetNumber}&branch=${context.git.branch}&resolved=false&facets=severities"
-            sonarScanner.getSonarReportInJson(workDir, url, path)
-
-            sonarScanner.sendStatusToGerrit(workDir, context.sonar.route, path)
 
             sonarScanner.waitForQualityGate()
             return

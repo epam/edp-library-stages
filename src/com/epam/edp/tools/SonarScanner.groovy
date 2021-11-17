@@ -84,29 +84,6 @@ class SonarScanner {
         }
     }
 
-    def getSonarReportInJson(workDir, url, path) {
-        def sonarAuthHeader;
-        script.dir("${workDir}") {
-            script.withSonarQubeEnv('Sonar') {
-                sonarAuthHeader="${script.env.SONAR_AUTH_TOKEN}:".bytes.encodeBase64().toString()
-            }
-        }
-        script.httpRequest acceptType: 'APPLICATION_JSON',
-                url: url,
-                httpMode: 'GET',
-                customHeaders: [[name: 'Authorization', value: "Basic ${sonarAuthHeader}"]],
-                outputFile: "${workDir}/${path}/sonar-report.json"
-    }
-
-    def sendStatusToGerrit(workDir, sonarURL, path) {
-        script.dir("${workDir}") {
-            script.sonarToGerrit inspectionConfig: [baseConfig: [projectPath: "${workDir}", sonarReportPath: "${path}/sonar-report.json"], serverURL: "${sonarURL}"],
-                    notificationConfig: [commentedIssuesNotificationRecipient: 'NONE', negativeScoreNotificationRecipient: 'NONE'],
-                    reviewConfig: [issueFilterConfig: [newIssuesOnly: false, changedLinesOnly: false, severity: 'CRITICAL']],
-                    scoreConfig: [category: 'Sonar-Verified', noIssuesScore: +1, issuesScore: -1, issueFilterConfig: [severity: 'CRITICAL']]
-        }
-    }
-
     def cleanSonarProjectRange(patchsetNumber, sonarRoute, sonarProjectKey, sonarAuthHeader) {
         for (int i = 1; i <= (patchsetNumber as Integer) ; i++) {
             def response = script.httpRequest url: "${sonarRoute}/api/components/show?component=${sonarProjectKey}-${i}",
