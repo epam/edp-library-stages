@@ -36,8 +36,7 @@ class GitTagApplicationLibrary {
                 ssh-keyscan -p ${context.git.sshPort} ${context.git.host} >> ~/.ssh/known_hosts
                 git config --global user.email ${context.git.autouser}@epam.com
                 git config --global user.name ${context.git.autouser}
-                git tag -a ${context.codebase.vcsTag} -m 'Tag is added automatically by \
-                     ${context.git.autouser} user'
+                git tag -a ${context.codebase.vcsTag} -m 'Tag is added automatically by ${context.git.autouser} user'
                 git push --tags"""
             }
             def resultImageName = "${context.codebase.name}-${context.git.branch.replaceAll("[^\\p{L}\\p{Nd}]+", "-")}"
