@@ -23,23 +23,18 @@ class CreateBranch {
 
     void run(context) {
         script.dir("${context.workDir}") {
-            script.withCredentials([script.sshUserPrivateKey(credentialsId: "${context.git.credentialsId}",
-                    keyFileVariable: 'key', passphraseVariable: '', usernameVariable: 'git_user')]) {
+            script.sshagent (credentials: ["${context.git.credentialsId}"]) {
                 try {
-
                     script.sh """
-                        eval `ssh-agent`
-                        ssh-add ${script.key}
-                        mkdir -p ~/.ssh
-                        ssh-keyscan -p ${context.git.sshPort} ${context.git.host} >> ~/.ssh/known_hosts
-                        git config --global user.email ${context.git.autouser}@epam.com
+                        export GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no"
+                        export GIT_SSH_VARIANT=ssh
+                        git config --global user.email ${context.git.autouser}@edp.ci-user
                         git config --global user.name ${context.git.autouser}
                         if [[ -z `git ls-remote --heads origin ${context.job.releaseName}` ]]; then
                             git branch ${context.job.releaseName} ${context.job.releaseFromCommitId}
                             git push --all
                         fi
                     """
-
                 }
                 catch (Exception ex) {
                     script.error "[JENKINS][ERROR] Create branch has failed with exception - ${ex}"

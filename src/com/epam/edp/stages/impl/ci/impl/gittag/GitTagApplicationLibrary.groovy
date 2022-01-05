@@ -27,14 +27,11 @@ class GitTagApplicationLibrary {
 
     void run(context) {
         script.dir("${context.workDir}") {
-            script.withCredentials([script.sshUserPrivateKey(credentialsId: "${context.git.credentialsId}",
-                    keyFileVariable: 'key', passphraseVariable: '', usernameVariable: 'git_user')]) {
+            script.sshagent (credentials: ["${context.git.credentialsId}"]) {
                 script.sh """
-                eval `ssh-agent`
-                ssh-add ${script.key}
-                mkdir -p ~/.ssh
-                ssh-keyscan -p ${context.git.sshPort} ${context.git.host} >> ~/.ssh/known_hosts
-                git config --global user.email ${context.git.autouser}@epam.com
+                export GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no"
+                export GIT_SSH_VARIANT=ssh
+                git config --global user.email ${context.git.autouser}@edp.ci-user
                 git config --global user.name ${context.git.autouser}
                 git tag -a ${context.codebase.vcsTag} -m 'Tag is added automatically by ${context.git.autouser} user'
                 git push --tags"""
