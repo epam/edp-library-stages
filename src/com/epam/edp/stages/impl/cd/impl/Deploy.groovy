@@ -1,4 +1,4 @@
-/* Copyright 2021 EPAM Systems.
+/* Copyright 2022 EPAM Systems.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -169,9 +169,6 @@ class Deploy {
             return
         }
 
-        if (codebase.need_database)
-            context.platform.addSccToUser(codebase.name, "anyuid", context.job.deployProject)
-
         codebase.cdPipelineName = context.job.pipelineName
         codebase.cdPipelineStageName = context.job.stageName
 
@@ -217,9 +214,6 @@ class Deploy {
 
     def deployCodebaseTemplate(context, codebase, deployTemplatesPath) {
         def templateName = "${codebase.name}-install-${context.job.stageWithoutPrefixName}"
-
-        if (codebase.need_database)
-            script.sh("oc adm policy add-scc-to-user anyuid -z ${codebase.name} -n ${context.job.deployProject}")
 
         if (!checkTemplateExists(templateName, deployTemplatesPath)) {
             script.println("[JENKSIN][INFO] Trying to find out default template ${codebase.name}.yaml")
@@ -298,7 +292,6 @@ class Deploy {
     }
 
     void run(context) {
-        context.platform.createProjectIfNotExist(context.job.deployProject, context.job.edpName)
 
         context.platform.copySharedSecrets(context.job.sharedSecretsMask, context.job.deployProject)
 
