@@ -1,4 +1,4 @@
-/* Copyright 2021 EPAM Systems.
+/* Copyright 2022 EPAM Systems.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ class SonarCleanup {
         SonarScanner sonarScanner = new SonarScanner(script);
         script.withSonarQubeEnv('Sonar') {
             def sonarAuthHeader="${script.env.SONAR_AUTH_TOKEN}:".bytes.encodeBase64().toString()
-            def sonarProjectKey = "${context.codebase.name}:change-${context.git.changeNumber}"
+            def sonarProjectKey = "${context.codebase.name}-${context.git.branch}:change-${context.git.changeNumber}"
             if (context.git.patchsetNumber != "0" && context.git.changeNumber != "0") {
                 sonarScanner.cleanSonarProjectRange(context.git.patchsetNumber, context.sonar.route, sonarProjectKey, sonarAuthHeader)
             }

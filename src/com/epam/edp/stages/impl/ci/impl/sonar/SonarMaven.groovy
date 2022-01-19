@@ -1,4 +1,4 @@
-/* Copyright 2021 EPAM Systems.
+/* Copyright 2022 EPAM Systems.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -67,10 +67,10 @@ class SonarMaven {
         def codebaseName;
         def workDir;
         if (context.job.type == "codereview" && context.codebase.config.strategy != "import") {
-            codebaseName = "${context.codebase.name}:change-${context.git.changeNumber}-${context.git.patchsetNumber}";
+            codebaseName = "${context.codebase.name}-${context.git.branch}:change-${context.git.changeNumber}-${context.git.patchsetNumber}";
             workDir = codereviewAnalysisRunDir;
         } else {
-            codebaseName = context.codebase.name;
+            codebaseName = "${context.codebase.name}-${context.git.branch}";
             workDir = context.workDir;
         }
         def scriptText = """ ${buildTool.command} ${buildTool.properties} -Dartifactory.username=LOGIN_REPLACE -Dartifactory.password=PASSWORD_REPLACE \
@@ -85,8 +85,6 @@ class SonarMaven {
             def report = script.readProperties file: "${workDir}/${path}/report-task.txt"
             def ceTaskUrl = report.ceTaskUrl
             sonarScanner.waitForSonarAnalysis(ceTaskUrl)
-
-            def url = "${context.sonar.route}/api/issues/search?componentKeys=${context.codebase.name}:change-${context.git.changeNumber}-${context.git.patchsetNumber}&branch=${context.git.branch}&resolved=false&facets=severities"
 
             sonarScanner.waitForQualityGate()
             return
