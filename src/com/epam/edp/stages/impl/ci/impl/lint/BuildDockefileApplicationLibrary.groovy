@@ -81,7 +81,7 @@ class BuildDockefileApplicationLibrary {
         def resultImageName = "${context.codebase.name}-${context.git.branch.replaceAll("[^\\p{L}\\p{Nd}]+", "-")}"
         def buildconfigName = "lint-${resultImageName}-${script.BUILD_NUMBER}"
         if (checkBuildPodExist(buildconfigName, context.job.ciProject)) {
-            script.println("[JENKINS][DEBUG] Pod with name ${buildconfigName} already exist. It will be removed.")
+            script.println("[JENKINS][DEBUG] Pod with the name ${buildconfigName} already exists. It will be removed.")
             context.platform.deleteObject("pod", buildconfigName, true)
         }
         script.dir("${context.workDir}") {
@@ -94,7 +94,7 @@ class BuildDockefileApplicationLibrary {
                         "${context.job.ciProject}/${context.codebase.name}", dockerRegistryHost, context)
                 context.platform.apply(kanikoTemplateFilePath.getRemote())
                 while (!context.platform.getObjectStatus("pod", buildconfigName)["initContainerStatuses"][0].state.keySet().contains("running")) {
-                    script.println("[JENKINS][DEBUG] Waiting for init container in Kaniko is started")
+                    script.println("[JENKINS][DEBUG] Waiting for the Kaniko init container to be started")
                     script.sleep(5)
                 }
 

@@ -84,7 +84,7 @@ class JiraIssueMetadata {
             def tickets = info.getCommitMessage().findAll(ticketNamePattern)
             def id = info.getCommitId()
             if (!tickets) {
-                script.println("[JENKINS][DEBUG] No found tickets in ${id} commit")
+                script.println("[JENKINS][DEBUG] No tickets found in ${id} commit")
                 continue
             }
             addCommitId(template, id)

@@ -24,7 +24,7 @@ class Deploy {
 
     def checkOpenshiftTemplateExists(context, templateName) {
         if (!script.openshift.selector("template", templateName).exists()) {
-            script.println("[JENKINS][WARNING] Template which called ${templateName} doesn't exist in ${context.job.ciProject} namespace")
+            script.println("[JENKINS][WARNING] Template with the name ${templateName} doesn't exist in ${context.job.ciProject} namespace")
             return false
         }
         return true
@@ -60,7 +60,7 @@ class Deploy {
             script.println("[JENKINS][DEBUG] Workload ${codebaseName} in project ${context.job.deployProject} has been rolled out")
         }
         catch (Exception verifyDeploymentException) {
-            script.println("[JENKINS][WARNING] Rolling out of ${codebaseName} has been failed.")
+            script.println("[JENKINS][WARNING] Rolling out of ${codebaseName} has failed.")
             if (type == "application") {
                 context.platform.rollbackDeployedCodebase(codebaseName, context.job.deployProject, codebaseKind)
                 context.platform.verifyDeployedCodebase(codebaseName, context.job.deployProject, codebaseKind)
@@ -243,7 +243,7 @@ class Deploy {
     def checkTemplateExists(templateName, deployTemplatesPath) {
         def templateYamlFile = new File("${deployTemplatesPath}/${templateName}.yaml")
         if (!templateYamlFile.exists()) {
-            script.println("[JENKINS][WARNING] Template file which called ${templateName}.yaml doesn't exist in ${deployTemplatesPath} in the repository")
+            script.println("[JENKINS][WARNING] Template file with the name ${templateName}.yaml doesn't exist in ${deployTemplatesPath} in the repository")
             return false
         }
         return true
@@ -254,7 +254,7 @@ class Deploy {
             return context.platform.getJsonPathValue("edpcomponents", "docker-registry", ".spec.url")
         }
         catch (Exception ex) {
-            script.println("[JENKINS][WARNING] Getting docker registry info failed.Reason:\r\n ${ex}")
+            script.println("[JENKINS][WARNING] Getting docker registry info failed. Reason:\r\n ${ex}")
             return null
         }
     }
@@ -280,7 +280,7 @@ class Deploy {
                 }
             }
             catch (Exception ex) {
-                script.unstable("[JENKINS][WARNING] Deployment of codebase ${name} has been failed. Reason - ${ex}.")
+                script.unstable("[JENKINS][WARNING] Deployment of codebase ${name} has failed. Reason - ${ex}.")
                 script.currentBuild.setResult('UNSTABLE')
                 if (codebase.name in context.job.applicationsToPromote)
                     context.job.applicationsToPromote.remove(codebase.name)

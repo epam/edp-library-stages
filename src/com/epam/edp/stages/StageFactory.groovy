@@ -107,7 +107,7 @@ class StageFactory {
             stageClass = stages.find { it.key == cdKey(name) }?.value
 
         if (!stageClass) {
-            script.error("[JENKINS][ERROR] There are no implementation for stage: ${name} " +
+            script.error("[JENKINS][ERROR] There is no implementation for the stage: ${name} " +
                     "build tool: ${buildTool}, type: ${type}")
         }
         stageClass.newInstance(script: script)

@@ -48,7 +48,7 @@ class TestsMavenAutotest {
             }
 
             catch (Exception ex) {
-                script.error "[JENKINS][ERROR] Tests have been failed with error - ${ex}"
+                script.error "[JENKINS][ERROR] Tests have failed with error - ${ex}"
             }
             finally {
                 switch (context.codebase.config.testReportFramework.toLowerCase()) {

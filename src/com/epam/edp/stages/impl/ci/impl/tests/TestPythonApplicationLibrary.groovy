@@ -38,7 +38,7 @@ class TestPythonApplicationLibrary {
                 script.sh "python setup.py pytest"
             }
             catch (Exception ex) {
-                script.error("[JENKINS][DEBUG] Test stage hasn't been passed")
+                script.error("[JENKINS][DEBUG] Test stage hasn't passed")
             }
             finally {
                 script.allure([

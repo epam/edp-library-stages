@@ -69,7 +69,7 @@ class CodebaseImageStreams {
     def getCbisTemplate() {
         def template = this.context.platform.getJsonPathValue("cm", "cbis-template", ".data.cbis\\.json")
         if (template == null) {
-            script.error("[JENKINS][ERROR] There're no cbis-template in cluster")
+            script.error("[JENKINS][ERROR] There is no cbis-template in cluster")
         }
         return template
     }

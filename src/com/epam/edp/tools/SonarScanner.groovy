@@ -46,7 +46,7 @@ class SonarScanner {
         script.timeout(time: 10, unit: 'MINUTES') {
             def qualityGateResult = script.waitForQualityGate()
             if (qualityGateResult.status != 'OK')
-                script.error "[JENKINS][ERROR] Sonar quality gate check has been failed with status " +
+                script.error "[JENKINS][ERROR] Sonar quality gate check has failed with status " +
                         "${qualityGateResult.status}"
         }
     }

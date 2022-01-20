@@ -51,7 +51,7 @@ class AutomationTests {
             try {
                 runner.execute()
             } catch (Exception ex) {
-                script.error "[JENKINS][ERROR] Autotests from ${qualityGate.autotest.name} have been failed. Reason - ${ex}"
+                script.error "[JENKINS][ERROR] Autotests from ${qualityGate.autotest.name} have failed. Reason - ${ex}"
             } finally {
                 new ReportTool().getReportFramework(script, qualityGate.autotest.testReportFramework, workspace).generateReport()
             }
