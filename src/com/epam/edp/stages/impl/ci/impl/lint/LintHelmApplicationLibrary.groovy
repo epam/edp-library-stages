@@ -1,4 +1,4 @@
-/* Copyright 2021 EPAM Systems.
+/* Copyright 2022 EPAM Systems.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -24,8 +24,9 @@ class LintHelmApplicationLibrary {
 
     void run(context) {
         def test_dir = "${RandomStringUtils.random(10, true, true)}"
+        def filesToStash =  "deploy-templates/**,ct.yaml"
         script.dir("${context.workDir}") {
-            script.stash name: 'deploy-templates-data', includes: "deploy-templates/**", useDefaultExcludes: false
+            script.stash name: 'deploy-templates-data', includes: "${filesToStash}", useDefaultExcludes: false
         }
         script.node("edp-helm") {
             script.dir("${test_dir}") {
