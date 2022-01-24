@@ -1,6 +1,29 @@
 <a name="unreleased"></a>
 ## [Unreleased]
 
+### Routine
+
+- Update changelog [EPMDEDP-8227](https://jiraeu.epam.com/browse/EPMDEDP-8227)
+- Update release template [EPMDEDP-8227](https://jiraeu.epam.com/browse/EPMDEDP-8227)
+- Update release flow [EPMDEDP-8227](https://jiraeu.epam.com/browse/EPMDEDP-8227)
+
+
+<a name="v2.12.0"></a>
+## [v2.12.0] - 2022-01-21
+### Features
+
+- Use ct.yaml config on helm-lint stage [EPMDEDP-8227](https://jiraeu.epam.com/browse/EPMDEDP-8227)
+
+### Code Refactoring
+
+- Refactor ecr-to-docker CI stage [EPMDEDP-7974](https://jiraeu.epam.com/browse/EPMDEDP-7974)
+- Use SSH Agent Jenkins Plugin instead of eval ssh-agent [EPMDEDP-8026](https://jiraeu.epam.com/browse/EPMDEDP-8026)
+
+### Routine
+
+- Update release CI pipelines [EPMDEDP-7847](https://jiraeu.epam.com/browse/EPMDEDP-7847)
+- Add release temaplate for GitHub [EPMDEDP-8227](https://jiraeu.epam.com/browse/EPMDEDP-8227)
+
 
 <a name="v2.11.0"></a>
 ## [v2.11.0] - 2021-12-07
@@ -53,7 +76,8 @@
 - [EPMDEDP-5352]: Apply crds to cluster during deploy
 
 
-[Unreleased]: https://github.com/epam/edp-library-stages/compare/v2.11.0...HEAD
+[Unreleased]: https://github.com/epam/edp-library-stages/compare/v2.12.0...HEAD
+[v2.12.0]: https://github.com/epam/edp-library-stages/compare/v2.11.0...v2.12.0
 [v2.11.0]: https://github.com/epam/edp-library-stages/compare/v2.10.0...v2.11.0
 [v2.10.0]: https://github.com/epam/edp-library-stages/compare/v2.9.1...v2.10.0
 [v2.9.1]: https://github.com/epam/edp-library-stages/compare/v2.9.0...v2.9.1
