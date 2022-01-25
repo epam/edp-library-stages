@@ -39,16 +39,6 @@ class EcrToDocker {
         return response.status
     }
 
-    def getAwsRegion(){
-        def awsRegion = script.sh(
-                            script:
-                                "curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone | " +
-                                "sed \'s/\\(.*\\)[a-z]/\\1/\'",
-                            returnStdout: true
-                        ).trim()
-        println("[INFO] Current AWS region is ${awsRegion}")
-        return awsRegion
-    }
     void run(context) {
         def ecr = context.platform.getJsonPathValue("edpcomponent", "docker-registry", ".spec.url")
         def ecrRepo = context.platform.getJsonPathValue("edpcomponent", "docker-registry", ".metadata.namespace")
@@ -58,7 +48,7 @@ class EcrToDocker {
             script.dir("${context.workDir}") {
                 script.openshift.withCluster() {
                     script.openshift.withProject() {
-                        def awsRegion = getAwsRegion()
+                        def awsRegion = script.openshift.selector("cm", "edp-config").object().data.aws_region
                         def secretName = "dockerhub-credentials"
                         def secretExist = script.openshift.selector("secrets", secretName).exists()
 

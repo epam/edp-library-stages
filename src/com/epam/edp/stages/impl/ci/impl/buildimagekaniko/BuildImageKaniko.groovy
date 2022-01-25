@@ -33,29 +33,19 @@ class BuildImageKaniko {
     def setKanikoTemplate(outputFilePath, buildPodName, resultImageName, dockerRegistryHost, context) {
         def kanikoTemplateFilePath = new FilePath(Jenkins.getInstance().getComputer(script.env['NODE_NAME']).getChannel(), outputFilePath)
         def kanikoTemplateData = context.platform.getJsonPathValue("cm", "kaniko-template", ".data.kaniko\\.json")
+        def awsRegion = context.platform.getJsonPathValue("cm", "edp-config", ".data.aws_region")
         def parsedKanikoTemplateData = new JsonSlurperClassic().parseText(kanikoTemplateData)
         parsedKanikoTemplateData.metadata.name = buildPodName
 
         def awsCliInitContainer = parsedKanikoTemplateData.spec.initContainers.find { it.name == "init-repository" }
         if (awsCliInitContainer) {
             setEnvVariable(awsCliInitContainer.env, "REPO_NAME", resultImageName, true)
-            setEnvVariable(awsCliInitContainer.env, "AWS_DEFAULT_REGION", getAwsRegion())
+            setEnvVariable(awsCliInitContainer.env, "AWS_DEFAULT_REGION", awsRegion)
         }
         parsedKanikoTemplateData.spec.containers[0].args[0] = "--destination=${dockerRegistryHost}/${resultImageName}:${context.codebase.isTag.replaceAll("/", "-")}"
         def jsonData = JsonOutput.toJson(parsedKanikoTemplateData)
         kanikoTemplateFilePath.write(jsonData, null)
         return kanikoTemplateFilePath
-    }
-
-    def getAwsRegion() {
-        try {
-            def response = script.httpRequest timeout: 10, url: 'http://169.254.169.254/latest/dynamic/instance-identity/document'
-            def parsedMetadata = new JsonSlurperClassic().parseText(response.content)
-            return parsedMetadata.region
-        }
-        catch (Exception ex) {
-            return null
-        }
     }
 
     def checkBuildPodExist(podName, namespace) {
