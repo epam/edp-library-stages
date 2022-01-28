@@ -22,14 +22,6 @@ import groovy.json.JsonSlurperClassic
 class Deploy {
     Script script
 
-    def checkOpenshiftTemplateExists(context, templateName) {
-        if (!script.openshift.selector("template", templateName).exists()) {
-            script.println("[JENKINS][WARNING] Template with the name ${templateName} doesn't exist in ${context.job.ciProject} namespace")
-            return false
-        }
-        return true
-    }
-
     def getBuildUserFromLog(context) {
         def jenkinsCred = "admin:${context.jenkins.token}".bytes.encodeBase64().toString()
         def jobUrl = "${context.job.buildUrl}".replaceFirst("${context.job.jenkinsUrl}", '')
@@ -40,50 +32,6 @@ class Deploy {
                 script: "#!/bin/sh -e\necho \"${response.content}\" | grep \"Approved by\" -m 1 | awk {'print \$3'}",
                 returnStdout: true
         ).trim()
-    }
-
-    def deployConfigMaps(codebaseDir, name, context) {
-        File folder = new File("${codebaseDir}/config-files")
-        for (file in folder.listFiles()) {
-            if (file.isFile() && file.getName() == "Readme.md")
-                continue
-            String configsDir = file.getName().split("\\.")[0].replaceAll("[^\\p{L}\\p{Nd}]+", "-").toLowerCase()
-            context.platform.createConfigMapFromFile("${name}-${configsDir}", context.job.deployProject, "${codebaseDir}/config-files/${file.getName()}")
-            script.println("[JENKINS][DEBUG] Configmap ${configsDir} has been created")
-        }
-    }
-
-    def checkDeployment(context, codebaseName, type, codebaseKind = null) {
-        script.println("[JENKINS][DEBUG] Validate deployment - ${codebaseName} in ${context.job.deployProject}")
-        try {
-            context.platform.verifyDeployedCodebase(codebaseName, context.job.deployProject, codebaseKind)
-            script.println("[JENKINS][DEBUG] Workload ${codebaseName} in project ${context.job.deployProject} has been rolled out")
-        }
-        catch (Exception verifyDeploymentException) {
-            script.println("[JENKINS][WARNING] Rolling out of ${codebaseName} has failed.")
-            if (type == "application") {
-                context.platform.rollbackDeployedCodebase(codebaseName, context.job.deployProject, codebaseKind)
-                context.platform.verifyDeployedCodebase(codebaseName, context.job.deployProject, codebaseKind)
-            }
-            throw (verifyDeploymentException)
-        }
-    }
-
-    def checkImageExists(context, object) {
-        def imageExists = context.platform.getImageStream(object.inputIs, context.job.crApiVersion)
-        if (imageExists == "") {
-            script.println("[JENKINS][WARNING] Image stream ${object.name} doesn't exist in the project ${context.job.ciProject}\r\n" +
-                    "[JENKINS][WARNING] Deploy will be skipped")
-            return false
-        }
-
-        def tagExist = context.platform.getImageStreamTags(object.inputIs, context.job.crApiVersion)
-        if (!tagExist) {
-            script.println("[JENKINS][WARNING] Image stream ${object.name} with tag ${object.version} doesn't exist in the project ${context.job.ciProject}\r\n" +
-                    "[JENKINS][WARNING] Deploy will be skipped")
-            return false
-        }
-        return true
     }
 
     def getRepositoryPath(codebase) {
@@ -133,7 +81,7 @@ class Deploy {
         catch (Exception ex) {
             script.unstable("[JENKINS][WARNING] Project ${codebase.name} cloning has failed with ${ex}\r\n" +
                     "[JENKINS][WARNING] Deploy will be skipped\r\n" +
-                    "[JENKINS][WARNING] Check if tag ${codebase.version} exists in repository")
+                    "[JENKINS][WARNING] Check if tag ${refspec} exists in repository")
             script.currentBuild.setResult('UNSTABLE')
             script.currentBuild.description = "${script.currentBuild.description}\r\n${codebase.name} deploy failed"
             return false
@@ -142,35 +90,10 @@ class Deploy {
         return true
     }
 
-    def getDeploymentWorkloadsList(deploymentTemplate, isSvc = false) {
-        def deploymentWorkloadsList = []
-        ["Deployment", "DeploymentConfig"].each() { kind ->
-            def workloads = script.sh(
-                    script: "oc process ${isSvc ? "" : "-f"} ${deploymentTemplate} " +
-                            "${isSvc ? "" : "-p IMAGE_NAME=fake "}" +
-                            "${isSvc ? "" : "-p NAMESPACE=fake "}" +
-                            "${isSvc ? "-p SERVICE_VERSION=fake " : "-p APP_VERSION=fake "}" +
-                            "-o jsonpath='{range .items[?(@.kind==\"${kind}\")]}{.kind}{\"/\"}{.metadata.name}{\"\\n\"}{end}'",
-                    returnStdout: true
-            ).trim().tokenize("\n")
-            workloads.each() {
-                def workloadMap = [:]
-                workloadMap["kind"] = it.split("/")[0]
-                workloadMap["name"] = it.split("/")[1]
-                deploymentWorkloadsList.add(workloadMap)
-            }
-        }
-        return deploymentWorkloadsList
-    }
-
     def deployCodebaseHelmTemplate(context, codebase, deployTemplatesPath) {
-        def templateName = "Chart"
-        if (!checkTemplateExists(templateName, deployTemplatesPath)) {
+        if (!checkTemplateExists(deployTemplatesPath)) {
             return
         }
-
-        codebase.cdPipelineName = context.job.pipelineName
-        codebase.cdPipelineStageName = context.job.stageName
 
         def fullImageName = context.platform.createFullImageName(context.environment.config.dockerRegistryHost,
                 context.job.ciProject, codebase.name)
@@ -212,29 +135,9 @@ class Deploy {
         script.println("[JENKINS][DEBUG] Annotation has been added to this job description")
     }
 
-    def deployCodebaseTemplate(context, codebase, deployTemplatesPath) {
-        def templateName = "${codebase.name}-install-${context.job.stageWithoutPrefixName}"
+    def checkTemplateExists(deployTemplatesPath) {
 
-        if (!checkTemplateExists(templateName, deployTemplatesPath)) {
-            script.println("[JENKSIN][INFO] Trying to find out default template ${codebase.name}.yaml")
-            templateName = codebase.name
-            if (!checkTemplateExists(templateName, deployTemplatesPath))
-                return
-        }
-
-        def deploymentWorkloadsList = getDeploymentWorkloadsList("${deployTemplatesPath}/${templateName}.yaml", false)
-        context.platform.deployCodebase(
-                context.job.deployProject,
-                "${deployTemplatesPath}/${templateName}.yaml",
-                codebase,
-                "${context.job.ciProject}/${codebase.name}"
-        )
-        deploymentWorkloadsList.each() { workload ->
-            checkDeployment(context, workload.name, 'application', workload.kind)
-        }
-    }
-
-    def checkTemplateExists(templateName, deployTemplatesPath) {
+        def templateName = "Chart"
         def templateYamlFile = new File("${deployTemplatesPath}/${templateName}.yaml")
         if (!templateYamlFile.exists()) {
             script.println("[JENKINS][WARNING] Template file with the name ${templateName}.yaml doesn't exist in ${deployTemplatesPath} in the repository")
@@ -262,17 +165,10 @@ class Deploy {
                     context.job.applicationsToPromote.remove(codebase.name)
                 return
             }
-            deployConfigMaps(codebaseDir, name, context)
             try {
-                switch (codebase.deploymentScript) {
-                    case "openshift-template":
-                        deployCodebaseTemplate(context, codebase, deployTemplatesPath)
-                        break
-                    case "helm-chart":
-                        deployCodebaseHelmTemplate(context, codebase, deployTemplatesPath)
-                        break
+                deployCodebaseHelmTemplate(context, codebase, deployTemplatesPath)
                 }
-            }
+
             catch (Exception ex) {
                 script.unstable("[JENKINS][WARNING] Deployment of codebase ${name} has failed. Reason - ${ex}.")
                 script.currentBuild.setResult('UNSTABLE')
@@ -329,9 +225,6 @@ class Deploy {
                     if (!codebase.version)
                         return
                 }
-
-                if (!checkImageExists(context, codebase))
-                    return
 
                 context.platform.addSccToUser(codebase.name, 'anyuid', context.job.deployProject)
                 context.platform.createRoleBinding("system:serviceaccount:${context.job.deployProject}", "view", context.job.deployProject)
