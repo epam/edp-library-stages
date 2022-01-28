@@ -293,8 +293,6 @@ class Deploy {
 
     void run(context) {
 
-        context.platform.copySharedSecrets(context.job.sharedSecretsMask, context.job.deployProject)
-
         if (context.job.buildUser == null || context.job.buildUser == "")
             context.job.buildUser = getBuildUserFromLog(context)
 
