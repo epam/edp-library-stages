@@ -276,9 +276,16 @@ class Deploy {
             catch (Exception ex) {
                 script.unstable("[JENKINS][WARNING] Deployment of codebase ${name} has failed. Reason - ${ex}.")
                 script.currentBuild.setResult('UNSTABLE')
-                if (codebase.name in context.job.applicationsToPromote)
+                if (codebase.name in context.job.applicationsToPromote) {
                     context.job.applicationsToPromote.remove(codebase.name)
+                }
+                script.dir("${codebaseDir}") {
+                    deleteDir()
+                }
             }
+        }
+        script.dir("${codebaseDir}") {
+            deleteDir()
         }
     }
 
