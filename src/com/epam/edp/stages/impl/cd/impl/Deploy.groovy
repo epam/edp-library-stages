@@ -279,13 +279,11 @@ class Deploy {
                 if (codebase.name in context.job.applicationsToPromote) {
                     context.job.applicationsToPromote.remove(codebase.name)
                 }
-                script.dir("${codebaseDir}") {
-                    deleteDir()
-                }
+                script.deleteDir()
             }
         }
         script.dir("${codebaseDir}") {
-            deleteDir()
+            script.deleteDir()
         }
     }
 
