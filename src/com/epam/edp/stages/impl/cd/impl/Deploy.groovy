@@ -91,15 +91,12 @@ class Deploy {
     }
 
     def deployCodebaseHelmTemplate(context, codebase, deployTemplatesPath) {
-        if (!checkTemplateExists(deployTemplatesPath)) {
-            return
-        }
 
         def fullImageName = context.platform.createFullImageName(context.environment.config.dockerRegistryHost,
                 context.job.ciProject, codebase.name)
         def parametersMap = [
                 ['name': 'image.repository', 'value': fullImageName],
-                ['name': 'image.tag', 'value': "${codebase.version.replaceAll("/", "-")}"],
+                ['name': 'image.tag', 'value': "${codebase.version}"],
         ]
 
         context.platform.deployCodebaseHelm(
@@ -133,17 +130,6 @@ class Deploy {
             summary.appendText("<li>${version}</li>", false)
         }
         script.println("[JENKINS][DEBUG] Annotation has been added to this job description")
-    }
-
-    def checkTemplateExists(deployTemplatesPath) {
-
-        def templateName = "Chart"
-        def templateYamlFile = new File("${deployTemplatesPath}/${templateName}.yaml")
-        if (!templateYamlFile.exists()) {
-            script.println("[JENKINS][WARNING] Template file with the name ${templateName}.yaml doesn't exist in ${deployTemplatesPath} in the repository")
-            return false
-        }
-        return true
     }
 
     def getDockerRegistryInfo(context) {
