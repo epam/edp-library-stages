@@ -96,7 +96,7 @@ class Deploy {
                 context.job.ciProject, codebase.name)
         def parametersMap = [
                 ['name': 'image.repository', 'value': fullImageName],
-                ['name': 'image.tag', 'value': "${codebase.version}"],
+                ['name': 'image.tag', 'value': "${codebase.version.replaceAll("/", "-")}"],
         ]
 
         context.platform.deployCodebaseHelm(
