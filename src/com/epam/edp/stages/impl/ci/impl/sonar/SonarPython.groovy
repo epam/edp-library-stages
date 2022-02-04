@@ -47,10 +47,10 @@ class SonarPython {
         def codebaseName;
         def workDir;
         if (context.job.type == "codereview" && context.codebase.config.strategy != "import") {
-            codebaseName = "${context.codebase.name}-${context.git.branch}:change-${context.git.changeNumber}-${context.git.patchsetNumber}";
+            codebaseName = "${context.codebase.name}-${context.git.normalizedBranch}:change-${context.git.changeNumber}-${context.git.patchsetNumber}";
             workDir = codereviewAnalysisRunDir;
         } else {
-            codebaseName = "${context.codebase.name}-${context.git.branch}";
+            codebaseName = "${context.codebase.name}-${context.git.normalizedBranch}";
             workDir = context.workDir;
         }
         def scriptText = """ ${scannerHome}/bin/sonar-scanner \
