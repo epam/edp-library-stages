@@ -68,9 +68,9 @@ class Deploy {
         script.println("[JENKINS][DEBUG] Repository path: ${repoPath}")
 
         def gitCodebaseUrl = "ssh://${autouser}@${host}:${sshPort}${repoPath}"
+        def refspec = getRefspec(codebase)
 
         try {
-            def refspec = getRefspec(codebase)
             script.checkout([$class                           : 'GitSCM', branches: [[name: "${refspec}"]],
                              doGenerateSubmoduleConfigurations: false, extensions: [],
                              submoduleCfg                     : [],
