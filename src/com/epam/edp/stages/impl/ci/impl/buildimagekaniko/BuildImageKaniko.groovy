@@ -1,4 +1,4 @@
-/* Copyright 2021 EPAM Systems.
+/* Copyright 2022 EPAM Systems.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import groovy.json.JsonOutput
 import groovy.json.JsonSlurperClassic
 import hudson.FilePath
 
-@Stage(name = "build-image-kaniko", buildTool = ["maven", "npm", "gradle", "dotnet","python", "any"], type = [ProjectType.APPLICATION])
+@Stage(name = "build-image-kaniko", buildTool = ["maven", "npm", "gradle", "dotnet","python", "any"], type = [ProjectType.APPLICATION, ProjectType.LIBRARY])
 class BuildImageKaniko {
     Script script
 

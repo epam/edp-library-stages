@@ -19,7 +19,7 @@ import com.epam.edp.stages.impl.ci.ProjectType
 import com.epam.edp.stages.impl.ci.Stage
 
 @Stage(name = "get-version", buildTool = "kaniko", type = ProjectType.LIBRARY)
-class GetVersionContainerLibrary {
+class GetVersionKanikoLibrary {
     Script script
 
     def updateVersions(workDir, codebase, git, job) {
@@ -30,10 +30,8 @@ class GetVersionContainerLibrary {
             return
         }
 
-        codebase.version = script.readFile "${workDir}/VERSION"
-        codebase.buildVersion = "${codebase.version}-${script.BUILD_NUMBER}"
-        job.setDisplayName("${script.currentBuild.number}-${git.branch}-${codebase.version}")
-        codebase.isTag = "${git.branch}-${codebase.buildVersion}"
+        job.setDisplayName("${script.currentBuild.number}-${git.branch}")
+        codebase.isTag = "${script.currentBuild.number}-${git.branch}"
         codebase.vcsTag = codebase.isTag
     }
 
@@ -46,7 +44,6 @@ class GetVersionContainerLibrary {
     void run(context) {
         updateVersions(context.workDir, context.codebase, context.git, context.job)
         context.codebase.deployableModuleDir = "${context.workDir}"
-        script.println("[JENKINS][DEBUG] Application version - ${context.codebase.version}")
         script.println("[JENKINS][DEBUG] VCS tag - ${context.codebase.vcsTag}")
         script.println("[JENKINS][DEBUG] IS tag - ${context.codebase.isTag}")
     }

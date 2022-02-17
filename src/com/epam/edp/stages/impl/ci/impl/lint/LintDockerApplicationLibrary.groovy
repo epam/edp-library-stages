@@ -18,7 +18,7 @@ import org.apache.commons.lang.RandomStringUtils
 import com.epam.edp.stages.impl.ci.ProjectType
 import com.epam.edp.stages.impl.ci.Stage
 
-@Stage(name = "dockerfile-lint", buildTool = "any", type = [ProjectType.APPLICATION])
+@Stage(name = "dockerfile-lint", buildTool = "any", type = [ProjectType.APPLICATION, ProjectType.LIBRARY])
 class LintDockerApplicationLibrary {
     Script script
 
