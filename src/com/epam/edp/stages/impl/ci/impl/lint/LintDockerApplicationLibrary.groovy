@@ -1,4 +1,4 @@
-/* Copyright 2021 EPAM Systems.
+/* Copyright 2022 EPAM Systems.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ class LintDockerApplicationLibrary {
             script.stash name: 'dockerfile-data', includes: "${filesToStash}", useDefaultExcludes: false
         }
 
-        script.node("edp-helm") {
+        script.node("kaniko-docker") {
             script.dir("${test_dir}") {
                 script.unstash 'dockerfile-data'
                         script.sh (script: """
