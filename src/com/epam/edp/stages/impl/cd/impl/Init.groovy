@@ -38,7 +38,5 @@ class Init {
         context.environment = new Environment(context.job.deployProject, context.platform, script)
 
         context.job.setDisplayName("${script.currentBuild.displayName}-${context.job.deployProject}")
-
-        context.job.generateCodebaseVersionsInputData()
     }
 }
