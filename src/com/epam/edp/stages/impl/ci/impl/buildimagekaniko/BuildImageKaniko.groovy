@@ -15,9 +15,8 @@ package com.epam.edp.stages.impl.ci.impl.buildimagekaniko
 
 import com.epam.edp.stages.impl.ci.ProjectType
 import com.epam.edp.stages.impl.ci.Stage
-import groovy.json.JsonOutput
-import groovy.json.JsonSlurperClassic
 import hudson.FilePath
+import org.yaml.snakeyaml.Yaml
 
 @Stage(name = "build-image-kaniko", buildTool = ["maven", "npm", "gradle", "dotnet","python", "any"], type = [ProjectType.APPLICATION, ProjectType.LIBRARY])
 class BuildImageKaniko {
@@ -25,26 +24,26 @@ class BuildImageKaniko {
 
     def setEnvVariable(envList, name, value, overwrite = false) {
         if (envList.find { it.name == name } && overwrite)
-            envList.find { it.name == name }.value = value
+            envList.find { it.name == name }.value = value.toString()
         else
-            envList.add(['name': name, 'value': value])
+            envList.add(['name': name, 'value': value.toString()])
     }
 
     def setKanikoTemplate(outputFilePath, buildPodName, resultImageName, dockerRegistryHost, context) {
         def kanikoTemplateFilePath = new FilePath(Jenkins.getInstance().getComputer(script.env['NODE_NAME']).getChannel(), outputFilePath)
-        def kanikoTemplateData = context.platform.getJsonPathValue("cm", "kaniko-template", ".data.kaniko\\.json")
+        def kanikoTemplateYaml = context.platform.getJsonPathValue("cm", "kaniko-template", ".data.kaniko\\.yaml")
         def awsRegion = context.platform.getJsonPathValue("cm", "edp-config", ".data.aws_region")
-        def parsedKanikoTemplateData = new JsonSlurperClassic().parseText(kanikoTemplateData)
-        parsedKanikoTemplateData.metadata.name = buildPodName
+        def parsedKanikoTemplateYaml= new Yaml().load(kanikoTemplateYaml)
+        parsedKanikoTemplateYaml.metadata.name = buildPodName.toString()
 
-        def awsCliInitContainer = parsedKanikoTemplateData.spec.initContainers.find { it.name == "init-repository" }
+        def awsCliInitContainer = parsedKanikoTemplateYaml.spec.initContainers.find { it.name == "init-repository" }
         if (awsCliInitContainer) {
             setEnvVariable(awsCliInitContainer.env, "REPO_NAME", resultImageName, true)
             setEnvVariable(awsCliInitContainer.env, "AWS_DEFAULT_REGION", awsRegion)
         }
-        parsedKanikoTemplateData.spec.containers[0].args[0] = "--destination=${dockerRegistryHost}/${resultImageName}:${context.codebase.isTag.replaceAll("/", "-")}"
-        def jsonData = JsonOutput.toJson(parsedKanikoTemplateData)
-        kanikoTemplateFilePath.write(jsonData, null)
+        parsedKanikoTemplateYaml.spec.containers[0].args[0] = "--destination=${dockerRegistryHost}/${resultImageName}:${context.codebase.isTag.replaceAll("/", "-")}".toString()
+        def yamlData = new Yaml().dump(parsedKanikoTemplateYaml)
+        kanikoTemplateFilePath.write(yamlData, null)
         return kanikoTemplateFilePath
     }
 
@@ -77,7 +76,7 @@ class BuildImageKaniko {
                 if (!dockerRegistryHost)
                     script.error("[JENKINS][ERROR] Couldn't get docker registry server")
 
-                def kanikoTemplateFilePath = setKanikoTemplate("${context.workDir}/kaniko-template.json", buildconfigName,
+                def kanikoTemplateFilePath = setKanikoTemplate("${context.workDir}/kaniko-template.yaml", buildconfigName,
                         "${context.job.ciProject}/${context.codebase.name}", dockerRegistryHost, context)
                 context.platform.apply(kanikoTemplateFilePath.getRemote())
 
