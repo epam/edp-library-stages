@@ -27,7 +27,8 @@ class GetVersionKanikoLibrary {
             updateBuildNumber(codebase.config.name, git.branch.replaceAll(/\//, "-"), codebase.currentBuildNumber)
             codebase.vcsTag = "build/${codebase.version}"
             codebase.isTag = "${codebase.version}"
-            return
+        } else {
+            codebase.version = "${script.currentBuild.number}-${git.branch}"
         }
 
         job.setDisplayName("${script.currentBuild.number}-${git.branch}")
