@@ -15,9 +15,8 @@ package com.epam.edp.stages.impl.ci.impl.lint
 
 import com.epam.edp.stages.impl.ci.ProjectType
 import com.epam.edp.stages.impl.ci.Stage
-import groovy.json.JsonOutput
-import groovy.json.JsonSlurperClassic
 import hudson.FilePath
+import org.yaml.snakeyaml.Yaml
 
 import com.epam.edp.stages.impl.ci.impl.codebaseiamgestream.CodebaseImageStreams
 
@@ -27,26 +26,26 @@ class BuildDockefileApplicationLibrary {
 
     def setEnvVariable(envList, name, value, overwrite = false) {
         if (envList.find { it.name == name } && overwrite)
-            envList.find { it.name == name }.value = value
+            envList.find { it.name == name }.value = value.toString()
         else
-            envList.add(['name': name, 'value': value])
+            envList.add(['name': name, 'value': value.toString()])
     }
 
     def setKanikoTemplate(outputFilePath, buildPodName, resultImageName, dockerRegistryHost, context) {
         def kanikoTemplateFilePath = new FilePath(Jenkins.getInstance().getComputer(script.env['NODE_NAME']).getChannel(), outputFilePath)
-        def kanikoTemplateData = context.platform.getJsonPathValue("cm", "kaniko-template", ".data.kaniko\\.json")
+        def kanikoTemplateYaml = context.platform.getJsonPathValue("cm", "kaniko-template", ".data.kaniko\\.yaml")
         def awsRegion = context.platform.getJsonPathValue("cm", "edp-config", ".data.aws_region")
-        def parsedKanikoTemplateData = new JsonSlurperClassic().parseText(kanikoTemplateData)
-        parsedKanikoTemplateData.metadata.name = buildPodName
+        def parsedKanikoTemplateYaml= new Yaml().load(kanikoTemplateYaml)
+        parsedKanikoTemplateYaml.metadata.name = buildPodName.toString()
 
-        def awsCliInitContainer = parsedKanikoTemplateData.spec.initContainers.find { it.name == "init-repository" }
+        def awsCliInitContainer = parsedKanikoTemplateYaml.spec.initContainers.find { it.name == "init-repository" }
         if (awsCliInitContainer) {
             setEnvVariable(awsCliInitContainer.env, "REPO_NAME", resultImageName, true)
             setEnvVariable(awsCliInitContainer.env, "AWS_DEFAULT_REGION", awsRegion)
         }
-        parsedKanikoTemplateData.spec.containers[0].args[0] = "--no-push"
-        def jsonData = JsonOutput.toJson(parsedKanikoTemplateData)
-        kanikoTemplateFilePath.write(jsonData, null)
+        parsedKanikoTemplateYaml.spec.containers[0].args[0] = "--no-push".toString()
+        def yamlData = new Yaml().dump(parsedKanikoTemplateYaml)
+        kanikoTemplateFilePath.write(yamlData, null)
         return kanikoTemplateFilePath
     }
 
@@ -61,7 +60,6 @@ class BuildDockefileApplicationLibrary {
     }
 
     void run(context) {
-        context.codebase.deployableModuleDir = "${context.workDir}"
         def dockerfilePath = new FilePath(Jenkins.getInstance().getComputer(script.env['NODE_NAME']).getChannel(),
                 "${context.workDir}/Dockerfile")
         if (!dockerfilePath.exists()) {
@@ -71,7 +69,7 @@ class BuildDockefileApplicationLibrary {
         def resultImageName = "${context.codebase.name}-${context.git.branch.replaceAll("[^\\p{L}\\p{Nd}]+", "-")}"
         def buildconfigName = "lint-${resultImageName}-${script.BUILD_NUMBER}"
         if (checkBuildPodExist(buildconfigName, context.job.ciProject)) {
-            script.println("[JENKINS][DEBUG] Pod with the name ${buildconfigName} already exists. It will be removed.")
+            script.println("[JENKINS][DEBUG] Pod with name ${buildconfigName} already exists. It will be removed.")
             context.platform.deleteObject("pod", buildconfigName, true)
         }
         script.dir("${context.workDir}") {
@@ -80,9 +78,15 @@ class BuildDockefileApplicationLibrary {
                 if (!dockerRegistryHost)
                     script.error("[JENKINS][ERROR] Couldn't get docker registry server")
 
-                def kanikoTemplateFilePath = setKanikoTemplate("${context.workDir}/kaniko-template.json", buildconfigName,
+                def kanikoTemplateFilePath = setKanikoTemplate("${context.workDir}/kaniko-template.yaml", buildconfigName,
                         "${context.job.ciProject}/${context.codebase.name}", dockerRegistryHost, context)
                 context.platform.apply(kanikoTemplateFilePath.getRemote())
+
+                while (context.platform.getObjectStatus("pod", buildconfigName)["conditions"].find{it.type == 'PodScheduled'}.status != "True") {
+                    script.println("[JENKINS][DEBUG] Waiting for the Kaniko pod to be scheduled")
+                    script.sleep(5)
+                }
+
                 while (!context.platform.getObjectStatus("pod", buildconfigName)["initContainerStatuses"][0].state.keySet().contains("running")) {
                     script.println("[JENKINS][DEBUG] Waiting for the Kaniko init container to be started")
                     script.sleep(5)
@@ -108,7 +112,11 @@ class BuildDockefileApplicationLibrary {
                 script.error("[JENKINS][ERROR] Building image for ${context.codebase.name} failed")
             }
             finally {
-                def podToDelete = "lint-${context.codebase.name}-${context.git.branch.replaceAll("[^\\p{L}\\p{Nd}]+", "-")}-${script.BUILD_NUMBER.toInteger() - 1}"
+                if(context.platform.getObjectStatus("pod", buildconfigName).phase == "Pending"){
+                    context.platform.deleteObject("pod", buildconfigName, true)
+                }
+
+                def podToDelete = "lint-${resultImageName}-${script.BUILD_NUMBER.toInteger() - 1}"
                 context.platform.deleteObject("pod", podToDelete, true)
             }
         }
