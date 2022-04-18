@@ -31,7 +31,7 @@ class TerraformApply {
               secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
                     script.ansiColor('xterm') {
                         script.sh """
-                            awscliv2 sts get-caller-identity
+                            aws sts get-caller-identity
                             if [ -f .terraform-version ]; then
                                 tfenv install
                             else

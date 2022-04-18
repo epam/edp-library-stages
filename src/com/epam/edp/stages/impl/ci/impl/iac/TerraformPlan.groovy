@@ -37,7 +37,7 @@ class TerraformPlan {
                              tfenv install 0.14.5
                          fi
                          terraform init
-                         awscliv2 sts get-caller-identity
+                         aws sts get-caller-identity
                          terraform plan -out=platform_results.tfplan
                      """
                  }
