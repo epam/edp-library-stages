@@ -21,7 +21,7 @@ import com.epam.edp.stages.impl.ci.Stage
 import com.epam.edp.stages.impl.ci.impl.codebaseiamgestream.CodebaseImageStreams
 
 
-@Stage(name = "git-tag", buildTool = ["gradle", "maven", "dotnet", "npm", "any"], type = [ProjectType.APPLICATION, ProjectType.LIBRARY])
+@Stage(name = "git-tag", buildTool = ["gradle", "maven", "dotnet", "npm", "any"], type = [ProjectType.APPLICATION, ProjectType.AUTOTESTS, ProjectType.LIBRARY])
 class GitTagApplicationLibrary {
     Script script
 
