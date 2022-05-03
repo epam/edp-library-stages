@@ -1,4 +1,4 @@
-/* Copyright 2019 EPAM Systems.
+/* Copyright 2022 EPAM Systems.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@ package com.epam.edp.stages.impl.ci.impl.compile
 
 import com.epam.edp.stages.impl.ci.ProjectType
 import com.epam.edp.stages.impl.ci.Stage
+import groovy.json.JsonOutput
+import groovy.json.JsonSlurperClassic
 
 @Stage(name = "compile", buildTool = "npm", type = [ProjectType.APPLICATION, ProjectType.LIBRARY])
 class CompileNpmApplicationLibrary {
@@ -25,18 +27,26 @@ class CompileNpmApplicationLibrary {
         script.dir("${context.workDir}") {
             script.withCredentials([script.usernamePassword(credentialsId: "${context.nexus.credentialsId}",
                     passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]) {
-                def token = script.sh(script: """
-        curl -s -H "Accept: application/json" -H "Content-Type:application/json" -X PUT --data \
-        '{"name": "${script.USERNAME}", "password": "${script.PASSWORD}"}' \
-        ${context.buildTool.groupRepository}-/user/org.couchdb.user:${script.USERNAME} | \
-        grep -oE 'NpmToken\\.[0-9a-zA-Z-]+'
-        """,
-                        returnStdout: true)
+                def url = "${context.buildTool.groupRepository}-/user/org.couchdb.user:${script.USERNAME}"
+                def requestBody = JsonOutput.toJson([
+                        name: script.USERNAME,
+                        password: script.PASSWORD
+                ])
+                def response = script.httpRequest url: url,
+                        httpMode: 'PUT',
+                        contentType: 'APPLICATION_JSON',
+                        requestBody: requestBody
+
+                def registryUrl = url.substring(url.indexOf("/"), url.length())
+                def token = new JsonSlurperClassic().parseText(response.content).token
+                script.sh(script: """
+                    set +x
+                    npm set registry ${context.buildTool.groupRepository}
+
+                    echo :always-auth=true\n >> .npmrc
+                    echo ${registryUrl}:_authToken=${token}\\n >> .npmrc
+                """)
             }
-            script.sh(script: """
-            set +x
-            npm set registry ${context.buildTool.groupRepository}
-            """)
 
             script.sh "npm install && npm run build:clean"
         }
