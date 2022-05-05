@@ -27,24 +27,16 @@ class CompileNpmApplicationLibrary {
         script.dir("${context.workDir}") {
             script.withCredentials([script.usernamePassword(credentialsId: "${context.nexus.credentialsId}",
                     passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]) {
-                def url = "${context.buildTool.groupRepository}-/user/org.couchdb.user:${script.USERNAME}"
-                def requestBody = JsonOutput.toJson([
-                        name: script.USERNAME,
-                        password: script.PASSWORD
-                ])
-                def response = script.httpRequest url: url,
-                        httpMode: 'PUT',
-                        contentType: 'APPLICATION_JSON',
-                        requestBody: requestBody
-
+                def url = context.buildTool.groupRepository
                 def registryUrl = url.substring(url.indexOf("/"), url.length())
-                def token = new JsonSlurperClassic().parseText(response.content).token
+                def upBase64 = "${script.USERNAME}:${script.PASSWORD}".bytes.encodeBase64().toString()
                 script.sh(script: """
                     set +x
-                    npm set registry ${context.buildTool.groupRepository}
 
-                    echo :always-auth=true\n >> .npmrc
-                    echo ${registryUrl}:_authToken=${token}\\n >> .npmrc
+                    npm set registry ${url} --location project
+                    npm set ${registryUrl}:always-auth true --location project
+                    npm set ${registryUrl}:email ${script.USERNAME}@example.com --location project
+                    npm set ${registryUrl}:_auth ${upBase64} --location project
                 """)
             }
 
