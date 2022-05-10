@@ -1,11 +1,52 @@
 <a name="unreleased"></a>
 ## [Unreleased]
 
+### Features
+
+- Update Makefile changelog target [EPMDEDP-8218](https://jiraeu.epam.com/browse/EPMDEDP-8218)
+- Provide the ability to customize the deploy pipeline [EPMDEDP-8313](https://jiraeu.epam.com/browse/EPMDEDP-8313)
+- Add helm-docs code-review stage [EPMDEDP-8329](https://jiraeu.epam.com/browse/EPMDEDP-8329)
+- Enable stages for library [EPMDEDP-8341](https://jiraeu.epam.com/browse/EPMDEDP-8341)
+- Add GetVersion stage for Container Library [EPMDEDP-8341](https://jiraeu.epam.com/browse/EPMDEDP-8341)
+- Add copy-secret pipeline stage [EPMDEDP-8469](https://jiraeu.epam.com/browse/EPMDEDP-8469)
+- Implement helm-uninstall step [EPMDEDP-8532](https://jiraeu.epam.com/browse/EPMDEDP-8532)
+- Implement semi-auto-deploy-input stage with timeout and manual mode [EPMDEDP-8584](https://jiraeu.epam.com/browse/EPMDEDP-8584)
+- Update Kaniko stage for using Kaniko template in yaml format [EPMDEDP-8620](https://jiraeu.epam.com/browse/EPMDEDP-8620)
+- Add git-tag stage for autotests [EPMDEDP-8920](https://jiraeu.epam.com/browse/EPMDEDP-8920)
+- Use auth token to access NPM registry deployed on Nexus [EPMDEDP-8970](https://jiraeu.epam.com/browse/EPMDEDP-8970)
+
+### Bug Fixes
+
+- Add normalizedBranch parameter for naming projects in sonar [EPMDEDP-8283](https://jiraeu.epam.com/browse/EPMDEDP-8283)
+- Fix changelog generation in GH Release Action [EPMDEDP-8468](https://jiraeu.epam.com/browse/EPMDEDP-8468)
+- Define workdir for dockerbuild-verify stage [EPMDEDP-8832](https://jiraeu.epam.com/browse/EPMDEDP-8832)
+- Align dockerbuild-verify stage to kaniko template format [EPMDEDP-8832](https://jiraeu.epam.com/browse/EPMDEDP-8832)
+- Replace / to - in image tag on OKD build stage [EPMDEDP-8883](https://jiraeu.epam.com/browse/EPMDEDP-8883)
+- Fix jira metadata for default versionning for kaniko [EPMDEDP-8958](https://jiraeu.epam.com/browse/EPMDEDP-8958)
+- Pass email for nexus NPM regisrty during login stage [EPMDEDP-8970](https://jiraeu.epam.com/browse/EPMDEDP-8970)
+
+### Code Refactoring
+
+- Wipe the workspace after the Deploy stage [EPMDEDP-7683](https://jiraeu.epam.com/browse/EPMDEDP-7683)
+- Wipe the workspace after the Deploy stage [EPMDEDP-7683](https://jiraeu.epam.com/browse/EPMDEDP-7683)
+- Create separate sonar project for each branch build [EPMDEDP-8012](https://jiraeu.epam.com/browse/EPMDEDP-8012)
+- Get aws_region variable from configmap [EPMDEDP-8164](https://jiraeu.epam.com/browse/EPMDEDP-8164)
+- The refspec value must be defined early [EPMDEDP-8168](https://jiraeu.epam.com/browse/EPMDEDP-8168)
+- Deploy stage must use valid image tag [EPMDEDP-8168](https://jiraeu.epam.com/browse/EPMDEDP-8168)
+- Remove unused functional [EPMDEDP-8168](https://jiraeu.epam.com/browse/EPMDEDP-8168)
+- CD-operator responsible to create new project on cluster [EPMDEDP-8168](https://jiraeu.epam.com/browse/EPMDEDP-8168)
+- Update image tag modification [EPMDEDP-8168](https://jiraeu.epam.com/browse/EPMDEDP-8168)
+- Remove unused functional [EPMDEDP-8168](https://jiraeu.epam.com/browse/EPMDEDP-8168)
+
 ### Routine
 
+- Fix grammatical errors in Jenkins libraries [EPMDEDP-8205](https://jiraeu.epam.com/browse/EPMDEDP-8205)
+- Update release flow [EPMDEDP-8227](https://jiraeu.epam.com/browse/EPMDEDP-8227)
 - Update changelog [EPMDEDP-8227](https://jiraeu.epam.com/browse/EPMDEDP-8227)
 - Update release template [EPMDEDP-8227](https://jiraeu.epam.com/browse/EPMDEDP-8227)
-- Update release flow [EPMDEDP-8227](https://jiraeu.epam.com/browse/EPMDEDP-8227)
+- Use kaniko-docker agent for hadolint check [EPMDEDP-8341](https://jiraeu.epam.com/browse/EPMDEDP-8341)
+- Add check if Kaniko pod is scheduled [EPMDEDP-8624](https://jiraeu.epam.com/browse/EPMDEDP-8624)
+- Use awscli instead awscliv2 [EPMDEDP-8808](https://jiraeu.epam.com/browse/EPMDEDP-8808)
 
 
 <a name="v2.12.0"></a>
