@@ -81,7 +81,7 @@ class EcrToDocker {
                         script.println("[INFO] Image ${dockerhubRepo}:${context.codebase.isTag} was not found in Docker Hub, start copying")
                         script.sh """
                                 set +x
-                                awsv2 ecr get-login-password --region ${awsRegion} | crane auth login ${ecr} -u AWS --password-stdin
+                                aws ecr get-login-password --region ${awsRegion} | crane auth login ${ecr} -u AWS --password-stdin
                                 crane auth login index.docker.io -u ${username} -p ${accessToken}
                                 set -ex
                                 crane cp ${ecr}/${ecrRepo}/${cbImage}:${context.codebase.isTag} ${dockerhubUrl}:${context.codebase.isTag}
