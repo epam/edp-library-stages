@@ -1,6 +1,9 @@
 <a name="unreleased"></a>
 ## [Unreleased]
 
+
+<a name="v2.13.0"></a>
+## [v2.13.0] - 2022-05-17
 ### Features
 
 - Update Makefile changelog target [EPMDEDP-8218](https://jiraeu.epam.com/browse/EPMDEDP-8218)
@@ -23,6 +26,7 @@
 - Align dockerbuild-verify stage to kaniko template format [EPMDEDP-8832](https://jiraeu.epam.com/browse/EPMDEDP-8832)
 - Replace / to - in image tag on OKD build stage [EPMDEDP-8883](https://jiraeu.epam.com/browse/EPMDEDP-8883)
 - Fix jira metadata for default versionning for kaniko [EPMDEDP-8958](https://jiraeu.epam.com/browse/EPMDEDP-8958)
+- Override npm local repository to enable Nexus push stage [EPMDEDP-8970](https://jiraeu.epam.com/browse/EPMDEDP-8970)
 - Pass email for nexus NPM regisrty during login stage [EPMDEDP-8970](https://jiraeu.epam.com/browse/EPMDEDP-8970)
 
 ### Code Refactoring
@@ -41,12 +45,14 @@
 ### Routine
 
 - Fix grammatical errors in Jenkins libraries [EPMDEDP-8205](https://jiraeu.epam.com/browse/EPMDEDP-8205)
-- Update release flow [EPMDEDP-8227](https://jiraeu.epam.com/browse/EPMDEDP-8227)
 - Update changelog [EPMDEDP-8227](https://jiraeu.epam.com/browse/EPMDEDP-8227)
 - Update release template [EPMDEDP-8227](https://jiraeu.epam.com/browse/EPMDEDP-8227)
+- Update release flow [EPMDEDP-8227](https://jiraeu.epam.com/browse/EPMDEDP-8227)
+- We use aws instead of awsv2 in our Jenkins agent [EPMDEDP-8257](https://jiraeu.epam.com/browse/EPMDEDP-8257)
 - Use kaniko-docker agent for hadolint check [EPMDEDP-8341](https://jiraeu.epam.com/browse/EPMDEDP-8341)
 - Add check if Kaniko pod is scheduled [EPMDEDP-8624](https://jiraeu.epam.com/browse/EPMDEDP-8624)
 - Use awscli instead awscliv2 [EPMDEDP-8808](https://jiraeu.epam.com/browse/EPMDEDP-8808)
+- Update changelog [EPMDEDP-9185](https://jiraeu.epam.com/browse/EPMDEDP-9185)
 
 
 <a name="v2.12.0"></a>
@@ -117,7 +123,8 @@
 - [EPMDEDP-5352]: Apply crds to cluster during deploy
 
 
-[Unreleased]: https://github.com/epam/edp-library-stages/compare/v2.12.0...HEAD
+[Unreleased]: https://github.com/epam/edp-library-stages/compare/v2.13.0...HEAD
+[v2.13.0]: https://github.com/epam/edp-library-stages/compare/v2.12.0...v2.13.0
 [v2.12.0]: https://github.com/epam/edp-library-stages/compare/v2.11.0...v2.12.0
 [v2.11.0]: https://github.com/epam/edp-library-stages/compare/v2.10.0...v2.11.0
 [v2.10.0]: https://github.com/epam/edp-library-stages/compare/v2.9.1...v2.10.0
