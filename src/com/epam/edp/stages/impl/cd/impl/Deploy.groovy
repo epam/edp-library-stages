@@ -127,7 +127,9 @@ class Deploy {
         def summary = script.manager.createSummary("notepad.png")
         summary.appendText("Deployed versions:", false)
         deployedVersions.each { version ->
-            summary.appendText("<li>${version}</li>", false)
+            if (version =~ /^app.edp.epam.com.*/) {
+                summary.appendText("<li>${version}</li>", false)
+            }
         }
         script.println("[JENKINS][DEBUG] Annotation has been added to this job description")
     }
