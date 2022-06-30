@@ -1,6 +1,28 @@
 <a name="unreleased"></a>
 ## [Unreleased]
 
+### Features
+
+- Add GetVersion stage for Helm, Kustomize, ArgoCD, FLux libraries [EPMDEDP-8257](https://jiraeu.epam.com/browse/EPMDEDP-8257)
+- Add Jenkins artifacts creation [EPMDEDP-9199](https://jiraeu.epam.com/browse/EPMDEDP-9199)
+
+### Bug Fixes
+
+- Fix git checkout for Autotest step in CDPipeline [EPMDEDP-10158](https://jiraeu.epam.com/browse/EPMDEDP-10158)
+
+### Routine
+
+- Fix Jira Ticket pattern for changelog generator [EPMDEDP-10159](https://jiraeu.epam.com/browse/EPMDEDP-10159)
+- Update changelog [EPMDEDP-8832](https://jiraeu.epam.com/browse/EPMDEDP-8832)
+- Remove "previous-stage-name" from Jenkins deployed versions view [EPMDEDP-9378](https://jiraeu.epam.com/browse/EPMDEDP-9378)
+
+
+<a name="v2.13.1"></a>
+## [v2.13.1] - 2022-06-30
+### Bug Fixes
+
+- Fix git checkout for Autotest step in CDPipeline [EPMDEDP-10158](https://jiraeu.epam.com/browse/EPMDEDP-10158)
+
 
 <a name="v2.13.0"></a>
 ## [v2.13.0] - 2022-05-17
@@ -123,7 +145,8 @@
 - [EPMDEDP-5352]: Apply crds to cluster during deploy
 
 
-[Unreleased]: https://github.com/epam/edp-library-stages/compare/v2.13.0...HEAD
+[Unreleased]: https://github.com/epam/edp-library-stages/compare/v2.13.1...HEAD
+[v2.13.1]: https://github.com/epam/edp-library-stages/compare/v2.13.0...v2.13.1
 [v2.13.0]: https://github.com/epam/edp-library-stages/compare/v2.12.0...v2.13.0
 [v2.12.0]: https://github.com/epam/edp-library-stages/compare/v2.11.0...v2.12.0
 [v2.11.0]: https://github.com/epam/edp-library-stages/compare/v2.10.0...v2.11.0
