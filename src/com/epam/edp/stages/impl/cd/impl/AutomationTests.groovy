@@ -41,7 +41,7 @@ class AutomationTests {
             gitServer.init(context.platform, qualityGate.autotest.gitServer)
             script.println("[JENKINS][DEBUG] GitServer data is set up: ${gitServer.toString()}")
 
-            def autotest = new Autotest(gitServer, qualityGate.autotest.gitProjectPath, qualityGate.autotest.name,
+            def autotest = new Autotest(gitServer, qualityGate.autotest.git_url, qualityGate.autotest.name,
                     qualityGate.codebaseBranch.branchName, context.job.stageName)
             script.println("[JENKINS][DEBUG] Autotest data is set up: ${autotest.toString()}")
 
