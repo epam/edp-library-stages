@@ -2,8 +2,11 @@
 ## [Unreleased]
 
 
+<a name="v2.13.1"></a>
+## [v2.13.1] - 2022-06-30
+
 <a name="v2.13.0"></a>
-## [v2.13.0] - 2022-05-12
+## [v2.13.0] - 2022-05-17
 ### Features
 
 - Update Makefile changelog target [EPMDEDP-8218](https://jiraeu.epam.com/browse/EPMDEDP-8218)
@@ -123,7 +126,8 @@
 - [EPMDEDP-5352]: Apply crds to cluster during deploy
 
 
-[Unreleased]: https://github.com/epam/edp-library-stages/compare/v2.13.0...HEAD
+[Unreleased]: https://github.com/epam/edp-library-stages/compare/v2.13.1...HEAD
+[v2.13.1]: https://github.com/epam/edp-library-stages/compare/v2.13.0...v2.13.1
 [v2.13.0]: https://github.com/epam/edp-library-stages/compare/v2.12.0...v2.13.0
 [v2.12.0]: https://github.com/epam/edp-library-stages/compare/v2.11.0...v2.12.0
 [v2.11.0]: https://github.com/epam/edp-library-stages/compare/v2.10.0...v2.11.0
