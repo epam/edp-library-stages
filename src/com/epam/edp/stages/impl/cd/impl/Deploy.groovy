@@ -197,7 +197,7 @@ class Deploy {
     void run(context) {
 
         def prevDeployedVersions = getApplicationFromStageCR(context)
-        script.sh("rm ${script.WORKSPACE}/artifacts/* || true")
+        script.sh("rm -f ${script.WORKSPACE}/artifacts/*")
         createJenkinsArtifacts(prevDeployedVersions, "prev_versions.txt")
 
         if (context.job.buildUser == null || context.job.buildUser == "")
