@@ -30,7 +30,7 @@ class GetVersionPythonApplicationLibrary {
     def updateVersions(context){
         if (context.codebase.config.versioningType == "edp") {
             script.dir("${context.workDir}") {
-                script.sh """ kubectl patch codebasebranches.v2.edp.epam.com ${context.codebase.config.name}-${context.git.branch.replaceAll(/\//, "-")} --type=merge -p '{\"status\": {\"build\": "${context.codebase.currentBuildNumber}"}}'
+                script.sh """ kubectl patch codebasebranches.v2.edp.epam.com ${context.codebase.config.name}-${context.git.branch.replaceAll(/\//, "-")} --subresource=status --type=merge -p '{\"status\": {\"build\": "${context.codebase.currentBuildNumber}"}}'
                 """
             }
             context.codebase.vcsTag = "build/${context.codebase.version}"

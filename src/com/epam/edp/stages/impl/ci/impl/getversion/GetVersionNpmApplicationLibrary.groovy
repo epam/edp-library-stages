@@ -26,7 +26,7 @@ class GetVersionNpmApplicationLibrary {
         script.sh """
             set -eo pipefail
             npm --no-git-tag-version version ${context.codebase.branchVersion}-${context.codebase.currentBuildNumber}
-            kubectl patch codebasebranches.v2.edp.epam.com ${context.codebase.config.name}-${context.git.branch.replaceAll(/\//, "-")} --type=merge -p '{\"status\": {\"build\": "${context.codebase.currentBuildNumber}"}}'
+            kubectl patch codebasebranches.v2.edp.epam.com ${context.codebase.config.name}-${context.git.branch.replaceAll(/\//, "-")} --subresource=status --type=merge -p '{\"status\": {\"build\": "${context.codebase.currentBuildNumber}"}}'
         """
     }
 

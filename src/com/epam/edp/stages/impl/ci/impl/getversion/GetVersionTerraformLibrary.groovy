@@ -40,7 +40,7 @@ class GetVersionTerraformLibrary {
     def updateBuildNumber(codebaseName, branchName, buildNumber) {
         script.sh """kubectl patch codebasebranches.v2.edp.epam.com ${codebaseName}-${
             branchName
-        } --type=merge -p '{\"status\": {\"build\": "${buildNumber}"}}'"""
+        } --subresource=status --type=merge -p '{\"status\": {\"build\": "${buildNumber}"}}'"""
     }
 
     void run(context) {
