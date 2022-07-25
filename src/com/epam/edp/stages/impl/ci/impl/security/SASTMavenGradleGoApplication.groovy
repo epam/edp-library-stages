@@ -28,7 +28,7 @@ class SASTMavenGradleGoApplication {
             def testDir = "${RandomStringUtils.random(10, true, true)}"
             def defectDojoCredentials = getDefectDojoCredentials(context)
 
-            script.node("sast-edp") {
+            script.node("sast") {
                 script.dir("${testDir}") {
                     script.unstash 'all-repo'
                     def dataFromSemgrepScanner = runSemgrepScanner(context)
