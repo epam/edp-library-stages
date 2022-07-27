@@ -73,7 +73,27 @@ class SASTMavenGradleGoApplication {
     }
 
     def publishReport(credentials, dataReport){
+        script.println("[JENKINS][INFO] \n" +
+                "curl -X POST ${credentials.url}/api/v2/import-scan/ \n" +
+                "-H \"accept: application/json\" \n" +
+                "-H \"Authorization: Token XXXXXXXXX\" \n" +
+                "-H \"Content-Type: multipart/form-data\" \n" +
+                "-F \"scan_date=\\\$(date +%Y-%m-%d)\" \n" +
+                "-F \"minimum_severity=Info\" \n" +
+                "-F \"active=${dataReport.active}\" \n" +
+                "-F \"verified=${dataReport.verified}\" \n" +
+                "-F \"scan_type=${dataReport.type}\" \n" +
+                "-F \"file=@${dataReport.path};type=application/json\" \n" +
+                "-F \"product_type_name=${dataReport.productTypeName}\" \n" +
+                "-F \"product_name=${dataReport.productName}\" \n" +
+                "-F \"engagement_name=${dataReport.engagementName}\" \n" +
+                "-F \"auto_create_context=${dataReport.autoCreateContext}\" \n" +
+                "-F \"close_old_findings=${dataReport.closeOldFindings}\" \n" +
+                "-F \"push_to_jira=${dataReport.pushToJira}\" \n" +
+                "-F \"environment=${dataReport.environment}\" \n" +
+                "-F \"test_title=${dataReport.testTitle}\"")
         script.sh (script: """
+            set +x
             curl -X POST "${credentials.url}/api/v2/import-scan/" \
                 -H "accept: application/json" \
                 -H "Authorization: Token ${credentials.token}" \
