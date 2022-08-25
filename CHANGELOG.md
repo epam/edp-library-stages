@@ -1,20 +1,43 @@
 <a name="unreleased"></a>
 ## [Unreleased]
 
+
+<a name="v2.14.0"></a>
+## [v2.14.0] - 2022-08-25
 ### Features
 
+- Add a Static Application Security Testing stage with Semgrep scanner [EPMDEDP-10234](https://jiraeu.epam.com/browse/EPMDEDP-10234)
 - Add GetVersion stage for Helm, Kustomize, ArgoCD, FLux libraries [EPMDEDP-8257](https://jiraeu.epam.com/browse/EPMDEDP-8257)
 - Add Jenkins artifacts creation [EPMDEDP-9199](https://jiraeu.epam.com/browse/EPMDEDP-9199)
 
 ### Bug Fixes
 
+- Use 'subresource' flag for patch codebasebranches [EPMDEDP-10122](https://jiraeu.epam.com/browse/EPMDEDP-10122)
 - Fix git checkout for Autotest step in CDPipeline [EPMDEDP-10158](https://jiraeu.epam.com/browse/EPMDEDP-10158)
 
 ### Routine
 
+- Use -f flag for rm command instead of || true [EPMDEDP-10158](https://jiraeu.epam.com/browse/EPMDEDP-10158)
 - Fix Jira Ticket pattern for changelog generator [EPMDEDP-10159](https://jiraeu.epam.com/browse/EPMDEDP-10159)
+- Update CHANGELOG [EPMDEDP-10159](https://jiraeu.epam.com/browse/EPMDEDP-10159)
+- Hide the curl command execution with token in the SAST stage [EPMDEDP-10234](https://jiraeu.epam.com/browse/EPMDEDP-10234)
+- Rename the Jenkins agent label for SAST scanning [EPMDEDP-10234](https://jiraeu.epam.com/browse/EPMDEDP-10234)
+- Align build.gradle to new gradle version [EPMDEDP-10274](https://jiraeu.epam.com/browse/EPMDEDP-10274)
+- Remove get-version stage for Helm, Kustomize, ArgoCD, FLux libraries [EPMDEDP-10397](https://jiraeu.epam.com/browse/EPMDEDP-10397)
 - Update changelog [EPMDEDP-8832](https://jiraeu.epam.com/browse/EPMDEDP-8832)
 - Remove "previous-stage-name" from Jenkins deployed versions view [EPMDEDP-9378](https://jiraeu.epam.com/browse/EPMDEDP-9378)
+
+### BREAKING CHANGE:
+
+
+Starting from this change, we expect that CodebaseBranches CRD use 'status' field as subresource
+
+
+<a name="v2.13.2"></a>
+## [v2.13.2] - 2022-06-30
+### Routine
+
+- Fix Jira Ticket pattern for changelog generator [EPMDEDP-10159](https://jiraeu.epam.com/browse/EPMDEDP-10159)
 
 
 <a name="v2.13.1"></a>
@@ -145,7 +168,9 @@
 - [EPMDEDP-5352]: Apply crds to cluster during deploy
 
 
-[Unreleased]: https://github.com/epam/edp-library-stages/compare/v2.13.1...HEAD
+[Unreleased]: https://github.com/epam/edp-library-stages/compare/v2.14.0...HEAD
+[v2.14.0]: https://github.com/epam/edp-library-stages/compare/v2.13.2...v2.14.0
+[v2.13.2]: https://github.com/epam/edp-library-stages/compare/v2.13.1...v2.13.2
 [v2.13.1]: https://github.com/epam/edp-library-stages/compare/v2.13.0...v2.13.1
 [v2.13.0]: https://github.com/epam/edp-library-stages/compare/v2.12.0...v2.13.0
 [v2.12.0]: https://github.com/epam/edp-library-stages/compare/v2.11.0...v2.12.0
