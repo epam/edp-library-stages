@@ -18,7 +18,7 @@ import org.apache.commons.lang.RandomStringUtils
 import com.epam.edp.stages.impl.ci.ProjectType
 import com.epam.edp.stages.impl.ci.Stage
 
-@Stage(name = "helm-docs", buildTool = "any", type = [ProjectType.APPLICATION])
+@Stage(name = "helm-docs", buildTool = "any", type = [ProjectType.APPLICATION, ProjectType.LIBRARY])
 class HelmDocsApplication {
     Script script
 
