@@ -38,6 +38,7 @@ class SonarGradle {
                   IFS=\$'\\n';for i in \$(git diff --diff-filter=ACMR --name-only origin/${context.git.branch}); \
                     do cp --parents \"\$i\" ${codereviewAnalysisRunDir}/; echo "file for scanner:" \"\$i\"/; done
                   cp -f build.gradle ${codereviewAnalysisRunDir};
+                  cp -fr gradle ${codereviewAnalysisRunDir};
                   for build in `find . -type d -name \'build\'`; do cp --parents -r \${build} ${codereviewAnalysisRunDir}; done
                   """
             }
