@@ -31,8 +31,8 @@ class GitTagApplicationLibrary {
                 script.sh """
                 export GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no"
                 export GIT_SSH_VARIANT=ssh
-                git config --global user.email ${context.git.autouser}@edp.ci-user
-                git config --global user.name ${context.git.autouser}
+                git config --local user.email ${context.git.autouser}@edp.ci-user
+                git config --local user.name ${context.git.autouser}
                 git tag -a ${context.codebase.vcsTag} -m 'Tag is added automatically by ${context.git.autouser} user'
                 git push --tags"""
             }

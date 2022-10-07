@@ -28,8 +28,8 @@ class CreateBranch {
                     script.sh """
                         export GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no"
                         export GIT_SSH_VARIANT=ssh
-                        git config --global user.email ${context.git.autouser}@edp.ci-user
-                        git config --global user.name ${context.git.autouser}
+                        git config --local user.email ${context.git.autouser}@edp.ci-user
+                        git config --local user.name ${context.git.autouser}
                         if [[ -z `git ls-remote --heads origin ${context.job.releaseName}` ]]; then
                             git branch ${context.job.releaseName} ${context.job.releaseFromCommitId}
                             git push --all
