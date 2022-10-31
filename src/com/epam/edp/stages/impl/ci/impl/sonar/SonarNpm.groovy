@@ -37,6 +37,7 @@ class SonarNpm {
                   git config --local core.quotepath false
                   IFS=\$'\\n';for i in \$(git diff --diff-filter=ACMR --name-only origin/${context.git.branch}); \
                     do cp --parents \"\$i\" ${codereviewAnalysisRunDir}/; echo "file for scanner:" \"\$i\"/; done
+                  [ -f sonar-project.properties ] && cp -n sonar-project.properties ${codereviewAnalysisRunDir};
                   """
             }
         }
