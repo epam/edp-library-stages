@@ -18,19 +18,26 @@ import com.epam.edp.stages.impl.cd.Stage
 
 @Stage(name = "copy-secrets")
 class CopySecrets {
-  Script script
+    Script script
 
-  void run(context) {
-    def deployProject = context.job.deployProject
-    script.node("edp-helm") {
-            script.sh(script: """
-                 secrets=(\$(kubectl get secrets -l 'app.edp.epam.com/use=cicd' --no-headers -o=custom-columns=NAME:.metadata.name))
-                  for secret in \${secrets[@]}; do
-                        kubectl get secret \$secret -o json | \
-                        jq 'del(.data.namespace,.metadata.namespace,.metadata.resourceVersion,.metadata.uid,.metadata.ownerReferences,.metadata.managedFields) | .metadata.creationTimestamp=null' | \
-                        kubectl -n "${deployProject}" apply -f -
-                  done
-             """)
+    void run(context) {
+        def deployProject = context.job.deployProject
+        script.node("edp-helm") {
+            def secrets = script.sh(script: "kubectl get secrets -l 'app.edp.epam.com/use=cicd' " +
+                "--no-headers -o=custom-columns=NAME:.metadata.name", returnStdout: true).trim()
+            if (secrets) {
+                def secrets_array = secrets.split("\n")
+                for (secret in secrets_array) {
+                    script.sh(script: """
+                        kubectl get secret "${secret}" -o json \
+                            | jq 'del(.data.namespace,.metadata.namespace,.metadata.resourceVersion,.metadata.uid,.metadata.ownerReferences,.metadata.managedFields)
+                            | .metadata.creationTimestamp=null' \
+                            | kubectl -n "${deployProject}" apply -f -
+                    """)
+                }
+            } else {
+                script.error("[JENKINS][DEBUG] No secrets with label 'app.edp.epam.com/use=cicd' in EDP namespace")
+            }
+        }
     }
-  }
 }
