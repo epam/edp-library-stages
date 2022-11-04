@@ -16,6 +16,7 @@ npm-debug.log
 ### Gradle ###
 .gradle
 /build/
+/lib/
 
 /backend/target/*
 /database/target/*
