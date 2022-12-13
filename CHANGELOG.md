@@ -1,9 +1,26 @@
 <a name="unreleased"></a>
 ## [Unreleased]
 
+
+<a name="v2.15.0"></a>
+## [v2.15.0] - 2022-12-13
+### Features
+
+- Enable helm-lint stage for library [EPMDEDP-10431](https://jiraeu.epam.com/browse/EPMDEDP-10431)
+
+### Bug Fixes
+
+- Address issue with multiple update for .gitconfig [EPMDEDP-10781](https://jiraeu.epam.com/browse/EPMDEDP-10781)
+- Copy sonar-project.properties in Npm Codereview [EPMDEDP-10912](https://jiraeu.epam.com/browse/EPMDEDP-10912)
+- Modify copy-secrets stage for POSIX shell [EPMDEDP-8469](https://jiraeu.epam.com/browse/EPMDEDP-8469)
+
 ### Routine
 
+- Update changelog [EPMDEDP-10274](https://jiraeu.epam.com/browse/EPMDEDP-10274)
 - Align build.gradle to new gradle version [EPMDEDP-10274](https://jiraeu.epam.com/browse/EPMDEDP-10274)
+- Enable helm-docs stage for library [EPMDEDP-10434](https://jiraeu.epam.com/browse/EPMDEDP-10434)
+- Add git-chglog installation to Makefile [EPMDEDP-10482](https://jiraeu.epam.com/browse/EPMDEDP-10482)
+- Copy 'gradle' folder with configuration for sonar gradle stage [EPMDEDP-10512](https://jiraeu.epam.com/browse/EPMDEDP-10512)
 
 
 <a name="v2.14.0"></a>
@@ -172,7 +189,8 @@ Starting from this change, we expect that CodebaseBranches CRD use 'status' fiel
 - [EPMDEDP-5352]: Apply crds to cluster during deploy
 
 
-[Unreleased]: https://github.com/epam/edp-library-stages/compare/v2.14.0...HEAD
+[Unreleased]: https://github.com/epam/edp-library-stages/compare/v2.15.0...HEAD
+[v2.15.0]: https://github.com/epam/edp-library-stages/compare/v2.14.0...v2.15.0
 [v2.14.0]: https://github.com/epam/edp-library-stages/compare/v2.13.2...v2.14.0
 [v2.13.2]: https://github.com/epam/edp-library-stages/compare/v2.13.1...v2.13.2
 [v2.13.1]: https://github.com/epam/edp-library-stages/compare/v2.13.0...v2.13.1
