@@ -41,6 +41,7 @@ class TestPythonApplicationLibrary {
                 script.error("[JENKINS][DEBUG] Test stage hasn't passed")
             }
             finally {
+                script.sh "pkill -9 python"
                 script.allure([
                         includeProperties: false,
                         reportBuildPolicy: 'ALWAYS',
