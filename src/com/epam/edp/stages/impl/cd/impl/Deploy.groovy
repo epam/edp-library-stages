@@ -34,13 +34,6 @@ class Deploy {
         ).trim()
     }
 
-    def getRepositoryPath(codebase) {
-        if (codebase.strategy == "import") {
-            return codebase.gitProjectPath
-        }
-        return "/" + codebase.name
-    }
-
     def getRefspec(codebase) {
         return codebase.versioningType == "edp" ?
                 "refs/tags/build/${codebase.version}" :
@@ -64,10 +57,9 @@ class Deploy {
         script.println("[JENKINS][DEBUG] sshPort: ${sshPort}")
         script.println("[JENKINS][DEBUG] credentialsId: ${credentialsId}")
 
-        def repoPath = getRepositoryPath(codebase)
-        script.println("[JENKINS][DEBUG] Repository path: ${repoPath}")
+        script.println("[JENKINS][DEBUG] Repository path: ${codebase.gitProjectPath}")
 
-        def gitCodebaseUrl = "ssh://${autouser}@${host}:${sshPort}${repoPath}"
+        def gitCodebaseUrl = "ssh://${autouser}@${host}:${sshPort}${codebase.gitProjectPath}"
         def refspec = getRefspec(codebase)
 
         try {
