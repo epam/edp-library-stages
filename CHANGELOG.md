@@ -2,6 +2,28 @@
 ## [Unreleased]
 
 
+<a name="v2.16.0"></a>
+## [v2.16.0] - 2023-05-22
+### Bug Fixes
+
+- Add build-image-from-dockerfile for Docker lib on OKD [EPMDEDP-11134](https://jiraeu.epam.com/browse/EPMDEDP-11134)
+- Kill python server after tests run [EPMDEDP-11213](https://jiraeu.epam.com/browse/EPMDEDP-11213)
+- Jira integration with libraries [EPMDEDP-11748](https://jiraeu.epam.com/browse/EPMDEDP-11748)
+
+### Routine
+
+- Update changelog [EPMDEDP-10610](https://jiraeu.epam.com/browse/EPMDEDP-10610)
+- Align git application path to git repo provisioning [EPMDEDP-11871](https://jiraeu.epam.com/browse/EPMDEDP-11871)
+- Add templates for github issues [EPMDEDP-11928](https://jiraeu.epam.com/browse/EPMDEDP-11928)
+
+
+<a name="v2.15.1"></a>
+## [v2.15.1] - 2022-12-16
+### Bug Fixes
+
+- Kill python server after tests run [EPMDEDP-11213](https://jiraeu.epam.com/browse/EPMDEDP-11213)
+
+
 <a name="v2.15.0"></a>
 ## [v2.15.0] - 2022-12-13
 ### Features
@@ -39,8 +61,8 @@
 ### Routine
 
 - Use -f flag for rm command instead of || true [EPMDEDP-10158](https://jiraeu.epam.com/browse/EPMDEDP-10158)
-- Fix Jira Ticket pattern for changelog generator [EPMDEDP-10159](https://jiraeu.epam.com/browse/EPMDEDP-10159)
 - Update CHANGELOG [EPMDEDP-10159](https://jiraeu.epam.com/browse/EPMDEDP-10159)
+- Fix Jira Ticket pattern for changelog generator [EPMDEDP-10159](https://jiraeu.epam.com/browse/EPMDEDP-10159)
 - Hide the curl command execution with token in the SAST stage [EPMDEDP-10234](https://jiraeu.epam.com/browse/EPMDEDP-10234)
 - Rename the Jenkins agent label for SAST scanning [EPMDEDP-10234](https://jiraeu.epam.com/browse/EPMDEDP-10234)
 - Align build.gradle to new gradle version [EPMDEDP-10274](https://jiraeu.epam.com/browse/EPMDEDP-10274)
@@ -103,10 +125,10 @@ Starting from this change, we expect that CodebaseBranches CRD use 'status' fiel
 - Get aws_region variable from configmap [EPMDEDP-8164](https://jiraeu.epam.com/browse/EPMDEDP-8164)
 - The refspec value must be defined early [EPMDEDP-8168](https://jiraeu.epam.com/browse/EPMDEDP-8168)
 - Deploy stage must use valid image tag [EPMDEDP-8168](https://jiraeu.epam.com/browse/EPMDEDP-8168)
-- Remove unused functional [EPMDEDP-8168](https://jiraeu.epam.com/browse/EPMDEDP-8168)
-- CD-operator responsible to create new project on cluster [EPMDEDP-8168](https://jiraeu.epam.com/browse/EPMDEDP-8168)
 - Update image tag modification [EPMDEDP-8168](https://jiraeu.epam.com/browse/EPMDEDP-8168)
 - Remove unused functional [EPMDEDP-8168](https://jiraeu.epam.com/browse/EPMDEDP-8168)
+- Remove unused functional [EPMDEDP-8168](https://jiraeu.epam.com/browse/EPMDEDP-8168)
+- CD-operator responsible to create new project on cluster [EPMDEDP-8168](https://jiraeu.epam.com/browse/EPMDEDP-8168)
 
 ### Routine
 
@@ -189,7 +211,9 @@ Starting from this change, we expect that CodebaseBranches CRD use 'status' fiel
 - [EPMDEDP-5352]: Apply crds to cluster during deploy
 
 
-[Unreleased]: https://github.com/epam/edp-library-stages/compare/v2.15.0...HEAD
+[Unreleased]: https://github.com/epam/edp-library-stages/compare/v2.16.0...HEAD
+[v2.16.0]: https://github.com/epam/edp-library-stages/compare/v2.15.1...v2.16.0
+[v2.15.1]: https://github.com/epam/edp-library-stages/compare/v2.15.0...v2.15.1
 [v2.15.0]: https://github.com/epam/edp-library-stages/compare/v2.14.0...v2.15.0
 [v2.14.0]: https://github.com/epam/edp-library-stages/compare/v2.13.2...v2.14.0
 [v2.13.2]: https://github.com/epam/edp-library-stages/compare/v2.13.1...v2.13.2
