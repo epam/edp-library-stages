@@ -1,6 +1,32 @@
 <a name="unreleased"></a>
 ## [Unreleased]
 
+### Routine
+
+- Align changelog installation for release process [EPMDEDP-11826](https://jiraeu.epam.com/browse/EPMDEDP-11826)
+
+
+<a name="v2.16.0"></a>
+## [v2.16.0] - 2023-05-25
+### Bug Fixes
+
+- Add build-image-from-dockerfile for Docker lib on OKD [EPMDEDP-11134](https://jiraeu.epam.com/browse/EPMDEDP-11134)
+- Kill python server after tests run [EPMDEDP-11213](https://jiraeu.epam.com/browse/EPMDEDP-11213)
+- Jira integration with libraries [EPMDEDP-11748](https://jiraeu.epam.com/browse/EPMDEDP-11748)
+
+### Routine
+
+- Update changelog [EPMDEDP-10610](https://jiraeu.epam.com/browse/EPMDEDP-10610)
+- Align git application path to git repo provisioning [EPMDEDP-11871](https://jiraeu.epam.com/browse/EPMDEDP-11871)
+- Add templates for github issues [EPMDEDP-11928](https://jiraeu.epam.com/browse/EPMDEDP-11928)
+
+
+<a name="v2.15.1"></a>
+## [v2.15.1] - 2022-12-16
+### Bug Fixes
+
+- Kill python server after tests run [EPMDEDP-11213](https://jiraeu.epam.com/browse/EPMDEDP-11213)
+
 
 <a name="v2.15.0"></a>
 ## [v2.15.0] - 2022-12-13
@@ -189,7 +215,9 @@ Starting from this change, we expect that CodebaseBranches CRD use 'status' fiel
 - [EPMDEDP-5352]: Apply crds to cluster during deploy
 
 
-[Unreleased]: https://github.com/epam/edp-library-stages/compare/v2.15.0...HEAD
+[Unreleased]: https://github.com/epam/edp-library-stages/compare/v2.16.0...HEAD
+[v2.16.0]: https://github.com/epam/edp-library-stages/compare/v2.15.1...v2.16.0
+[v2.15.1]: https://github.com/epam/edp-library-stages/compare/v2.15.0...v2.15.1
 [v2.15.0]: https://github.com/epam/edp-library-stages/compare/v2.14.0...v2.15.0
 [v2.14.0]: https://github.com/epam/edp-library-stages/compare/v2.13.2...v2.14.0
 [v2.13.2]: https://github.com/epam/edp-library-stages/compare/v2.13.1...v2.13.2
