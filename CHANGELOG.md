@@ -3,7 +3,7 @@
 
 
 <a name="v2.16.0"></a>
-## [v2.16.0] - 2023-05-22
+## [v2.16.0] - 2023-05-25
 ### Bug Fixes
 
 - Add build-image-from-dockerfile for Docker lib on OKD [EPMDEDP-11134](https://jiraeu.epam.com/browse/EPMDEDP-11134)
@@ -13,6 +13,7 @@
 ### Routine
 
 - Update changelog [EPMDEDP-10610](https://jiraeu.epam.com/browse/EPMDEDP-10610)
+- Align changelog installation for release process [EPMDEDP-11826](https://jiraeu.epam.com/browse/EPMDEDP-11826)
 - Align git application path to git repo provisioning [EPMDEDP-11871](https://jiraeu.epam.com/browse/EPMDEDP-11871)
 - Add templates for github issues [EPMDEDP-11928](https://jiraeu.epam.com/browse/EPMDEDP-11928)
 
