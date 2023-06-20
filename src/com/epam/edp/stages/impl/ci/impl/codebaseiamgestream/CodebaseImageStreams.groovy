@@ -37,7 +37,7 @@ class CodebaseImageStreams {
 
     def editCbisTags(crApi, cbisName, imageTag) {
         def cbisCr = this.context.platform.getJsonValue(crApi, cbisName)
-        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss")
+        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX")
         def newcbisTag = JsonOutput.toJson('name': imageTag, 'created': dateFormat.format(new Date()))
         def preparedcbisCr = new JsonSlurperClassic().parseText(cbisCr)
 
