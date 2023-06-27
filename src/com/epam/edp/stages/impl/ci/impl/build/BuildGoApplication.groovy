@@ -24,7 +24,7 @@ class BuildGoApplication {
 
     void run(context) {
         script.dir("${context.workDir}") {
-            script.sh "${context.buildTool.command} build -o ${context.workDir}/go-binary ${context.workDir}/${context.buildTool.getGoMainPath()}"
+            script.sh "make build"
         }
     }
 }
