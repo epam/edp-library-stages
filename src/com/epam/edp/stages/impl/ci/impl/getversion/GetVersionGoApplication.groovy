@@ -30,7 +30,7 @@ class GetVersionGoApplication {
             return
         }
 
-        codebase.version = script.readFile "${workDir}/VERSION"
+        codebase.version = script.sh(script: "date +%Y%m%d-%H%M%S", returnStdout: true).trim()
         codebase.buildVersion = "${codebase.version}-${script.BUILD_NUMBER}"
         job.setDisplayName("${script.currentBuild.number}-${git.branch}-${codebase.version}")
         codebase.isTag = "${git.branch}-${codebase.buildVersion}"
