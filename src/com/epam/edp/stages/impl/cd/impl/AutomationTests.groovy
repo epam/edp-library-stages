@@ -77,9 +77,18 @@ class AutomationTests {
         return slave
     }
 
-    private static def initBuildTool(context, script, autotestName) {
+    private String capitalizeFirstLetter(String input) {
+        if (input == null || input.isEmpty()) {
+            return input
+        }
+        return input.substring(0, 1).toUpperCase() + input.substring(1)
+    }
+
+    private def initBuildTool(context, script, autotestName) {
         def buildTool = context.platform.getJsonPathValue("codebases.${context.job.crApiVersion}.edp.epam.com",
                 autotestName, ".spec.buildTool")
+        script.println("[JENKINS][DEBUG] BuildTool before capitalize: ${buildTool}")
+        buildTool = this.capitalizeFirstLetter(buildTool)
         context.buildTool = new BuildToolFactory().getBuildToolImpl(buildTool, script, context.nexus, context.job)
         context.buildTool.init()
         return context.buildTool
